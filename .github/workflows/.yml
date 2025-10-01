@@ -448,7 +448,7 @@ jobs:
           flutter pub get || true
           flutter pub add flutter_riverpod go_router firebase_core firebase_auth cloud_firestore firebase_crashlytics firebase_performance firebase_remote_config hive hive_flutter intl || true
 
-      - name: Open PR
+    - name: Open PR
         id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
@@ -465,4 +465,11 @@ jobs:
           delete-branch: false
 
       - name: PR URL
-        run: echo "PR: ${{ steps.cpr.outputs['pull-request-url'] }}"
+        if: steps.cpr.outputs.pull-request-url != ''
+        run: |
+          echo "PR: ${{ steps.cpr.outputs['pull-request-url'] }}"
+
+      - name: No changes (no PR created)
+        if: steps.cpr.outputs.pull-request-url == ''
+        run: echo "No changes to commit; branch already up-to-date."
+    echo "PR: ${{ steps.cpr.outputs['pull-request-url'] }}"
