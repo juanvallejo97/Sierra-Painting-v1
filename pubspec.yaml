@@ -10,9 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Keep this in sync with Flutter SDK's integration_test (older CI images pull 0.5.0)
-  material_color_utilities: 0.5.0
-
   # Firebase
   firebase_core: ^4.1.1
   firebase_auth: ^6.1.0
@@ -67,9 +64,7 @@ dev_dependencies:
   # Fix analyzer <> SDK mismatch seen in your logs
   analyzer: ^6.4.1
 
-# Ensure nothing upgrades material_color_utilities beyond what integration_test expects
 dependency_overrides:
-  material_color_utilities: 0.5.0
   analyzer: ^6.4.1
 
 
