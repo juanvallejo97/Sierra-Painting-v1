@@ -1,6 +1,5 @@
 name: sierra_painting
 description: A Flutter painting application for small business management with Firebase backend
-main
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -49,14 +48,12 @@ dependencies:
   # Accessibility
   flutter_localizations:
     sdk: flutter
-main
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^3.0.1
-main
   build_runner: ^2.4.7
   hive_generator: ^2.0.1
   
@@ -78,4 +75,3 @@ flutter:
   #   - family: CustomFont
   #     fonts:
   #       - asset: fonts/CustomFont-Regular.ttf
-main
