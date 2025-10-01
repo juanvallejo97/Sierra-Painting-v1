@@ -2,7 +2,9 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
     
+main
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
@@ -57,5 +59,6 @@ service firebase.storage {
                       isValidPdfFile() && 
                       isUnder10MB();
     }
+main
   }
 }
