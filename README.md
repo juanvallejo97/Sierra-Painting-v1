@@ -50,7 +50,7 @@ sierra_painting/
 ## Getting Started
 
 ### Prerequisites
-- Flutter SDK (>=3.0.0)
+- Flutter SDK 3.29.0 (includes Dart 3.11.0)
 - Node.js 18+
 - Firebase CLI
 - Git
@@ -109,6 +109,18 @@ flutter test
 # Build for production
 flutter build apk --release  # Android
 flutter build ios --release  # iOS
+```
+
+### Local verification checklist
+
+Run these commands before pushing changes to ensure CI parity:
+
+```bash
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+dart format .
+flutter analyze
+flutter test
 ```
 
 ### Deploying Cloud Functions
