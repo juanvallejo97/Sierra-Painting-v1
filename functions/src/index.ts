@@ -1,224 +1,143 @@
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import {
-  leadSchema,
-  estimateSchema,
-  markPaidManualSchema,
-  stripeCheckoutSchema,
-} from "./schemas";
-import {createPdfService} from "./services/pdf-service";
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import {z} from 'zod';
+import {handleStripeWebhook} from './stripe/webhookHandler';
 
+// Initialize Firebase Admin
 admin.initializeApp();
 
-// Create Lead Function
-export const createLead = functions.https.onCall(async (data, context) => {
-  // Validate authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "User must be authenticated"
-    );
-  }
+// Export Firestore and Auth for use in other modules
+export const db = admin.firestore();
+export const auth = admin.auth();
 
-  // Validate input with Zod
-  const validationResult = leadSchema.safeParse(data);
-  if (!validationResult.success) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      validationResult.error.message
-    );
-  }
-
-  const leadData = {
-    ...validationResult.data,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    createdBy: context.auth.uid,
-    status: "new",
-  };
-
+/**
+ * Create user profile on authentication
+ */
+export const onUserCreate = functions.auth.user().onCreate(async (user) => {
   try {
-    const leadRef = await admin.firestore().collection("leads").add(leadData);
-    return {success: true, leadId: leadRef.id};
+    await db.collection('users').doc(user.uid).set({
+      email: user.email,
+      displayName: user.displayName || null,
+      photoURL: user.photoURL || null,
+      role: 'user', // Default role
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    functions.logger.info(`Created user profile for ${user.uid}`);
   } catch (error) {
-    console.error("Error creating lead:", error);
-    throw new functions.https.HttpsError("internal", "Failed to create lead");
+    functions.logger.error('Error creating user profile:', error);
+    throw error;
   }
 });
 
-// Create Estimate PDF Function
-export const createEstimatePdf = functions.https.onCall(
-  async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated"
-      );
-    }
-
-    const validationResult = estimateSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        validationResult.error.message
-      );
-    }
-
-    try {
-      const pdfBuffer = await createPdfService(validationResult.data);
-      const bucket = admin.storage().bucket();
-      const fileName = `estimates/${data.leadId}_${Date.now()}.pdf`;
-      const file = bucket.file(fileName);
-
-      await file.save(pdfBuffer, {
-        metadata: {
-          contentType: "application/pdf",
-        },
-      });
-
-      const [url] = await file.getSignedUrl({
-        action: "read",
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      // Save estimate to Firestore
-      const estimateRef = await admin.firestore()
-        .collection("estimates")
-        .add({
-          ...validationResult.data,
-          pdfUrl: url,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          createdBy: context.auth.uid,
-        });
-
-      return {success: true, estimateId: estimateRef.id, pdfUrl: url};
-    } catch (error) {
-      console.error("Error creating estimate PDF:", error);
-      throw new functions.https.HttpsError(
-        "internal",
-        "Failed to create estimate PDF"
-      );
-    }
+/**
+ * Clean up user data on account deletion
+ */
+export const onUserDelete = functions.auth.user().onDelete(async (user) => {
+  try {
+    // Delete user profile
+    await db.collection('users').doc(user.uid).delete();
+    
+    functions.logger.info(`Deleted user data for ${user.uid}`);
+  } catch (error) {
+    functions.logger.error('Error deleting user data:', error);
+    throw error;
   }
-);
+});
 
-// Mark Invoice as Paid Manually (Check/Cash)
-export const markPaidManual = functions.https.onCall(
-  async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated"
-      );
-    }
+/**
+ * Mark payment as paid (Manual payment - check/cash)
+ * Only callable by admins
+ */
+const markPaymentPaidSchema = z.object({
+  invoiceId: z.string().min(1),
+  amount: z.number().positive(),
+  paymentMethod: z.enum(['check', 'cash']),
+  notes: z.string().optional(),
+});
 
-    // Check admin role
-    const userDoc = await admin.firestore()
-      .collection("users")
-      .doc(context.auth.uid)
-      .get();
-
-    if (!userDoc.exists || !userDoc.data()?.isAdmin) {
-      throw new functions.https.HttpsError(
-        "permission-denied",
-        "Only admins can mark invoices as paid"
-      );
-    }
-
-    const validationResult = markPaidManualSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        validationResult.error.message
-      );
-    }
-
-    try {
-      const {invoiceId, ...paymentData} = validationResult.data;
-
-      // Create audit trail
-      const auditData = {
-        invoiceId,
-        action: "manual_payment",
-        paymentData,
-        performedBy: context.auth.uid,
-        performedAt: admin.firestore.FieldValue.serverTimestamp(),
-        ipAddress: context.rawRequest.ip,
-      };
-
-      await admin.firestore().runTransaction(async (transaction) => {
-        const invoiceRef = admin.firestore()
-          .collection("invoices")
-          .doc(invoiceId);
-        const auditRef = admin.firestore()
-          .collection("audit_logs")
-          .doc();
-
-        const invoice = await transaction.get(invoiceRef);
-        if (!invoice.exists) {
-          throw new functions.https.HttpsError(
-            "not-found",
-            "Invoice not found"
-          );
-        }
-
-        transaction.update(invoiceRef, {
-          paid: true,
-          paidAt: admin.firestore.FieldValue.serverTimestamp(),
-          paymentMethod: paymentData.paymentMethod,
-          paymentAmount: paymentData.amount,
-          checkNumber: paymentData.checkNumber,
-          paymentNotes: paymentData.notes,
-        });
-
-        transaction.set(auditRef, auditData);
-      });
-
-      return {success: true};
-    } catch (error) {
-      console.error("Error marking invoice as paid:", error);
-      throw new functions.https.HttpsError(
-        "internal",
-        "Failed to mark invoice as paid"
-      );
-    }
+export const markPaymentPaid = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
-);
 
-// Optional: Stripe Checkout Session
-export const createCheckoutSession = functions.https.onCall(
-  async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "User must be authenticated"
-      );
-    }
+  // Verify admin role
+  const userDoc = await db.collection('users').doc(context.auth.uid).get();
+  if (!userDoc.exists || userDoc.data()?.role !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'User must be an admin');
+  }
 
-    const validationResult = stripeCheckoutSchema.safeParse(data);
-    if (!validationResult.success) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        validationResult.error.message
-      );
-    }
+  // Validate input
+  try {
+    const validatedData = markPaymentPaidSchema.parse(data);
 
-    // Placeholder for Stripe integration
-    // const stripe = new Stripe(functions.config().stripe.secret_key);
-    // const session = await stripe.checkout.sessions.create({...});
+    // Create payment record with audit trail
+    const paymentRef = await db.collection('payments').add({
+      invoiceId: validatedData.invoiceId,
+      amount: validatedData.amount,
+      paymentMethod: validatedData.paymentMethod,
+      status: 'completed',
+      notes: validatedData.notes || null,
+      markedBy: context.auth.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
+    // Add audit log entry
+    await paymentRef.collection('audit').add({
+      action: 'payment_marked_paid',
+      performedBy: context.auth.uid,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      details: {
+        amount: validatedData.amount,
+        paymentMethod: validatedData.paymentMethod,
+      },
+    });
+
+    // Update invoice status
+    await db.collection('invoices').doc(validatedData.invoiceId).update({
+      status: 'paid',
+      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    functions.logger.info(`Payment marked as paid: ${paymentRef.id}`);
+    
     return {
       success: true,
-      message: "Stripe integration pending - add API key",
+      paymentId: paymentRef.id,
     };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new functions.https.HttpsError('invalid-argument', error.message);
+    }
+    functions.logger.error('Error marking payment as paid:', error);
+    throw new functions.https.HttpsError('internal', 'An error occurred');
   }
-);
+});
 
-// Optional: Stripe Webhook (Idempotent)
-export const stripeWebhook = functions.https.onRequest(
-  async (req, res) => {
-    // Verify webhook signature
-    // Handle events idempotently using event.id
-
-    res.json({received: true});
+/**
+ * Stripe webhook handler (optional, behind feature flag)
+ * Must be idempotent
+ */
+export const stripeWebhook = functions.https.onRequest(async (req, res) => {
+  try {
+    await handleStripeWebhook(req, res);
+  } catch (error) {
+    functions.logger.error('Stripe webhook error:', error);
+    res.status(500).json({error: 'Webhook handler failed'});
   }
-);
+});
+
+/**
+ * Health check endpoint
+ */
+export const healthCheck = functions.https.onRequest((req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  });
+});
+main

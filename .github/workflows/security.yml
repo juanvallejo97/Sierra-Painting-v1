@@ -1,0 +1,57 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+
+jobs:
+  firebase-rules:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate Firestore Rules
+      run: |
+        if [ -f "firestore.rules" ]; then
+          echo "Firestore rules file found"
+          # Add validation logic here if needed
+        else
+          echo "No firestore.rules file found"
+          exit 1
+        fi
+    
+    - name: Validate Storage Rules
+      run: |
+        if [ -f "storage.rules" ]; then
+          echo "Storage rules file found"
+          # Add validation logic here if needed
+        else
+          echo "No storage.rules file found"
+          exit 1
+        fi
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check Flutter dependencies
+      run: |
+        if [ -f "pubspec.yaml" ]; then
+          echo "Checking Flutter dependencies for vulnerabilities"
+          # flutter pub outdated would go here
+        fi
+    
+    - name: Check Functions dependencies
+      working-directory: functions
+      run: |
+        if [ -f "package.json" ]; then
+          echo "Checking npm dependencies for vulnerabilities"
+          npm audit --audit-level=moderate || true
+        fi

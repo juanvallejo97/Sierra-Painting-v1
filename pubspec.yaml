@@ -1,5 +1,6 @@
 name: sierra_painting
-description: A painting business management application
+description: A Flutter painting application for small business management with Firebase backend
+main
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,39 +11,52 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # State Management
-  flutter_riverpod: ^2.4.9
-  riverpod_annotation: ^2.3.3
-  
-  # Routing
-  go_router: ^13.0.0
+
+  # Material Design 3
+  material_color_utilities: ^0.8.0
   
   # Firebase
-  firebase_core: ^2.24.2
-  cloud_firestore: ^4.13.6
-  firebase_auth: ^4.15.3
-  firebase_storage: ^11.5.6
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  firebase_storage: ^11.5.0
+  cloud_firestore: ^4.13.0
+  cloud_functions: ^4.5.0
+  firebase_app_check: ^0.2.1+0
   
-  # Local Storage
+  # State Management
+  provider: ^6.1.1
+  
+  # Local Storage for offline-first
+  shared_preferences: ^2.2.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  
+  # Networking
+  http: ^1.1.2
+  connectivity_plus: ^5.0.2
+  
+  # Feature Flags
+  firebase_remote_config: ^4.3.8
+  
+  # Payments (optional)
+  flutter_stripe: ^10.1.0
+  
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.2.2
   path_provider: ^2.1.1
   
-  # UI
-  cupertino_icons: ^1.0.6
-  
-  # Utils
-  intl: ^0.18.1
-  uuid: ^4.2.2
-  connectivity_plus: ^5.0.2
+  # Accessibility
+  flutter_localizations:
+    sdk: flutter
+main
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
-  
-  # Code Generation
-  riverpod_generator: ^2.3.9
+
+  flutter_lints: ^3.0.1
+main
   build_runner: ^2.4.7
   hive_generator: ^2.0.1
   
@@ -53,3 +67,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  
+  # Add assets here
+  # assets:
+  #   - images/
+  
+  # Add custom fonts here
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: fonts/CustomFont-Regular.ttf
+main
