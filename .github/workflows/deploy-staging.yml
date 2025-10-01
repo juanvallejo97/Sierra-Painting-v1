@@ -8,11 +8,22 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
+    # Skip if required secrets are not available
+    if: ${{ secrets.FIREBASE_TOKEN != '' && (secrets.GCP_SA_KEY != '' || secrets.FIREBASE_PROJECT_STAGING != '') }}
     
     steps:
       - uses: actions/checkout@v4
       
-      - name: Setup Node.js
+      - name: Set up Node.js with cache
+        if: hashFiles('functions/package-lock.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+      
+      - name: Set up Node.js without cache
+        if: hashFiles('functions/package-lock.json') == ''
         uses: actions/setup-node@v4
         with:
           node-version: '18'
@@ -22,7 +33,12 @@ jobs:
       
       - name: Install Functions dependencies
         working-directory: ./functions
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
       
       - name: Build Functions
         working-directory: ./functions
