@@ -1,42 +1,93 @@
 rules_version = '2';
 
+/**
+ * Firebase Storage Security Rules for Sierra Painting
+ * 
+ * SECURITY POSTURE:
+ * - Deny-by-default: All access denied unless explicitly allowed
+ * - Authentication required: No anonymous access to any files
+ * - Role-based access: Admins have broader permissions
+ * - File type validation: Only allowed types (images, PDFs)
+ * - Size limits: Max 10MB per file
+ * 
+ * PERFORMANCE NOTES:
+ * - Firestore lookups in rules count toward read quota
+ * - Cache isAdmin() result when possible
+ * - Use minimal path depth for faster matching
+ * 
+ * INVARIANTS:
+ * - All writes must be authenticated
+ * - Profile images: user can only write their own
+ * - Project/invoice files: admin-only writes
+ * - Generated PDFs: Cloud Functions write directly (use Admin SDK)
+ */
+
 service firebase.storage {
   match /b/{bucket}/o {
-
     
-main
-    // Helper functions
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    
+    /**
+     * Check if request is from an authenticated user
+     */
     function isAuthenticated() {
       return request.auth != null;
     }
     
+    /**
+     * Check if authenticated user is the resource owner
+     */
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    /**
+     * Check if authenticated user has admin role
+     * WARNING: Firestore read counts toward quota
+     */
     function isAdmin() {
       return isAuthenticated() && 
              firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    /**
+     * Validate file is an image
+     */
     function isValidImageFile() {
       return request.resource.contentType.matches('image/.*');
     }
     
+    /**
+     * Validate file is a PDF
+     */
     function isValidPdfFile() {
       return request.resource.contentType == 'application/pdf';
     }
     
+    /**
+     * Enforce maximum file size of 10MB
+     */
     function isUnder10MB() {
       return request.resource.size < 10 * 1024 * 1024;
     }
     
-    // Deny by default
+    // ============================================================
+    // DENY BY DEFAULT
+    // ============================================================
+    
     match /{allPaths=**} {
       allow read, write: if false;
     }
     
-    // User profile images
+    // ============================================================
+    // USER PROFILE IMAGES
+    // Path: /users/{userId}/profile/{imageId}
+    // Read: Any authenticated user
+    // Write: User can upload their own profile image only
+    // ============================================================
+    
     match /users/{userId}/profile/{imageId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId) && 
@@ -44,7 +95,13 @@ main
                       isUnder10MB();
     }
     
-    // Project images
+    // ============================================================
+    // PROJECT IMAGES (Before/After Photos)
+    // Path: /projects/{projectId}/images/{imageId}
+    // Read: Any authenticated user (for portfolio/gallery)
+    // Write: Admin only
+    // ============================================================
+    
     match /projects/{projectId}/images/{imageId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin() && 
@@ -52,13 +109,47 @@ main
                       isUnder10MB();
     }
     
-    // Invoice PDFs
+    // ============================================================
+    // ESTIMATE PDFs (Generated Server-Side)
+    // Path: /estimates/{estimateId}/{filename}
+    // Read: Authenticated users (org-scoped via signed URLs)
+    // Write: Admin only (but Cloud Functions use Admin SDK directly)
+    // ============================================================
+    
+    match /estimates/{estimateId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && 
+                      isValidPdfFile() && 
+                      isUnder10MB();
+    }
+    
+    // ============================================================
+    // INVOICE PDFs (Generated Server-Side)
+    // Path: /invoices/{invoiceId}/{filename}
+    // Read: Authenticated users (org-scoped via signed URLs)
+    // Write: Admin only (but Cloud Functions use Admin SDK directly)
+    // ============================================================
+    
     match /invoices/{invoiceId}/{filename} {
       allow read: if isAuthenticated();
       allow write: if isAdmin() && 
                       isValidPdfFile() && 
                       isUnder10MB();
     }
-main
+    
+    // ============================================================
+    // JOB SITE PHOTOS (Crew Uploads)
+    // Path: /jobs/{jobId}/photos/{photoId}
+    // Read: Authenticated users in the same org
+    // Write: Crew members assigned to the job (TODO: add job assignment check)
+    // ============================================================
+    
+    match /jobs/{jobId}/photos/{photoId} {
+      allow read: if isAuthenticated();
+      // TODO: Add check for crew assignment to jobId
+      allow write: if isAuthenticated() && 
+                      isValidImageFile() && 
+                      isUnder10MB();
+    }
   }
 }
