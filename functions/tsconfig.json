@@ -9,7 +9,6 @@
     "target": "es2017",
     "esModuleInterop": true,
 
-main
     "resolveJsonModule": true
   },
   "compileOnSave": true,
