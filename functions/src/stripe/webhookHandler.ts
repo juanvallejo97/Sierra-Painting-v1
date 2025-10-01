@@ -5,7 +5,7 @@ import {db} from '../index';
 // Initialize Stripe (will be configured via environment variable)
 const stripeSecretKey = functions.config().stripe?.secret_key || '';
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2024-06-20',
 });
 
 const webhookSecret = functions.config().stripe?.webhook_secret || '';
