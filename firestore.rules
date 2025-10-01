@@ -2,69 +2,98 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+
+main
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    function isAdmin() {
-      return isAuthenticated() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Default: deny all
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function hasValidAppCheck() {
+      return request.app.appCheck.token.aud[0] == request.app.projectId;
+    }
+    
+    // Deny by default - must explicitly grant access
+main
     match /{document=**} {
       allow read, write: if false;
     }
     
     // Users collection
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      // Users can create their profile on signup
+      allow create: if isOwner(userId);
+      // Users can update their own profile (except role)
+      allow update: if isOwner(userId) && 
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      // Only admins can delete users
+      allow delete: if isAdmin();
+      
+      // Admin can read/write all users
+      allow read, write: if isAdmin();
     }
     
-    // Leads collection
-    match /leads/{leadId} {
+    // Projects collection
+    match /projects/{projectId} {
+      // Authenticated users can read projects
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      // Only admins can create projects
+      allow create: if isAdmin();
+      // Only admins can update projects
+      allow update: if isAdmin();
+      // Only admins can delete projects
+      allow delete: if isAdmin();
     }
     
-    // Estimates collection
-    match /estimates/{estimateId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+    // Payments collection
+    match /payments/{paymentId} {
+      // Users can read their own payments
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      // Admins can read all payments
+      allow read: if isAdmin();
+      // Only admins can create payments (mark as paid)
+      allow create: if isAdmin();
+      // Only admins can update payments
+      allow update: if isAdmin();
+      // Payments cannot be deleted
+      allow delete: if false;
+      
+      // Audit log subcollection
+      match /audit/{auditId} {
+        allow read: if isAdmin();
+        allow write: if false; // Audit logs are write-only via server
+      }
+main
     }
     
     // Invoices collection
     match /invoices/{invoiceId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      // Client CANNOT set invoice.paid field
-      allow update: if isAuthenticated() && 
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['paid', 'paidAt', 'paymentMethod', 'paymentAmount']));
-      allow delete: if isAdmin();
-    }
-    
-    // Timeclocks collection
-    match /timeclocks/{timeclockId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId == request.auth.uid;
-      allow update: if isOwner(resource.data.userId) || isAdmin();
-      allow delete: if isAdmin();
-    }
-    
-    // Audit logs (read-only for admins)
-    match /audit_logs/{logId} {
+
+      // Users can read their own invoices
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      // Admins can read all invoices
       allow read: if isAdmin();
-      allow write: if false;
+      // Only admins can create/update invoices
+      allow create, update: if isAdmin();
+      // Invoices cannot be deleted
+      allow delete: if false;
+main
     }
   }
 }

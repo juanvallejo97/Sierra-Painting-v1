@@ -2,25 +2,63 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
+    
+main
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
     function isAdmin() {
-      return request.auth != null && 
-        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isAuthenticated() && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
-    // Estimates PDFs
-    match /estimates/{allPaths=**} {
-      allow read: if isAuthenticated();
-      allow write: if false; // Only functions can write
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*');
     }
     
-    // Default: deny all
+    function isValidPdfFile() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    function isUnder10MB() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+    
+    // Deny by default
     match /{allPaths=**} {
       allow read, write: if false;
     }
+    
+    // User profile images
+    match /users/{userId}/profile/{imageId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) && 
+                      isValidImageFile() && 
+                      isUnder10MB();
+    }
+    
+    // Project images
+    match /projects/{projectId}/images/{imageId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && 
+                      isValidImageFile() && 
+                      isUnder10MB();
+    }
+    
+    // Invoice PDFs
+    match /invoices/{invoiceId}/{filename} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && 
+                      isValidPdfFile() && 
+                      isUnder10MB();
+    }
+main
   }
 }

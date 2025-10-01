@@ -1,139 +1,174 @@
-# Sierra Painting v1
+# Sierra Painting - Project Sienna
 
-A comprehensive painting business management application built with Flutter and Firebase.
+A modern Flutter-based painting application for small business management with Firebase backend.
 
-## Features
+## Overview
 
-- **Time Clock**: Track employee hours with clock in/out functionality
-- **Estimates**: Create and manage customer estimates with PDF generation
-- **Invoices**: Generate and track invoices with payment processing
-- **Admin Panel**: Role-based access control for administrative functions
-- **Offline Support**: Works offline with Firestore persistence and Hive queue
-- **Material 3 UI**: Modern, responsive design with Material Design 3
+Sierra Painting is a mobile-first application built with Flutter and Firebase, designed to help small painting businesses manage their operations, projects, and payments efficiently.
 
-## Architecture
+## Tech Stack
 
-### Flutter App
-- **State Management**: Riverpod for reactive state management
-- **Routing**: go_router with RBAC guards for role-based navigation
-- **Local Storage**: Hive for offline queue management
-- **Database**: Cloud Firestore with offline persistence enabled
+### Frontend
+- **Flutter** (Material Design 3)
+- **Mobile-first** design approach
+- **Offline-first** architecture using Hive
+- **WCAG 2.2 AA** accessibility compliance
 
-### Folder Structure
+### Backend
+- **Firebase Authentication** - User management
+- **Cloud Firestore** - NoSQL database with deny-by-default security rules
+- **Firebase Storage** - File storage for images and documents
+- **Cloud Functions** - TypeScript + Zod validation
+- **Firebase App Check** - Security against abuse
+- **Firebase Remote Config** - Feature flags
+
+### Payments
+- **Primary**: Manual check/cash payments with admin approval and audit trail
+- **Optional**: Stripe Checkout (behind feature flag)
+
+## Project Structure
+
 ```
-lib/
-├── app/                    # App-level configuration and routing
-├── core/                   # Core utilities and shared resources
-│   ├── models/            # Shared data models
-│   ├── providers/         # Riverpod providers
-│   ├── services/          # Core services (queue, etc.)
-│   ├── utils/             # Utility functions
-│   └── constants/         # App constants
-└── features/              # Feature modules
-    ├── auth/              # Authentication
-    ├── timeclock/         # Time tracking
-    ├── estimates/         # Estimates management
-    ├── invoices/          # Invoice management
-    └── admin/             # Admin panel
+sierra_painting/
+├── lib/
+│   ├── core/
+│   │   ├── config/           # App configuration
+│   │   ├── services/         # Core services (offline, feature flags)
+│   │   └── utils/            # Utility functions
+│   ├── features/             # Feature modules
+│   └── shared/               # Shared widgets and components
+├── functions/
+│   └── src/
+│       ├── index.ts          # Main Cloud Functions
+│       └── stripe/           # Stripe webhook handlers
+├── test/                     # Flutter tests
+├── firestore.rules           # Firestore security rules (deny-by-default)
+├── storage.rules             # Storage security rules
+└── firebase.json             # Firebase configuration
 ```
 
-### Firebase Services
-
-#### Cloud Functions (TypeScript + Zod)
-- **createLead**: Create a new customer lead
-- **createEstimatePdf**: Generate PDF estimates
-- **markPaidManual**: Mark invoices as paid (check/cash) with audit trail
-- **createCheckoutSession** (optional): Stripe payment integration
-- **stripeWebhook** (optional): Idempotent Stripe webhook handler
-
-#### Security Rules
-- **Deny-by-default**: All access denied unless explicitly allowed
-- **Invoice Protection**: Clients cannot set `invoice.paid` field
-- **Audit Trail**: All payment modifications are logged
-
-## Setup Instructions
+## Getting Started
 
 ### Prerequisites
-- Flutter SDK (3.16.0 or higher)
+- Flutter SDK (>=3.0.0)
+- Node.js 18+
 - Firebase CLI
-- Node.js (18 or higher)
-- A Firebase project
+- Git
 
-### 1. Clone the Repository
+### Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/juanvallejo97/Sierra-Painting-v1.git
+   cd Sierra-Painting-v1
+   ```
+
+2. **Install Flutter dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Install Firebase Functions dependencies**
+   ```bash
+   cd functions
+   npm install
+   cd ..
+   ```
+
+4. **Configure Firebase**
+   ```bash
+   # Install Firebase CLI if not already installed
+   npm install -g firebase-tools
+   
+   # Login to Firebase
+   firebase login
+   
+   # Initialize Firebase in your project
+   firebase init
+   
+   # Generate Firebase configuration for Flutter
+   flutterfire configure
+   ```
+
+5. **Set up environment variables**
+   ```bash
+   cd functions
+   cp .env.example .env
+   # Edit .env with your actual values
+   ```
+
+### Running the App
+
 ```bash
-git clone https://github.com/juanvallejo97/Sierra-Painting-v1.git
-cd Sierra-Painting-v1
-```
-
-### 2. Configure Firebase
-
-#### Initialize Firebase Project
-```bash
-firebase login
-firebase use --add
-```
-
-#### Configure FlutterFire
-```bash
-# Install FlutterFire CLI
-dart pub global activate flutterfire_cli
-
-# Configure Firebase for Flutter
-flutterfire configure
-```
-
-This will update `lib/firebase_options.dart` with your actual Firebase credentials.
-
-#### Deploy Security Rules
-```bash
-firebase deploy --only firestore:rules,storage:rules
-```
-
-### 3. Setup Flutter App
-```bash
-# Install dependencies
-flutter pub get
-
-# Generate code (for Hive adapters)
-flutter pub run build_runner build --delete-conflicting-outputs
-
-# Run the app
+# Run in debug mode
 flutter run
+
+# Run tests
+flutter test
+
+# Build for production
+flutter build apk --release  # Android
+flutter build ios --release  # iOS
 ```
 
-### 4. Setup Cloud Functions
+### Deploying Cloud Functions
+
 ```bash
 cd functions
-
-# Install dependencies
-npm install
-
-# Build TypeScript
 npm run build
-
-# Deploy functions
 firebase deploy --only functions
 ```
 
-### 5. Firebase Emulators (Development)
+### Deploying Firestore Rules
+
 ```bash
-# Start all emulators
-firebase emulators:start
-
-# The emulators will start on:
-# - Auth: http://localhost:9099
-# - Firestore: http://localhost:8080
-# - Functions: http://localhost:5001
-# - Storage: http://localhost:9199
-# - UI: http://localhost:4000
+firebase deploy --only firestore:rules
+firebase deploy --only storage:rules
 ```
 
-To use emulators in your Flutter app, update the Firebase initialization in `lib/main.dart`:
-```dart
-// For emulator use
-await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-```
+## Key Features
+
+### Security
+- **Deny-by-default** Firestore security rules
+- **App Check** for API abuse prevention
+- **Role-based access control** (admin, user)
+- **Audit trails** for all payment operations
+
+### Offline Support
+- Local caching with Hive
+- Automatic sync when online
+- Pending operations queue
+
+### Accessibility
+- WCAG 2.2 AA compliant
+- Minimum 48x48 touch targets
+- Proper semantic labels
+- Text scaling support (up to 130%)
+
+### Payment Processing
+- Manual check/cash payments with admin approval
+- Optional Stripe integration (feature flag controlled)
+- Idempotent webhook handlers
+- Complete audit trail
+
+## CI/CD
+
+The project includes GitHub Actions workflows for:
+- **Flutter CI**: Linting, testing, and building
+- **Functions CI**: TypeScript compilation and linting
+- **Security**: Dependency audits and rules validation
+
+## Development
+
+### Code Style
+- Flutter: Uses `analysis_options.yaml` with strict linting
+- TypeScript: ESLint with Google style guide
+- Formatting: `flutter format` for Dart code
+
+### Testing
+```bash
+# Run Flutter tests
+flutter test
 
 ## Development
 
@@ -143,93 +178,34 @@ FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
 flutter test
 
 # Functions tests
+main
 cd functions
 npm test
 ```
 
 ### Linting
 ```bash
-# Flutter
+# Lint Flutter code
 flutter analyze
 
 # Functions
+main
 cd functions
 npm run lint
 ```
 
-### Building for Production
-```bash
-# Android APK
-flutter build apk --release
+## Feature Flags
 
-# Android App Bundle
-flutter build appbundle --release
+Feature flags are managed via Firebase Remote Config:
+- `stripe_enabled`: Enable/disable Stripe payments (default: false)
+- `offline_mode_enabled`: Enable/disable offline mode (default: true)
 
-# iOS
-flutter build ios --release
-```
+## Performance
 
-## CI/CD
+- Target: P95 latency < 2s for critical operations
+- Offline-first for instant UI response
+- Optimistic updates with background sync
 
-GitHub Actions workflows are configured for:
-
-### Continuous Integration (`ci.yml`)
-- Runs on all PRs and pushes
-- Flutter: format, analyze, test, build
-- Functions: lint, build
-
-### Staging Deployment (`deploy-staging.yml`)
-- Triggers on push to `main` branch
-- Deploys functions and rules to staging environment
-
-### Production Deployment (`deploy-production.yml`)
-- Triggers on version tags (e.g., `v1.0.0`)
-- Builds release APK and App Bundle
-- Deploys to production Firebase project
-- Uploads build artifacts
-
-### Required Secrets
-Add these to your GitHub repository secrets:
-- `FIREBASE_TOKEN`: Firebase CI token (get via `firebase login:ci`)
-
-## Optional: Stripe Integration
-
-To enable Stripe payment processing:
-
-1. Add Stripe API keys to Firebase config:
-```bash
-firebase functions:config:set stripe.secret_key="sk_live_..."
-```
-
-2. Update the `createCheckoutSession` and `stripeWebhook` functions in `functions/src/index.ts`
-
-3. Add Stripe dependency:
-```bash
-cd functions
-npm install stripe
-```
-
-## Security
-
-- **Authentication**: Firebase Authentication required for all operations
-- **Authorization**: Role-based access control (RBAC)
-- **Firestore Rules**: Deny-by-default with explicit permissions
-- **Audit Trail**: All payment modifications logged with user, timestamp, and IP
-- **Invoice Protection**: Clients cannot directly modify payment status
-
-## Admin Setup
-
-To grant admin privileges to a user:
-
-1. Create the user account through Firebase Authentication
-2. Add a document in the `users` collection:
-```json
-{
-  "email": "admin@example.com",
-  "isAdmin": true,
-  "createdAt": "2024-01-01T00:00:00Z"
-}
-```
 
 ## Contributing
 
@@ -240,4 +216,8 @@ To grant admin privileges to a user:
 
 ## License
 
-Copyright © 2024 Sierra Painting. All rights reserved. 
+
+Copyright © 2024 Sierra Painting. All rights reserved.
+
+## Support
+For issues or questions, please open an issue on GitHub. 
