@@ -42,8 +42,9 @@ module.exports = {
   settings: {
     'import/resolver': {
       typescript: {
-        project: ['./tsconfig.eslint.json']
+        project: ['./tsconfig.eslint.json'],
+         alwaysTryTypes: true
       }
     }
-  }
+  },
 };
