@@ -129,7 +129,6 @@ linter:
     use_to_and_as_if_applicable: true
     valid_regexps: true
     void_checks: true
-main
 
 analyzer:
   exclude:
@@ -139,4 +138,3 @@ analyzer:
 
     missing_required_param: error
     missing_return: error
-main
