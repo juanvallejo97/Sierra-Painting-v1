@@ -13,6 +13,11 @@ const webhookSecret = functions.config().stripe?.webhook_secret || '';
 /**
  * Handle Stripe webhook events
  * This handler is idempotent - processing the same event multiple times has the same effect
+ * 
+ * TODO: Verify Stripe webhook signature in production
+ * TODO: Store idempotency key in a dedicated collection with TTL cleanup
+ * TODO: Add proper error handling and retry logic for transient failures
+ * TODO: Implement comprehensive event type handling
  */
 export async function handleStripeWebhook(
   req: functions.https.Request,
@@ -28,6 +33,8 @@ export async function handleStripeWebhook(
   let event: Stripe.Event;
 
   try {
+    // TODO: Ensure webhookSecret is properly configured in production
+    // Verify signature to ensure request is from Stripe
     event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
   } catch (err) {
     functions.logger.error('Webhook signature verification failed:', err);
@@ -38,6 +45,7 @@ export async function handleStripeWebhook(
   // Process event idempotently
   try {
     // Check if event already processed (idempotency)
+    // TODO: Consider adding TTL to stripe_events collection to prevent unbounded growth
     const eventDoc = await db.collection('stripe_events').doc(event.id).get();
     if (eventDoc.exists) {
       functions.logger.info(`Event ${event.id} already processed`);
