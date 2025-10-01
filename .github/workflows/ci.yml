@@ -17,23 +17,33 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0'
-          channel: 'stable'
+          flutter-version: '3.19.0'
+          channel: stable
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Dart version
+        run: dart --version
       
       - name: Install dependencies
         run: flutter pub get
-      
+
+      - name: Generate code
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
-      
+
       - name: Analyze project source
         run: flutter analyze --fatal-infos
-      
+
       - name: Run tests
-        run: flutter test
+        run: flutter test --no-pub
       
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-pub
 
   analyze-functions:
     name: Analyze Cloud Functions
