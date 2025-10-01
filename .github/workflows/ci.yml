@@ -48,8 +48,13 @@ jobs:
           node-version: '18'
       
       - name: Install dependencies
-        working-directory: ./functions
-        run: npm ci
+        working-directory: functions
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install --no-audit --no-fund
+          fi
       
       - name: Run linter
         working-directory: ./functions
