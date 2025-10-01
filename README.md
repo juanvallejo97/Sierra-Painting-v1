@@ -50,7 +50,7 @@ sierra_painting/
 ## Getting Started
 
 ### Prerequisites
-- Flutter SDK 3.29.0 (includes Dart 3.11.0)
+- Flutter SDK 3.24.3 (includes Dart 3.10.0)
 - Node.js 18+
 - Firebase CLI
 - Git
