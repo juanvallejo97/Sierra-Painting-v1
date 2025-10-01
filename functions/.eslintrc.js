@@ -1,33 +1,32 @@
+/* eslint-env node */
 module.exports = {
   root: true,
-  env: {
-    es6: true,
-    node: true,
-  },
-  extends: [
-    "eslint:recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "google",
-    "plugin:@typescript-eslint/recommended",
-  ],
-  parser: "@typescript-eslint/parser",
+  env: { node: true, es2022: true },
+  ignorePatterns: ['.eslintrc.js', 'lib/**', 'node_modules/**'],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ["tsconfig.json"],
-    sourceType: "module",
+    tsconfigRootDir: __dirname,
+    project: ['./tsconfig.eslint.json'],
+    sourceType: 'module'
   },
-  ignorePatterns: [
-    "/lib/**/*",
+  plugins: ['@typescript-eslint', 'import'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    'plugin:import/recommended',
+    'plugin:import/typescript',
+    'prettier'
   ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
+  overrides: [
+    {
+      files: ['*.js'],
+      // Use the default JS parser for plain JS files
+      parser: 'espree',
+      parserOptions: { ecmaVersion: 2022 }
+    }
   ],
   rules: {
-    "quotes": ["error", "double"],
-    "import/no-unresolved": 0,
-    "indent": ["error", 2],
-    "max-len": ["error", {"code": 100}],
-  },
+    'import/no-unresolved': 'off'
+  }
 };
