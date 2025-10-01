@@ -2,15 +2,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-
-main
     // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
     
-
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
@@ -24,15 +20,19 @@ main
       return request.app.appCheck.token.aud[0] == request.app.projectId;
     }
     
+    // Organization scoping helper - check if user belongs to the resource's org
+    function belongsToOrg(resourceData) {
+      return isAuthenticated() && 
+             resourceData.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+    }
+    
     // Deny by default - must explicitly grant access
-main
     match /{document=**} {
       allow read, write: if false;
     }
     
     // Users collection
     match /users/{userId} {
-
       // Users can read their own profile
       allow read: if isOwner(userId);
       // Users can create their profile on signup
@@ -49,8 +49,8 @@ main
     
     // Projects collection
     match /projects/{projectId} {
-      // Authenticated users can read projects
-      allow read: if isAuthenticated();
+      // Authenticated users can read projects in their org
+      allow read: if isAuthenticated() && (belongsToOrg(resource.data) || isAdmin());
       // Only admins can create projects
       allow create: if isAdmin();
       // Only admins can update projects
@@ -59,41 +59,41 @@ main
       allow delete: if isAdmin();
     }
     
-    // Payments collection
+    // Payments collection - READ-ONLY to clients (audit trail)
     match /payments/{paymentId} {
       // Users can read their own payments
       allow read: if isAuthenticated() && 
                      resource.data.userId == request.auth.uid;
       // Admins can read all payments
       allow read: if isAdmin();
-      // Only admins can create payments (mark as paid)
-      allow create: if isAdmin();
-      // Only admins can update payments
-      allow update: if isAdmin();
-      // Payments cannot be deleted
-      allow delete: if false;
+      // NO client writes - only server-side via Cloud Functions
+      allow create, update, delete: if false;
       
-      // Audit log subcollection
+      // Audit log subcollection - READ-ONLY to admins
       match /audit/{auditId} {
         allow read: if isAdmin();
         allow write: if false; // Audit logs are write-only via server
       }
-main
     }
     
     // Invoices collection
     match /invoices/{invoiceId} {
-
       // Users can read their own invoices
       allow read: if isAuthenticated() && 
                      resource.data.userId == request.auth.uid;
       // Admins can read all invoices
       allow read: if isAdmin();
-      // Only admins can create/update invoices
-      allow create, update: if isAdmin();
+      
+      // Only admins can create invoices
+      allow create: if isAdmin();
+      
+      // Block client writes that include the 'paid' or 'paidAt' fields
+      // These fields can only be set server-side via markPaymentPaid function
+      allow update: if isAdmin() && 
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['paid', 'paidAt']);
+      
       // Invoices cannot be deleted
       allow delete: if false;
-main
     }
   }
 }

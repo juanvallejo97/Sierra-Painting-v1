@@ -49,12 +49,14 @@ export const onUserDelete = functions.auth.user().onDelete(async (user) => {
 /**
  * Mark payment as paid (Manual payment - check/cash)
  * Only callable by admins
+ * Idempotent via idempotency key
  */
 const markPaymentPaidSchema = z.object({
   invoiceId: z.string().min(1),
   amount: z.number().positive(),
   paymentMethod: z.enum(['check', 'cash']),
   notes: z.string().optional(),
+  idempotencyKey: z.string().optional(), // Optional client-provided key for idempotency
 });
 
 export const markPaymentPaid = functions.https.onCall(async (data, context) => {
@@ -72,6 +74,20 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
   // Validate input
   try {
     const validatedData = markPaymentPaidSchema.parse(data);
+    
+    // Generate idempotency key if not provided
+    const idempotencyKey = validatedData.idempotencyKey || 
+                          `markPaid:${validatedData.invoiceId}:${Date.now()}`;
+    const idempotencyDocRef = db.collection('idempotency').doc(idempotencyKey);
+    
+    // Check if this operation was already processed (idempotency check)
+    const idempotencyDoc = await idempotencyDocRef.get();
+    if (idempotencyDoc.exists) {
+      functions.logger.info(`Idempotent request detected: ${idempotencyKey}`);
+      // Return the original result
+      const storedResult = idempotencyDoc.data()?.result as {success: boolean; paymentId: string};
+      return storedResult;
+    }
 
     // Create payment record with audit trail
     const paymentRef = await db.collection('payments').add({
@@ -96,19 +112,29 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       },
     });
 
-    // Update invoice status
+    // Update invoice status - set paid and paidAt fields
     await db.collection('invoices').doc(validatedData.invoiceId).update({
       status: 'paid',
+      paid: true,
       paidAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     functions.logger.info(`Payment marked as paid: ${paymentRef.id}`);
     
-    return {
+    const result = {
       success: true,
       paymentId: paymentRef.id,
     };
+    
+    // Store idempotency record to prevent duplicate processing
+    await idempotencyDocRef.set({
+      result,
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      invoiceId: validatedData.invoiceId,
+    });
+    
+    return result;
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new functions.https.HttpsError('invalid-argument', error.message);
@@ -117,6 +143,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('internal', 'An error occurred');
   }
 });
+
 
 /**
  * Stripe webhook handler (optional, behind feature flag)
