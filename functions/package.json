@@ -2,7 +2,7 @@
   "name": "functions",
 
   "description": "Cloud Functions for Sierra Painting",
-main
+
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
@@ -14,7 +14,7 @@ main
 
     "logs": "firebase functions:log",
     "test": "jest"
-main
+
   },
   "engines": {
     "node": "18"
@@ -37,7 +37,7 @@ main
     "firebase-functions-test": "^3.1.0",
     "jest": "^29.7.0",
     "typescript": "^5.3.2"
-main
+
   },
   "private": true
 }
