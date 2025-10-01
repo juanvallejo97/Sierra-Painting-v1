@@ -9,11 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
 
-  # Material Design 3
-  material_color_utilities: ^0.11.1
-  
+  # Keep this in sync with Flutter SDK's integration_test (older CI images pull 0.5.0)
+  material_color_utilities: 0.5.0
+
   # Firebase
   firebase_core: ^4.1.1
   firebase_auth: ^6.1.0
@@ -21,58 +20,61 @@ dependencies:
   cloud_firestore: ^6.0.2
   cloud_functions: ^6.0.2
   firebase_app_check: ^0.4.1
-  
-  # State Management
+
+  # Routing & State
+  go_router: ^16.2.4
   provider: ^6.1.1
-  
-  # Local Storage for offline-first
+  flutter_riverpod: ^3.0.1
+
+  # Local Storage / Offline-first
   shared_preferences: ^2.2.2
   hive: ^2.2.3
   hive_flutter: ^1.1.0
-  
+
   # Networking
   http: ^1.1.2
   connectivity_plus: ^7.0.0
-  
+
   # Feature Flags
   firebase_remote_config: ^6.0.2
-  
+
   # Payments (optional)
   flutter_stripe: ^12.0.2
-  
+
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.2
   path_provider: ^2.1.1
-  
-  # Accessibility
+
+  # Accessibility / i18n
   flutter_localizations:
     sdk: flutter
-  go_router: ^16.2.4
-  flutter_riverpod: ^3.0.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Lints & Codegen
   flutter_lints: ^6.0.0
   build_runner: ^2.4.7
   hive_generator: ^2.0.1
-  
+
   # Testing
   mockito: ^5.4.4
   integration_test:
     sdk: flutter
 
+  # Fix analyzer <> SDK mismatch seen in your logs
+  analyzer: ^8.2.0
+
+# Ensure nothing upgrades material_color_utilities beyond what integration_test expects
+dependency_overrides:
+  material_color_utilities: 0.5.0
+
 flutter:
   uses-material-design: true
-
-  
-  # Add assets here
   # assets:
   #   - images/
-  
-  # Add custom fonts here
   # fonts:
   #   - family: CustomFont
   #     fonts:
