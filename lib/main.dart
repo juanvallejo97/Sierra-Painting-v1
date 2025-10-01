@@ -5,6 +5,7 @@ import 'core/config/firebase_options.dart';
 import 'core/config/theme_config.dart';
 import 'core/services/feature_flag_service.dart';
 import 'core/services/offline_service.dart';
+main
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   
+
   // Initialize offline storage
   await OfflineService.initialize();
   
@@ -95,4 +97,5 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+main
 }

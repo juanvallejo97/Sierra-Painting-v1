@@ -170,7 +170,15 @@ The project includes GitHub Actions workflows for:
 # Run Flutter tests
 flutter test
 
-# Run Functions tests
+## Development
+
+### Running Tests
+```bash
+# Flutter tests
+flutter test
+
+# Functions tests
+main
 cd functions
 npm test
 ```
@@ -180,7 +188,8 @@ npm test
 # Lint Flutter code
 flutter analyze
 
-# Lint Functions code
+# Functions
+main
 cd functions
 npm run lint
 ```
@@ -197,6 +206,7 @@ Feature flags are managed via Firebase Remote Config:
 - Offline-first for instant UI response
 - Optimistic updates with background sync
 
+
 ## Contributing
 
 1. Create a feature branch
@@ -206,8 +216,8 @@ Feature flags are managed via Firebase Remote Config:
 
 ## License
 
+
 Copyright © 2024 Sierra Painting. All rights reserved.
 
 ## Support
-
 For issues or questions, please open an issue on GitHub. 

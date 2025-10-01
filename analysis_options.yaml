@@ -2,6 +2,7 @@ include: package:flutter_lints/flutter.yaml
 
 linter:
   rules:
+
     # Error rules
     avoid_print: true
     avoid_relative_lib_imports: true
@@ -128,11 +129,14 @@ linter:
     use_to_and_as_if_applicable: true
     valid_regexps: true
     void_checks: true
+main
 
 analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
   errors:
+
     missing_required_param: error
     missing_return: error
+main
