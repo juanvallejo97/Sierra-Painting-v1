@@ -140,4 +140,3 @@ export const healthCheck = functions.https.onRequest((req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-main
