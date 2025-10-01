@@ -5,7 +5,6 @@ import 'core/config/firebase_options.dart';
 import 'core/config/theme_config.dart';
 import 'core/services/feature_flag_service.dart';
 import 'core/services/offline_service.dart';
-main
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +50,7 @@ class SierraPaintingApp extends StatelessWidget {
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(1.0, 1.3),
+              textScaler: TextScaler.linear(MediaQuery.of(context).textScaleFactor.clamp(1.0, 1.3)),
             ),
             child: child!,
           );
@@ -97,5 +96,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-main
 }

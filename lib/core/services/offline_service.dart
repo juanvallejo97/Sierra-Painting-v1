@@ -25,8 +25,8 @@ class OfflineService {
     instance._isOnline = connectivityResult != ConnectivityResult.none;
     
     // Listen to connectivity changes
-    instance._connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-      instance._isOnline = result != ConnectivityResult.none;
+    instance._connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      instance._isOnline = results.any((result) => result != ConnectivityResult.none);
     });
   }
 

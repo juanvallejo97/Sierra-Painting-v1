@@ -21,6 +21,5 @@ void main() {
       find.bySemanticsLabel('Painting app icon'),
       findsOneWidget,
     );
-main
   });
 }
