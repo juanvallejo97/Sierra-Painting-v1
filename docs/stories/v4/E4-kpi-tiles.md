@@ -5,6 +5,11 @@
 ## User Story
 As an Admin, I WANT to see key metrics on my dashboard, SO THAT I understand business health.
 
+## Dependencies
+- **V1-V3 Complete**: Needs time tracking and invoicing data
+- **E3** (Telemetry): Metrics aggregation based on telemetry
+- **A1** (Sign-in): Must be authenticated as admin
+
 ## Acceptance Criteria
 
 ### Success Scenario

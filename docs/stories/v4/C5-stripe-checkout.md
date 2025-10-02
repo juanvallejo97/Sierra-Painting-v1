@@ -5,6 +5,10 @@
 ## User Story
 As a Customer, I WANT to pay invoices with Stripe, SO THAT payment is secure and convenient.
 
+## Dependencies
+- **C2** (Quote → Invoice): Must have invoices to pay
+- Stripe account and API keys configured
+
 ## Acceptance Criteria
 
 ### Success Scenario

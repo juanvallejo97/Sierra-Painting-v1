@@ -5,6 +5,9 @@
 ## User Story
 As a Potential Customer, I WANT to submit a lead form, SO THAT I can request a quote.
 
+## Dependencies
+- None (public-facing, no auth required)
+
 ## Acceptance Criteria
 
 ### Success Scenario

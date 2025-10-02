@@ -5,6 +5,10 @@
 ## User Story
 As a System Administrator, I WANT cost alerts, SO THAT I can detect billing anomalies.
 
+## Dependencies
+- Cloud Monitoring API access
+- Budget thresholds configured in Firebase/GCP
+
 ## Acceptance Criteria
 
 ### Success Scenario
