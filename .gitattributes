@@ -1,0 +1,12 @@
+# Automatically merge certain files to reduce conflicts
+
+# Markdown documentation files - use union merge
+*.md merge=union
+
+# Gitignore files - use union merge (combine entries from both branches)
+.gitignore merge=union
+
+# Lock files - use union merge for dependency changes
+package-lock.json merge=union
+pubspec.lock merge=union
+yarn.lock merge=union
