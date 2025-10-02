@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "YOUR_PROJECT_ID"
+    "default": "YOUR_PROJECT_ID",
+    "staging": "sierra-painting-staging",
+    "production": "sierra-painting-prod"
   }
 }

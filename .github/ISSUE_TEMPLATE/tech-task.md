@@ -1,21 +1,18 @@
 ---
 name: Technical Task
-about: Infrastructure, refactoring, or technical debt work
-title: '[TECH] '
-labels: 'technical-task, needs-triage'
-assignees: ''
+about: Technical improvement, refactoring, or infrastructure work
+title: "[TECH] "
+labels: "technical-task, tech-task, needs-triage"
+assignees: ""
 ---
 
 ## Task Description
-
 <!-- Clear description of the technical work to be done -->
 
-## Motivation
-
-<!-- Why is this work necessary? What problem does it solve? -->
+## Problem Statement / Motivation
+<!-- Why is this work necessary? What problem does it solve or improve? -->
 
 ## Type
-
 - [ ] Infrastructure (CI/CD, deployments, monitoring)
 - [ ] Refactoring (code cleanup, architecture improvements)
 - [ ] Technical Debt (addressing accumulated shortcuts)
@@ -25,15 +22,17 @@ assignees: ''
 - [ ] Documentation
 
 ## Proposed Solution
-
 <!-- High-level approach to solving this -->
 
 ## Technical Details
-
 <!-- Specific technical information, affected files, architecture changes, etc. -->
 
-## Impact Assessment
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
 
+## Impact Assessment
 **Affected Systems:**
 - [ ] Flutter app
 - [ ] Cloud Functions
@@ -43,9 +42,9 @@ assignees: ''
 - [ ] Documentation
 
 **Risk Level:**
-- [ ] Low - Isolated change, easy rollback
-- [ ] Medium - Moderate complexity, some risk
-- [ ] High - Complex change, significant risk
+- [ ] Low — Isolated change, easy rollback
+- [ ] Medium — Moderate complexity, some risk
+- [ ] High — Complex change, significant risk
 
 **Breaking Changes:**
 - [ ] No breaking changes
@@ -53,26 +52,27 @@ assignees: ''
 
 <!-- If breaking changes, describe migration plan -->
 
-## Testing Plan
+## Dependencies / Blockers
+- [ ] Dependency 1
+- [ ] Dependency 2
 
+## Testing Strategy
 - [ ] Unit tests
 - [ ] Integration tests
-- [ ] Manual testing required
-- [ ] Performance testing required
+- [ ] Manual testing
+- [ ] Performance testing
+- [ ] Security testing (if applicable)
+
+## Rollback Plan
+<!-- How can this be reverted if needed? -->
 
 ## Definition of Done
-
-- [ ] Code written and reviewed
-- [ ] Tests passing
-- [ ] Documentation updated (if applicable)
-- [ ] Deployed to staging
+- [ ] Implementation complete and peer reviewed
+- [ ] Tests written and passing
+- [ ] Documentation updated (README/ADR/Runbooks as applicable)
+- [ ] Deployed to staging and verified
 - [ ] Monitoring/alerts configured (if applicable)
 - [ ] Rollback plan documented
 
-## Related Issues/PRs
-
+## Related Issues / PRs
 <!-- Link any related work -->
-
-## Dependencies
-
-<!-- List any dependencies or blockers -->
