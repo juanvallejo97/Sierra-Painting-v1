@@ -39,8 +39,8 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { z } from "zod";
 
-// Schemas (migrated to lib/)
-import { TimeInSchema, ManualPaymentSchema } from "./lib/zodSchemas";
+// Schemas (from schemas/)
+import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 
 // Legacy Stripe webhook handler (kept during migration)
 import { handleStripeWebhook } from "./stripe/webhookHandler";
@@ -351,7 +351,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       paymentMethod: validatedData.method,
       reference: validatedData.reference ?? null,
       status: "completed",
-      notes: validatedData.note ?? null,
+      notes: validatedData.note,
       markedBy: context.auth.uid,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -366,6 +366,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
         amount: invoiceData?.total ?? 0,
         paymentMethod: validatedData.method,
         reference: validatedData.reference ?? null,
+        note: validatedData.note,
       },
     });
 
@@ -382,6 +383,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
         amount: invoiceData?.total ?? 0,
         method: validatedData.method,
         reference: validatedData.reference ?? null,
+        note: validatedData.note,
       },
     });
 
