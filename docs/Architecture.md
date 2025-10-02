@@ -1,3 +1,22 @@
+# Sierra Painting - Architecture Overview
+
+> **Version:** 2.0.0-refactor  
+> **Last Updated:** 2024  
+> **Status:** Professional Skeleton (Refactored)
+
+## Table of Contents
+1. [System Architecture](#system-architecture)
+2. [Frontend Architecture (Flutter)](#frontend-architecture-flutter)
+3. [Backend Architecture (Firebase)](#backend-architecture-firebase)
+4. [Security Architecture](#security-architecture)
+5. [Offline-First Strategy](#offline-first-strategy)
+6. [Payment Architecture](#payment-architecture)
+7. [Observability & Monitoring](#observability--monitoring)
+8. [Performance Targets](#performance-targets)
+9. [File Organization](#file-organization)
+10. [Key Design Decisions](#key-design-decisions)
+
+---
 
 # Architecture Overview
 
