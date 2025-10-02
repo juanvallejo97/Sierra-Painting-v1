@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
+import 'package:sierra_painting/core/widgets/error_screen.dart';
 import 'package:sierra_painting/features/auth/presentation/login_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/timeclock_screen.dart';
 import 'package:sierra_painting/features/estimates/presentation/estimates_screen.dart';
@@ -25,6 +26,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       return null;
     },
+    errorBuilder: (context, state) => ErrorScreen(
+      error: state.error,
+      path: state.uri.toString(),
+    ),
     routes: [
       GoRoute(
         path: '/login',
