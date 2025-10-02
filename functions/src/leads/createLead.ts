@@ -113,7 +113,7 @@ function verifyCaptcha(token: string): boolean {
 // MAIN FUNCTION
 // ============================================================
 
-export const createLead = functions.https.onCall(async (data, context) => {
+export const createLead = functions.https.onCall(async (data: unknown, context) => {
   // ========================================
   // 1. APP CHECK VALIDATION
   // ========================================
@@ -133,9 +133,12 @@ export const createLead = functions.https.onCall(async (data, context) => {
   let validatedLead: Lead;
   try {
     validatedLead = LeadSchema.parse(data);
-  } catch (error) {
+  } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    functions.logger.warn('Invalid lead data', {error, data});
+    functions.logger.warn('Invalid lead data', {
+      error: errorMessage,
+      data,
+    });
     throw new functions.https.HttpsError(
       'invalid-argument',
       `Invalid lead data: ${errorMessage}`
@@ -164,7 +167,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
   // Generate idempotency key from email + phone (prevent duplicate submissions)
   const idempotencyKey = generateIdempotencyKey(
     'createLead',
-    validatedLead.email,
+    validatedLead.email || '',
     validatedLead.phone || '',
     Date.now().toString()
   );
@@ -198,10 +201,10 @@ export const createLead = functions.https.onCall(async (data, context) => {
     };
 
     // Remove captcha token (don't store it)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete (leadData as any).captchaToken;
+    const leadDataWithoutCaptcha = {...leadData};
+    delete (leadDataWithoutCaptcha as Record<string, unknown> & {captchaToken?: string}).captchaToken;
 
-    await leadRef.set(leadData);
+    await leadRef.set(leadDataWithoutCaptcha);
 
     const leadId = leadRef.id;
 
@@ -217,7 +220,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
 
     const metadata = extractCallableMetadata(context);
     await logAudit(createAuditEntry({
-      entity: 'lead' as any, // TODO: Add 'lead' to AuditLogEntry enum
+      entity: 'lead', // Lead entity type
       entityId: leadId,
       action: 'created',
       actor: 'anonymous', // No auth required for lead submission

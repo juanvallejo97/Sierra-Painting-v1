@@ -51,7 +51,12 @@
  */
 
 import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+
+// Import db from index for Firestore access
+// Note: admin is imported here but db is imported from index to ensure same instance
+import {db} from '../index';
 
 // ============================================================
 // CONSTANTS
@@ -276,8 +281,12 @@ export async function handlePaymentIntentSucceeded(
     return;
   }
 
-  // TODO: Call markPaidManual or similar function to update invoice
-  // This ensures consistent logic for marking invoices paid (audit, validation, etc.)
+  // Mark invoice as paid via Stripe
+  await db.collection('invoices').doc(invoiceId).update({
+    status: 'paid',
+    paidAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
   
   functions.logger.info('Payment intent succeeded', {
     paymentIntentId: paymentIntent.id,

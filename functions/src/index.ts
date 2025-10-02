@@ -42,8 +42,8 @@ import { z } from "zod";
 // Schemas (from schemas/)
 import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 
-// Legacy Stripe webhook handler (kept during migration)
-import { handleStripeWebhook } from "./stripe/webhookHandler";
+// Stripe webhook handler
+import { handleStripeWebhook } from "./payments/stripeWebhook";
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -141,8 +141,9 @@ export const onUserDelete = functions.auth.user().onDelete(async (user) => {
  */
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
   try {
-    await handleStripeWebhook(req, res);
-  } catch (error) {
+    // Cast res to expected type for webhook handler
+    await handleStripeWebhook(req, res as functions.Response<{received: boolean; note?: string} | {error: string}>);
+  } catch (error: unknown) {
     functions.logger.error("Stripe webhook error", error);
     res.status(500).json({ error: "Webhook handler failed" });
   }
@@ -191,7 +192,8 @@ export const clockIn = functions
 
       if (idempotencyDoc.exists) {
         functions.logger.info(`Idempotent clock-in request: ${idempotencyKey}`);
-        return idempotencyDoc.data()?.result;
+        const data = idempotencyDoc.data();
+        return data?.result as Record<string, unknown>;
       }
 
       // 4) Get user profile for org scope
@@ -199,7 +201,8 @@ export const clockIn = functions
       if (!userDoc.exists) {
         throw new functions.https.HttpsError("not-found", "User profile not found");
       }
-      const userOrgId = userDoc.data()?.orgId;
+      const userData = userDoc.data();
+      const userOrgId = userData?.orgId as string | undefined;
 
       // 5) Verify job exists & assignment
       const jobDoc = await db.collection("jobs").doc(validated.jobId).get();
@@ -212,7 +215,7 @@ export const clockIn = functions
         throw new functions.https.HttpsError("permission-denied", "Job not in your organization");
       }
 
-      if (!Array.isArray(jobData?.crewIds) || !jobData!.crewIds.includes(context.auth.uid)) {
+      if (!Array.isArray(jobData?.crewIds) || !(jobData.crewIds as string[]).includes(context.auth.uid)) {
         throw new functions.https.HttpsError("permission-denied", "Not assigned to this job");
       }
 
@@ -339,7 +342,11 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError("not-found", "Invoice not found");
     }
 
-    const invoiceData = invoiceDoc.data();
+    const invoiceData = invoiceDoc.data() as {
+      paid?: boolean;
+      total?: number;
+      orgId?: string;
+    } | undefined;
     if (invoiceData?.paid) {
       throw new functions.https.HttpsError("failed-precondition", "Invoice already paid");
     }
