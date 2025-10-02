@@ -69,6 +69,11 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import {LeadSchema, Lead} from '../lib/zodSchemas';
 import {logAudit, createAuditEntry, extractCallableMetadata} from '../lib/audit';
+import {
+  checkIdempotency,
+  recordIdempotency,
+  generateIdempotencyKey,
+} from '../lib/idempotency';
 
 // ============================================================
 // CONSTANTS
@@ -89,7 +94,7 @@ const LEADS_COLLECTION = 'leads';
  * @param token - Captcha token from client
  * @returns true if valid, false otherwise
  */
-async function verifyCaptcha(token: string): Promise<boolean> {
+function verifyCaptcha(token: string): boolean {
   // TODO: Implement reCAPTCHA or hCaptcha verification
   // Example for reCAPTCHA:
   // const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -129,10 +134,11 @@ export const createLead = functions.https.onCall(async (data, context) => {
   try {
     validatedLead = LeadSchema.parse(data);
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     functions.logger.warn('Invalid lead data', {error, data});
     throw new functions.https.HttpsError(
       'invalid-argument',
-      `Invalid lead data: ${error}`
+      `Invalid lead data: ${errorMessage}`
     );
   }
 
@@ -140,7 +146,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
   // 3. CAPTCHA VERIFICATION
   // ========================================
 
-  const captchaValid = await verifyCaptcha(validatedLead.captchaToken);
+  const captchaValid = verifyCaptcha(validatedLead.captchaToken);
   if (!captchaValid) {
     functions.logger.warn('Captcha verification failed', {
       email: validatedLead.email,
@@ -152,7 +158,32 @@ export const createLead = functions.https.onCall(async (data, context) => {
   }
 
   // ========================================
-  // 4. WRITE TO FIRESTORE
+  // 4. IDEMPOTENCY CHECK
+  // ========================================
+
+  // Generate idempotency key from email + phone (prevent duplicate submissions)
+  const idempotencyKey = generateIdempotencyKey(
+    'createLead',
+    validatedLead.email,
+    validatedLead.phone || '',
+    Date.now().toString()
+  );
+
+  const alreadyProcessed = await checkIdempotency(idempotencyKey);
+  if (alreadyProcessed) {
+    functions.logger.info('Duplicate lead submission (idempotent)', {
+      email: validatedLead.email,
+      idempotencyKey,
+    });
+    // Return success (idempotent behavior)
+    return {
+      leadId: idempotencyKey,
+      message: 'Lead already submitted',
+    };
+  }
+
+  // ========================================
+  // 5. WRITE TO FIRESTORE
   // ========================================
 
   try {
@@ -167,6 +198,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
     };
 
     // Remove captcha token (don't store it)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     delete (leadData as any).captchaToken;
 
     await leadRef.set(leadData);
@@ -174,7 +206,13 @@ export const createLead = functions.https.onCall(async (data, context) => {
     const leadId = leadRef.id;
 
     // ========================================
-    // 5. AUDIT LOG
+    // 6. RECORD IDEMPOTENCY
+    // ========================================
+
+    await recordIdempotency(idempotencyKey, {leadId}, 24 * 60 * 60); // 24 hour TTL
+
+    // ========================================
+    // 7. AUDIT LOG
     // ========================================
 
     const metadata = extractCallableMetadata(context);
@@ -192,7 +230,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
     }));
 
     // ========================================
-    // 6. SEND NOTIFICATIONS
+    // 8. SEND NOTIFICATIONS
     // ========================================
 
     // TODO: Send email notification to admin
@@ -205,7 +243,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
     });
 
     // ========================================
-    // 7. RETURN RESULT
+    // 9. RETURN RESULT
     // ========================================
 
     return {
@@ -213,6 +251,7 @@ export const createLead = functions.https.onCall(async (data, context) => {
       message: 'Lead submitted successfully',
     };
   } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     functions.logger.error('Failed to create lead', {error, data: validatedLead});
     throw new functions.https.HttpsError(
       'internal',

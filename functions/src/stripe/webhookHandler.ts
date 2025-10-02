@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import Stripe from 'stripe';
 import {db} from '../index';
+import {isStripeEventProcessed, recordStripeEvent} from '../lib/idempotency';
 
 // Initialize Stripe (will be configured via environment variable)
 const stripeSecretKey = functions.config().stripe?.secret_key || '';
@@ -11,13 +12,23 @@ const stripe = new Stripe(stripeSecretKey, {
 const webhookSecret = functions.config().stripe?.webhook_secret || '';
 
 /**
- * Handle Stripe webhook events
- * This handler is idempotent - processing the same event multiple times has the same effect
+ * Handle Stripe webhook events (standardized idempotency pattern)
  * 
- * TODO: Verify Stripe webhook signature in production
- * TODO: Store idempotency key in a dedicated collection with TTL cleanup
- * TODO: Add proper error handling and retry logic for transient failures
- * TODO: Implement comprehensive event type handling
+ * IDEMPOTENCY:
+ * Uses standardized idempotency utilities from lib/idempotency.ts
+ * - Checks if event already processed via isStripeEventProcessed()
+ * - Records processed events via recordStripeEvent()
+ * - TTL: 30 days (automatic cleanup)
+ * 
+ * SECURITY:
+ * - Verifies Stripe webhook signature
+ * - Rejects events with invalid signature
+ * - Logs all webhook attempts
+ * 
+ * RELIABILITY:
+ * - Idempotent: processing same event multiple times has same effect
+ * - Transactional updates to prevent partial state
+ * - Proper error handling for retries
  */
 export async function handleStripeWebhook(
   req: functions.https.Request,
@@ -26,6 +37,7 @@ export async function handleStripeWebhook(
   const sig = req.headers['stripe-signature'] as string;
 
   if (!sig) {
+    functions.logger.warn('Missing stripe-signature header');
     res.status(400).send('Missing stripe-signature header');
     return;
   }
@@ -33,7 +45,6 @@ export async function handleStripeWebhook(
   let event: Stripe.Event;
 
   try {
-    // TODO: Ensure webhookSecret is properly configured in production
     // Verify signature to ensure request is from Stripe
     event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
   } catch (err) {
@@ -42,24 +53,22 @@ export async function handleStripeWebhook(
     return;
   }
 
-  // Process event idempotently
+  functions.logger.info('Stripe webhook received', {
+    eventId: event.id,
+    eventType: event.type,
+  });
+
+  // Process event idempotently using standardized utilities
   try {
     // Check if event already processed (idempotency)
-    // TODO: Consider adding TTL to stripe_events collection to prevent unbounded growth
-    const eventDoc = await db.collection('stripe_events').doc(event.id).get();
-    if (eventDoc.exists) {
-      functions.logger.info(`Event ${event.id} already processed`);
+    const alreadyProcessed = await isStripeEventProcessed(event.id);
+    if (alreadyProcessed) {
+      functions.logger.info('Event already processed (idempotent)', {
+        eventId: event.id,
+      });
       res.json({received: true, note: 'already processed'});
       return;
     }
-
-    // Mark event as being processed
-    await db.collection('stripe_events').doc(event.id).set({
-      type: event.type,
-      processed: false,
-      createdAt: new Date(event.created * 1000),
-      receivedAt: new Date(),
-    });
 
     // Handle different event types
     switch (event.type) {
@@ -79,19 +88,23 @@ export async function handleStripeWebhook(
         break;
       }
       default:
-        functions.logger.info(`Unhandled event type: ${event.type}`);
+        functions.logger.info('Unhandled event type', {
+          eventType: event.type,
+          eventId: event.id,
+        });
     }
 
-    // Mark event as processed
-    await db.collection('stripe_events').doc(event.id).update({
-      processed: true,
-      processedAt: new Date(),
-    });
+    // Record event as processed (with 30-day TTL)
+    await recordStripeEvent(event.id, event.type);
 
     res.json({received: true});
   } catch (error) {
-    functions.logger.error('Error processing webhook:', error);
-    // Don't mark as processed so it can be retried
+    functions.logger.error('Error processing webhook:', {
+      eventId: event.id,
+      eventType: event.type,
+      error,
+    });
+    // Don't record as processed so it can be retried
     res.status(500).json({error: 'Processing failed'});
   }
 }
