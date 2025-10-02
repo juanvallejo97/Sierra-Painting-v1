@@ -47,8 +47,6 @@ firebase use --add             # select or add an alias (e.g., staging, prod)
 # Generate Flutter firebase_options.dart
 flutterfire configure
 3) Start Dev Environment
-bash
-Copy code
 # Terminal 1: Emulators
 firebase emulators:start
 
@@ -117,8 +115,6 @@ Observability with structured logs & performance traces
 See ADR-011 (Story-Driven Development) for details.
 
 📂 Project Structure
-bash
-Copy code
 /
 ├── lib/                      # Flutter application
 │   ├── app/                  # App bootstrap, theme, router (RBAC)
@@ -160,7 +156,7 @@ Copy code
 Firestore Rules (deny-by-default) — excerpt:
 
 javascript
-Copy code
+
 match /{document=**} {
   allow read, write: if false;
 }
@@ -188,8 +184,7 @@ Audit logs for all payment operations
 See Security Architecture.
 
 🧪 Test, Lint & Analyze
-bash
-Copy code
+
 # Flutter tests
 flutter test
 
@@ -224,8 +219,6 @@ Register it in Firebase Console → App Check → Debug tokens
 
 (Optional) Save locally:
 
-bash
-Copy code
 echo "APP_CHECK_DEBUG_TOKEN=your-token-here" > .env.debug
 /.env.debug is gitignored.
 
@@ -247,8 +240,6 @@ CI runs tests, deploys Functions & Rules to staging
 
 Manual staging:
 
-bash
-Copy code
 firebase use staging
 firebase deploy
 Production (tag-based)
@@ -284,21 +275,15 @@ Open a PR using the template
 🆘 Troubleshooting
 Emulators won’t start
 
-bash
-Copy code
 lsof -ti:4000,8080,9099,5001,9199 | xargs kill -9
 firebase emulators:start --clean
 Flutter build fails
 
-bash
-Copy code
 flutter clean
 flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
 Functions deploy fails
 
-bash
-Copy code
 cd functions
 rm -rf node_modules lib
 npm ci
