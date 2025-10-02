@@ -1,13 +1,14 @@
 ---
 name: Bug Report
 about: Report a defect or unexpected behavior
-title: '[BUG] '
-labels: 'bug'
-assignees: ''
+title: "[BUG] "
+labels: "bug, needs-triage"
+assignees: ""
 ---
 
 ## Bug Description
-A clear and concise description of what the bug is.
+**Short summary:**  
+<!-- A clear and concise description of the bug -->
 
 ## Steps to Reproduce
 1. Go to '...'
@@ -16,29 +17,36 @@ A clear and concise description of what the bug is.
 4. See error
 
 ## Expected Behavior
-What you expected to happen.
+<!-- What you expected to happen -->
 
 ## Actual Behavior
-What actually happened.
+<!-- What actually happened -->
 
-## Screenshots/Logs
-If applicable, add screenshots or error logs to help explain the problem.
-
-```
-[Paste error logs here]
-```
+## Screenshots / Videos
+<!-- If applicable, add screenshots or screen recordings to help explain the problem -->
 
 ## Environment
-- Platform: [e.g., Android, iOS, Web]
-- OS: [e.g., Android 13, iOS 16.5]
-- App Version: [e.g., 1.0.0]
-- Device: [e.g., Pixel 7, iPhone 14]
+- **Platform:** [e.g., Android, iOS, Web, Desktop]
+- **Device:** [e.g., Pixel 7, iPhone 14]
+- **OS:** [e.g., Android 13, iOS 16.5]
+- **App Version:** [e.g., 1.0.0]
+- **Flutter Version:** [e.g., 3.22.0]
+- **Network:** [e.g., Wi-Fi, 4G, Offline]
+
+## Logs / Error Messages
+
 
 ## Severity
-- [ ] Critical (app crashes, data loss)
-- [ ] High (feature unusable)
-- [ ] Medium (workaround available)
-- [ ] Low (cosmetic issue)
+- [ ] Critical — App crashes or data loss
+- [ ] High — Major feature unusable
+- [ ] Medium — Workaround available
+- [ ] Low — Minor / cosmetic
+
+## Impact
+<!-- How many users are affected? Is there a workaround? -->
+
+## Related Issues / PRs
+<!-- Link any related issues or pull requests -->
 
 ## Additional Context
-Add any other context about the problem here.
+<!-- Any other context about the problem -->

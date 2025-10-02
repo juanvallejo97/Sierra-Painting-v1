@@ -1,16 +1,18 @@
 ---
 name: User Story
-about: Describe a user-facing feature or capability
-title: '[STORY] '
-labels: 'story'
-assignees: ''
+about: Feature request or user story for new functionality
+title: "[STORY] "
+labels: "story, needs-triage"
+assignees: ""
 ---
 
 ## User Story
-As a **[role]**, I want **[capability]**, so that **[benefit]**.
+**As a** [role]  
+**I want** [capability]  
+**So that** [benefit/value]
 
 ## Acceptance Criteria (BDD)
-<!-- Use Given-When-Then format -->
+<!-- Use Given-When-Then format; add multiple scenarios if needed -->
 
 **Given** [precondition/context]  
 **When** [action/trigger]  
@@ -20,75 +22,38 @@ As a **[role]**, I want **[capability]**, so that **[benefit]**.
 - [ ] AC 2: [Specific, testable criteria]
 - [ ] AC 3: [Specific, testable criteria]
 
+## Epic
+<!-- Link to related epic (e.g., Auth/RBAC, Time Clock, Invoicing/Payments, Lead/Schedule, Ops/Observability) -->
+Epic: 
+
+## Priority
+- [ ] P0 — Critical (blocking production)
+- [ ] P1 — High (important for MVP)
+- [ ] P2 — Medium (nice to have)
+
+## Sprint Target
+- [ ] V1 (Weeks 1–4)
+- [ ] V2 (Weeks 5–8)
+- [ ] V3 (Weeks 9–12)
+- [ ] V4 (Weeks 13–16)
+
 ## Data Contracts
 <!-- Firestore collections, document schemas, function payloads -->
 
-**Collections/Documents:**
+**Collections/Documents**
 - Collection: `[collectionName]`
-  - Fields: `field1` (type), `field2` (type), ...
-  - Indexes: [...if needed]
+  - Fields: `field1` (type), `field2` (type), …
+  - Indexes: `[index on fieldX, fieldY]` (if needed)
 
-**Cloud Function Payloads:**
-```typescript
+**Cloud Function Payloads**
+```ts
 // Input
 {
-  field1: string,
-  field2: number,
+  field1: string;
+  field2: number;
 }
 
 // Output
 {
-  result: string,
+  result: string;
 }
-```
-
-## Security Rules Checklist
-- [ ] Client cannot write protected fields (e.g., `invoice.paid`, `invoice.paidAt`)
-- [ ] Role-based checks (admin/crew/user) enforced
-- [ ] Organization scoping enforced (users can only access their org data)
-- [ ] App Check enforced for callable functions (if applicable)
-
-## Tests Required
-- [ ] Unit tests for domain logic
-- [ ] Widget tests for UI components
-- [ ] Integration tests for user flows
-- [ ] Rules tests (emulator) for security rules
-- [ ] Function tests for Cloud Functions
-
-## Telemetry & Analytics
-<!-- Event names, screen tracking, performance traces -->
-
-**Analytics Events:**
-- Event: `[event_name]`
-  - Parameters: `param1`, `param2`, ...
-
-**Performance Traces:**
-- Trace: `[trace_name]`
-  - Start: [where]
-  - End: [where]
-
-**Crash Reporting:**
-- Error scenarios to log: [...]
-
-## UI/UX Notes
-<!-- Accessibility, responsiveness, loading states, error states -->
-
-- [ ] WCAG 2.2 AA compliance (48x48 touch targets, semantic labels)
-- [ ] Loading state (skeleton/spinner)
-- [ ] Error state (user-friendly message, retry button)
-- [ ] Empty state (helpful guidance)
-- [ ] Offline support (Pending Sync badge if writes)
-
-## Definition of Ready (DoR)
-- [ ] Acceptance criteria are clear and testable
-- [ ] Data contracts are defined
-- [ ] Security implications reviewed
-- [ ] Dependencies identified
-
-## Definition of Done (DoD)
-- [ ] Code complete and reviewed
-- [ ] Tests written and passing
-- [ ] Security rules updated and tested
-- [ ] Telemetry implemented
-- [ ] Documentation updated
-- [ ] Deployed to staging and validated

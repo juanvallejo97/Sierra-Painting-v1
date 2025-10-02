@@ -1,312 +1,533 @@
-# Migration Guide: Old Structure → Professional Skeleton
+# Migration Guide: Enterprise-Grade Skeleton Refactor
 
-This document maps the old repository structure to the new professional skeleton and provides step-by-step instructions for rebuilding the project.
+> **Project:** Sierra Painting  
+> **Scope:** Old Structure → Professional Skeleton  
+> **Type:** Non-breaking additive refactor (primarily documentation, structure, placeholders)
+
+---
 
 ## Overview
 
-This refactoring transforms the Sierra Painting repository from an ad-hoc structure into a production-ready, scalable architecture with:
-- **Clear separation of concerns** (data/domain/presentation layers)
-- **Comprehensive documentation** with file headers explaining purpose, contracts, and invariants
-- **Security-by-default** posture (deny-by-default rules, no client writes to payment fields)
-- **Offline-first** architecture with explicit sync state
-- **Observability** hooks (structured logging, analytics stubs, performance traces)
+This refactor upgrades the repository from a working prototype to an enterprise-grade skeleton with:
 
-## File Mapping: Old → New
+- Comprehensive documentation and ADRs
+- Clean Architecture (data / domain / presentation)
+- Security-by-default (deny-by-default rules, RBAC, App Check)
+- Offline-first strategy with explicit sync state
+- Observability hooks and CI/CD consolidation
+- Function signatures and headers (no implementations changed unless noted)
 
-### Root Configuration Files
+**Migration Type:** **Non-Breaking Additive Changes** — We add structure, docs, and placeholders without removing existing functionality. Some files move/rename for clarity.
 
-| Old | New | Change |
-|-----|-----|--------|
-| `.gitignore` | `.gitignore` | Enhanced with more patterns |
-| N/A | `.gitattributes` | **NEW**: Union merge for .md and .gitignore |
-| N/A | `.editorconfig` | **NEW**: Consistent code style |
-| `firebase.json` | `firebase.json` | Kept (verified emulators config) |
-| `.firebaserc` | `.firebaserc` | Enhanced with staging/prod aliases |
-| `firestore.rules` | `firestore.rules` | Enhanced with more comments |
-| `firestore.indexes.json` | `firestore.indexes.json` | Enhanced with collection-group indexes |
-| `storage.rules` | `storage.rules` | Enhanced with comments |
-| `pubspec.yaml` | `pubspec.yaml` | Kept (all deps already present) |
-| `analysis_options.yaml` | `analysis_options.yaml` | Kept |
+---
 
-### Documentation
+## Repository Structure: Before → After
 
-| Old | New | Change |
-|-----|-----|--------|
-| `README.md` | `README.md` | **REWRITTEN**: Task-based quickstart |
-| `docs/KickoffTicket.md` | `docs/KickoffTicket.md` | **UPDATED**: Reflects new skeleton |
-| `ARCHITECTURE.md` | `docs/Architecture.md` | **MOVED & UPDATED**: More detailed |
-| N/A | `docs/MIGRATION.md` | **NEW**: This file |
-| N/A | `docs/ADRs/0001-tech-stack.md` | **NEW**: Tech stack rationale |
-| `docs/APP_CHECK.md` | `docs/APP_CHECK.md` | Kept |
-| `docs/EMULATORS.md` | `docs/EMULATORS.md` | Kept |
-| `QUICKSTART.md` | **DELETED** | Merged into README.md |
-| `PROJECT_SUMMARY.md` | **DELETED** | Replaced by MIGRATION.md |
-| `IMPLEMENTATION_SUMMARY.md` | **DELETED** | Obsolete after refactor |
-| `VALIDATION_CHECKLIST.md` | **DELETED** | Replaced by PR checklist |
-| `VERIFICATION_REPORT.md` | **DELETED** | Obsolete after refactor |
-| `CHANGELOG.md` | `CHANGELOG.md` | Kept |
-| `CONTRIBUTING.md` | `CONTRIBUTING.md` | Kept |
-| `SETUP.md` | **DELETED** | Merged into README.md |
+### Root Level Files
+
+**Before**
+/
+├── README.md
+├── ARCHITECTURE.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── QUICKSTART.md
+├── SETUP.md
+├── VALIDATION_CHECKLIST.md
+├── VERIFICATION_REPORT.md
+├── PROJECT_SUMMARY.md
+├── IMPLEMENTATION_SUMMARY.md
+├── .gitignore
+├── firebase.json
+├── .firebaserc
+├── firestore.rules
+├── firestore.indexes.json
+├── storage.rules
+├── analysis_options.yaml
+├── pubspec.yaml
+└── pubspec.lock
+
+markdown
+Copy code
+
+**After**
+/
+├── README.md # ✨ Enhanced: Quickstart, emulators, flags, golden paths
+├── .gitignore # Kept (may include new patterns)
+├── .gitattributes # 🆕 Normalize LF + union merges for .md/.gitignore
+├── .editorconfig # 🆕 Consistent editor settings
+├── firebase.json # ✨ Enhanced: Emulator config
+├── .firebaserc # Kept (staging/prod aliases supported)
+├── firestore.rules # ✨ Enhanced: Comments, org scoping, deny-by-default
+├── firestore.indexes.json # ✨ Enhanced: Required composite indexes
+├── storage.rules # ✨ Enhanced: Signed URL notes
+├── analysis_options.yaml # Kept
+├── pubspec.yaml # Kept
+├── pubspec.lock # Kept
+└── LICENSE # Kept
+
+yaml
+Copy code
+
+**Rationale:** Modern dev standards (.editorconfig, .gitattributes), improved docs and emulator support.
+
+---
+
+### Documentation Directory
+
+**Before**
+docs/
+├── KickoffTicket.md
+├── APP_CHECK.md
+├── EMULATORS.md
+└── index.md
+
+markdown
+Copy code
+
+**After**
+docs/
+├── KickoffTicket.md # ✨ Enhanced: Google-style epic
+├── Architecture.md # 🆕 Comprehensive architecture overview
+├── Backlog.md # 🆕 Kanban table with story IDs
+├── EnhancementsAndAdvice.md # 🆕 Senior review + risk register
+├── MIGRATION.md # 🆕 This file
+├── ADRs/
+│ └── 0001-tech-stack.md # 🆕 Flutter + Firebase rationale
+├── APP_CHECK.md # Kept
+├── EMULATORS.md # Kept
+└── index.md # Kept
+
+yaml
+Copy code
+
+**Rationale:** ADRs for decision history; single-source README; clear backlog.
+
+---
 
 ### GitHub Configuration
 
-| Old | New | Change |
-|-----|-----|--------|
-| `.github/workflows/*.yml` | `.github/workflows/ci.yml` | **CONSOLIDATED**: Single CI workflow |
-| `.github/PULL_REQUEST_TEMPLATE.md` | `.github/PULL_REQUEST_TEMPLATE.md` | Kept |
-| N/A | `.github/ISSUE_TEMPLATE/story.md` | **NEW**: User story template |
-| N/A | `.github/ISSUE_TEMPLATE/bug.md` | **NEW**: Bug report template |
-| N/A | `.github/ISSUE_TEMPLATE/tech-task.md` | **NEW**: Tech task template |
+**Before**
+.github/
+├── workflows/
+│ ├── ci.yml
+│ ├── functions-ci.yml
+│ ├── flutter-ci.yml
+│ ├── deploy-staging.yml
+│ ├── deploy-production.yml
+│ ├── security.yml
+│ └── .yml
+└── PULL_REQUEST_TEMPLATE.md
+
+markdown
+Copy code
+
+**After**
+.github/
+├── ISSUE_TEMPLATE/
+│ ├── story.md # 🆕 User story template
+│ ├── bug.md # 🆕 Bug report template
+│ └── tech-task.md # 🆕 Technical task template
+├── workflows/
+│ └── ci.yml # ✨ Consolidated pipeline (Flutter + Functions + deploy)
+└── PULL_REQUEST_TEMPLATE.md # Kept
+
+yaml
+Copy code
+
+**Rationale:** Standardize issues; consolidate CI with emulator support, staged deploys.
+
+**Destructive Changes:** Remove redundant workflows; fold into single `ci.yml`.
+
+---
 
 ### Cloud Functions
 
-| Old Path | New Path | Change |
-|----------|----------|--------|
-| `functions/src/index.ts` | `functions/src/index.ts` | **UPDATED**: Wiring only, imports from lib/ |
-| `functions/src/schemas/index.ts` | `functions/src/lib/zodSchemas.ts` | **MOVED & RENAMED** |
-| `functions/src/services/pdf-service.ts` | `functions/src/pdf/createEstimatePdf.ts` | **RESTRUCTURED** |
-| `functions/src/stripe/webhookHandler.ts` | `functions/src/payments/stripeWebhook.ts` | **MOVED** |
-| N/A | `functions/src/lib/audit.ts` | **NEW**: Audit log helpers |
-| N/A | `functions/src/lib/idempotency.ts` | **NEW**: Idempotency helpers |
-| N/A | `functions/src/lib/stripe.ts` | **NEW**: Optional Stripe helpers |
-| N/A | `functions/src/leads/createLead.ts` | **NEW**: Lead creation callable |
-| N/A | `functions/src/payments/markPaidManual.ts` | **NEW**: Manual payment function |
-| N/A | `functions/src/payments/createCheckoutSession.ts` | **NEW**: Stripe checkout (optional) |
-| N/A | `functions/src/tests/rules.spec.ts` | **NEW**: Rules tests stub |
-| N/A | `functions/src/tests/payments.spec.ts` | **NEW**: Payment tests stub |
+**Before**
+functions/
+├── src/
+│ ├── index.ts
+│ ├── schemas/index.ts
+│ ├── services/pdf-service.ts
+│ └── stripe/webhookHandler.ts
+├── package.json
+├── tsconfig.json
+└── .eslintrc.json
 
-### Flutter App (lib/)
+markdown
+Copy code
 
-#### Core
+**After**
+functions/
+├── src/
+│ ├── index.ts # ✨ Exports wiring only
+│ ├── lib/ # 🆕 Shared utilities
+│ │ ├── zodSchemas.ts # 🆕 Validation schemas
+│ │ ├── audit.ts # 🆕 Audit trail helpers
+│ │ ├── idempotency.ts # 🆕 Idempotency helpers
+│ │ └── stripe.ts # 🆕 Stripe helpers (optional)
+│ ├── leads/
+│ │ └── createLead.ts # 🆕 App Check & captcha validation (signature)
+│ ├── pdf/
+│ │ └── createEstimatePdf.ts # 🆕 HTML→PDF→Storage (signature)
+│ ├── payments/
+│ │ ├── markPaidManual.ts # 🆕 Admin-only callable (signature)
+│ │ ├── createCheckoutSession.ts # 🆕 Optional Stripe (signature)
+│ │ └── stripeWebhook.ts # 🆕 Optional webhook (signature)
+│ └── tests/
+│ ├── rules.spec.ts # 🆕 Firestore rules tests (stub)
+│ └── payments.spec.ts # 🆕 Payment tests (stub)
+├── package.json
+├── tsconfig.json
+└── .eslintrc.json
 
-| Old Path | New Path | Change |
-|----------|----------|--------|
-| `lib/main.dart` | `lib/main.dart` | **UPDATED**: Enhanced headers |
-| `lib/app/app.dart` | `lib/app/app.dart` | **UPDATED**: Enhanced headers |
-| `lib/app/router.dart` | `lib/app/router.dart` | **UPDATED**: RBAC guards, detailed comments |
-| N/A | `lib/app/theme.dart` | **NEW**: Extracted from config |
-| `lib/firebase_options.dart` | `lib/firebase_options.dart` | Kept (generated) |
-| `lib/core/config/firebase_options.dart` | **DELETED** | Duplicate, use root-level |
-| `lib/core/config/theme_config.dart` | **DELETED** | Moved to app/theme.dart |
-| `lib/core/models/queue_item.dart` | `lib/core/models/queue_item.dart` | **UPDATED**: Enhanced headers |
-| `lib/core/providers/auth_provider.dart` | `lib/core/services/auth_service.dart` | **RENAMED & RESTRUCTURED** |
-| `lib/core/providers/firestore_provider.dart` | `lib/core/services/firestore_service.dart` | **RENAMED & RESTRUCTURED** |
-| `lib/core/services/feature_flag_service.dart` | `lib/core/services/feature_flag_service.dart` | **UPDATED**: Enhanced headers |
-| `lib/core/services/offline_service.dart` | `lib/core/services/storage_service.dart` | **RENAMED** |
-| `lib/core/services/queue_service.dart` | `lib/core/services/offline_queue_service.dart` | **RENAMED & ENHANCED** |
-| N/A | `lib/core/services/app_check_service.dart` | **NEW**: App Check service |
-| N/A | `lib/core/telemetry/telemetry_service.dart` | **NEW**: Analytics + logging |
-| N/A | `lib/core/utils/result.dart` | **NEW**: Error handling types |
+markdown
+Copy code
 
-#### Features
+**Rationale:** Domain-based layout; signatures + doc comments; shared libs; test stubs.
 
-Each feature now has complete data/domain/presentation structure with file headers:
+**Destructive Moves:**
+- `schemas/index.ts` → `lib/zodSchemas.ts`
+- `services/pdf-service.ts` → `pdf/createEstimatePdf.ts`
+- `stripe/webhookHandler.ts` → `payments/stripeWebhook.ts`
 
-| Old Path | New Path | Change |
-|----------|----------|--------|
-| `lib/features/auth/presentation/login_screen.dart` | `lib/features/auth/presentation/login_screen.dart` | **ENHANCED**: Headers, a11y notes |
-| N/A | `lib/features/auth/data/auth_repository.dart` | **NEW**: Auth repository |
-| N/A | `lib/features/auth/domain/user.dart` | **NEW**: User model |
-| N/A | `lib/features/auth/domain/role.dart` | **NEW**: Role enum |
-| `lib/features/timeclock/presentation/timeclock_screen.dart` | `lib/features/timeclock/presentation/timeclock_screen.dart` | **ENHANCED** |
-| N/A | `lib/features/timeclock/data/timeclock_repository.dart` | **NEW** |
-| N/A | `lib/features/timeclock/domain/time_entry.dart` | **NEW** |
-| `lib/features/estimates/presentation/estimates_screen.dart` | `lib/features/estimates/presentation/estimates_screen.dart` | **ENHANCED** |
-| N/A | `lib/features/estimates/data/estimate_repository.dart` | **NEW** |
-| N/A | `lib/features/estimates/domain/estimate.dart` | **NEW** |
-| N/A | `lib/features/estimates/domain/line_item.dart` | **NEW** |
-| `lib/features/invoices/presentation/invoices_screen.dart` | `lib/features/invoices/presentation/invoices_screen.dart` | **ENHANCED** |
-| N/A | `lib/features/invoices/data/invoice_repository.dart` | **NEW** |
-| N/A | `lib/features/invoices/domain/invoice.dart` | **NEW** |
-| `lib/features/admin/presentation/admin_screen.dart` | `lib/features/admin/presentation/admin_screen.dart` | **ENHANCED** |
-| N/A | `lib/features/website/presentation/lead_form.dart` | **NEW**: Lead form placeholder |
-| N/A | `lib/widgets/` | **NEW**: Shared widgets directory |
+---
 
-## Deleted Files and Rationale
+### Flutter App Structure
 
-### Documentation (Consolidated/Obsolete)
-- `QUICKSTART.md` → Merged into README.md for single-entry experience
-- `PROJECT_SUMMARY.md` → Replaced by MIGRATION.md (this file)
-- `IMPLEMENTATION_SUMMARY.md` → Obsolete; new structure is documented in Architecture.md
-- `VALIDATION_CHECKLIST.md` → Replaced by DoD in issue templates and PR checklist
-- `VERIFICATION_REPORT.md` → Obsolete; CI workflow validates
-- `SETUP.md` → Merged into README.md
+**Before**
+lib/
+├── main.dart
+├── firebase_options.dart
+├── app/
+│ ├── app.dart
+│ └── router.dart
+├── core/
+│ ├── config/
+│ │ ├── firebase_options.dart
+│ │ └── theme_config.dart
+│ ├── models/queue_item.dart
+│ ├── providers/
+│ │ ├── auth_provider.dart
+│ │ └── firestore_provider.dart
+│ └── services/
+│ ├── feature_flag_service.dart
+│ ├── offline_service.dart
+│ └── queue_service.dart
+└── features/
+├── auth/presentation/login_screen.dart
+├── timeclock/presentation/timeclock_screen.dart
+├── estimates/presentation/estimates_screen.dart
+├── invoices/presentation/invoices_screen.dart
+└── admin/presentation/admin_screen.dart
 
-### Code (Reorganized)
-- `lib/core/config/firebase_options.dart` → Duplicate; use root `lib/firebase_options.dart`
-- `lib/core/config/theme_config.dart` → Moved to `lib/app/theme.dart`
-- Multiple workflow files → Consolidated into single `ci.yml` with matrix builds
+markdown
+Copy code
 
-## Rebuild Steps
+**After**
+lib/
+├── main.dart # ✨ Header comments
+├── firebase_options.dart # Kept (generated)
+├── app/
+│ ├── app.dart # ✨ Material 3 tokens
+│ ├── router.dart # ✨ RBAC guards, error boundaries
+│ └── theme.dart # 🆕 Theme configuration
+├── core/
+│ ├── services/ # ✨ API signatures
+│ │ ├── auth_service.dart # 🆕 Auth API
+│ │ ├── firestore_service.dart # 🆕 Firestore API
+│ │ ├── storage_service.dart # 🆕 Storage API
+│ │ ├── offline_queue_service.dart # ✨ Renamed from queue_service.dart
+│ │ ├── feature_flag_service.dart # ✨ Expanded flags
+│ │ └── telemetry_service.dart # 🆕 Analytics & logs API
+│ ├── utils/result.dart # 🆕 Result/Either type
+│ ├── models/queue_item.dart # Enhanced headers
+│ └── providers/
+│ ├── auth_provider.dart # Kept
+│ └── firestore_provider.dart # Kept
+└── features/
+├── auth/ (data/domain/presentation) # 🆕 Repositories, entities, usecases
+├── timeclock/ (data/domain/presentation)
+├── estimates/ (data/domain/presentation)
+├── invoices/ (data/domain/presentation)
+├── admin/ (data/domain/presentation)
+└── website/presentation/lead_form_screen.dart # 🆕 Public lead form
 
-### 1. Install Dependencies
+markdown
+Copy code
 
-```bash
-# Flutter dependencies
+**Rationale:** Clean Architecture, service abstractions, explicit result types, telemetry hooks.
+
+**Destructive Rename:** `queue_service.dart` → `offline_queue_service.dart`.
+
+---
+
+## Detailed Change Log
+
+### Files Added (New)
+| File | Purpose |
+|------|---------|
+| `.editorconfig` | Consistent code formatting |
+| `.gitattributes` | LF normalization + union merges |
+| `docs/Backlog.md` | Product backlog (Kanban) |
+| `docs/Architecture.md` | Architecture reference |
+| `docs/EnhancementsAndAdvice.md` | Senior review + risks |
+| `docs/MIGRATION.md` | This migration guide |
+| `docs/ADRs/0001-tech-stack.md` | Tech stack ADR |
+| `.github/ISSUE_TEMPLATE/*` | Story, Bug, Tech Task templates |
+| `functions/src/lib/*` | Shared utilities (zod, audit, idempotency, stripe) |
+| `functions/src/{leads,pdf,payments}/*` | Domain function stubs/signatures |
+| `functions/src/tests/*` | Test stubs |
+| `lib/app/theme.dart` | App theming |
+| `lib/core/services/*.dart` | Service APIs |
+| `lib/core/utils/result.dart` | Result/Either type |
+| `lib/features/*/{data,domain,presentation}` | Clean Architecture stubs |
+| `lib/features/website/*` | Public lead form placeholder |
+
+### Files Modified (Enhanced)
+| File | Changes |
+|------|---------|
+| `README.md` | Quickstart, emulator guide, flags, golden paths |
+| `docs/KickoffTicket.md` | Up-leveled epic format |
+| `firebase.json` | Added emulator config |
+| `firestore.rules` | Org-scoping, deny-by-default, comments |
+| `firestore.indexes.json` | Required composite indexes |
+| `storage.rules` | Signed URL comments |
+| `.github/workflows/ci.yml` | Consolidated jobs, emulator support |
+| App files (`main.dart`, `app.dart`, `router.dart`) | Headers, guards, errors |
+
+### Files Removed (Consolidated/Obsolete)
+| File | Reason | Migration |
+|------|--------|-----------|
+| `QUICKSTART.md` | Merged into README | N/A |
+| `SETUP.md` | Merged into README | N/A |
+| `VALIDATION_CHECKLIST.md` | Replaced by PR/Issue templates | N/A |
+| `VERIFICATION_REPORT.md` | CI/CD supersedes | N/A |
+| `PROJECT_SUMMARY.md` | Replaced by `docs/Architecture.md` | N/A |
+| `IMPLEMENTATION_SUMMARY.md` | Superseded by MIGRATION.md | N/A |
+| Multiple `.github/workflows/*.yml` | Consolidated into `ci.yml` | N/A |
+| `functions/src/schemas/index.ts` | Moved | `lib/zodSchemas.ts` |
+| `functions/src/services/pdf-service.ts` | Moved | `pdf/createEstimatePdf.ts` |
+| `functions/src/stripe/webhookHandler.ts` | Moved | `payments/stripeWebhook.ts` |
+
+---
+
+## Import Path Updates
+
+**Functions (TypeScript)**
+```ts
+// Old
+import {schemas} from './schemas';
+import {generatePdf} from './services/pdf-service';
+import {handleStripeWebhook} from './stripe/webhookHandler';
+
+// New
+import {schemas} from './lib/zodSchemas';
+import {createEstimatePdf} from './pdf/createEstimatePdf';
+import {stripeWebhook} from './payments/stripeWebhook';
+Flutter (Dart)
+
+dart
+Copy code
+// Old
+import 'package:sierra_painting/core/services/queue_service.dart';
+
+// New
+import 'package:sierra_painting/core/services/offline_queue_service.dart';
+Rebuild Steps
+Prerequisites
+bash
+Copy code
+flutter --version       # >= 3.10.0
+node --version          # >= 18.0.0
+firebase --version      # >= 12.0.0
+1) Create Backup Branch
+bash
+Copy code
+git checkout main
+git checkout -b backup/pre-refactor
+git push origin backup/pre-refactor
+2) Merge the Refactor Branch
+bash
+Copy code
+git checkout main
+git merge refactor/sierra-skeleton
+3) Reinstall Dependencies
+bash
+Copy code
+# Flutter
 flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# Cloud Functions dependencies
+# Functions
 cd functions
 npm ci
 cd ..
-```
-
-### 2. Firebase Configuration
-
-```bash
-# If not configured, run:
-# flutterfire configure
-
-# Verify firebase projects
-firebase projects:list
-
-# Set up aliases (if using staging/prod)
-firebase use --add
-```
-
-### 3. Start Emulators
-
-```bash
-# Start all emulators
-firebase emulators:start
-
-# In another terminal, run the app
-flutter run
-```
-
-### 4. Run Tests
-
-```bash
-# Flutter tests
+4) Analyze, Build, and Test
+bash
+Copy code
+# Flutter
+flutter analyze
 flutter test
 
-# Cloud Functions tests
+# Functions
 cd functions
-npm test
-cd ..
-
-# Security rules tests (requires emulators running)
-cd functions
-npm run test:rules
-cd ..
-```
-
-### 5. Build
-
-```bash
-# Flutter analyze
-flutter analyze
-
-# Functions build
-cd functions
+npm run lint
+npm run typecheck
 npm run build
 cd ..
-```
+5) Start Emulators
+bash
+Copy code
+firebase emulators:start
+Verify:
 
-## Key Architectural Changes
+Auth: 9099 | Firestore: 8080 | Functions: 5001 | Storage: 9199 | UI: 4000
 
-### 1. **File Headers Required**
-Every file now has a header comment explaining:
-- **Purpose**: What this file does
-- **Responsibilities**: Key functions/classes
-- **Public API**: Exported interfaces
-- **Invariants**: Constraints that must hold
-- **Performance**: Considerations for scale
-- **Security**: Auth/authz notes
-- **TODOs**: Implementation notes
+6) Run the App
+bash
+Copy code
+flutter run
+Check:
 
-### 2. **Offline-First with Explicit Sync State**
-- All user-impacting writes go through `offline_queue_service.dart`
-- UI shows "Pending Sync" badges for queued operations
-- Automatic reconciliation when online
+Login & nav work
 
-### 3. **Security-by-Default**
-- Firestore rules deny by default
-- Clients cannot set `invoice.paid` or `invoice.paidAt`
-- App Check enforced on callable functions
-- Audit logging for all payment operations
+Offline queue shows pending/synced states
 
-### 4. **Payment Posture**
-- **Primary**: Manual check/cash (admin "mark paid" + audit)
-- **Optional**: Stripe Checkout behind `payments.stripeEnabled` flag
-- Stripe webhook validates signature + idempotency
+Feature flags load as expected
 
-### 5. **Observability**
-- Structured logs: `{ entity, action, actor, orgId, timestamp, ... }`
-- Analytics events stubbed with clear naming
-- Performance traces for critical operations
-- Crashlytics for error reporting
+7) Deploy to Staging
+bash
+Copy code
+firebase deploy --only firestore:rules,storage:rules --project staging
+firebase deploy --only functions --project staging
+Rollback Plan
+Option 1: Revert Merge
 
-### 6. **Accessibility**
-- WCAG 2.2 AA compliance
-- 48x48 minimum touch targets
-- Semantic labels on all interactive elements
-- Text scaling support (up to 130%)
+bash
+Copy code
+git revert -m 1 <merge-commit-hash>
+git push origin main
+Option 2: Restore From Backup
 
-## Feature Flags
+bash
+Copy code
+git checkout backup/pre-refactor
+git checkout -b main-restored
+git push origin main-restored -f
+Option 3: Cherry-Pick File(s)
 
-Configure in Firebase Remote Config:
+bash
+Copy code
+git checkout backup/pre-refactor -- path/to/file.dart
+git commit -m "Restore file from pre-refactor"
+git push origin main
+Key Architectural Changes
+File Headers Required in all code files:
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `payments.stripeEnabled` | boolean | `false` | Enable Stripe payments |
-| `features.pdfGeneration` | boolean | `true` | Enable server-side PDF generation |
-| `features.offlineMode` | boolean | `true` | Enable offline queue |
+Purpose, responsibilities, public API, invariants, performance, security, TODOs
 
-## Environment Variables
+Offline-First with Explicit Sync State
 
-### Cloud Functions (.env - not committed)
+All writes via offline_queue_service.dart; UI shows “Pending Sync” badges; auto reconcile on reconnect
 
-```bash
-# Stripe (optional, only if payments.stripeEnabled = true)
+Security-by-Default
+
+Deny-by-default Firestore rules; client cannot set invoice.paid/paidAt; App Check on callables; audit logging for payments
+
+Payment Posture
+
+Primary: Manual check/cash (markPaidManual)
+
+Optional: Stripe Checkout behind Remote Config (payments.stripeEnabled)
+
+Observability
+
+Structured logs {entity, action, actor, orgId, ts}; analytics events; performance traces; Crashlytics
+
+Feature Flags (Remote Config)
+Flag	Type	Default	Description
+payments.stripeEnabled	boolean	false	Toggle Stripe payments
+features.pdfGeneration	boolean	true	Enable server-side PDF generation
+features.offlineMode	boolean	true	Enable offline queue & sync
+
+Environment Variables
+Cloud Functions (.env or Secret Manager)
+
+bash
+Copy code
+# Stripe (optional)
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+Flutter (no secrets committed)
 
-# Other service credentials
-# (Use Secret Manager in production)
-```
+App Check debug tokens in .env.debug (gitignored)
 
-### Flutter (no secrets in repo)
+Firebase config in lib/firebase_options.dart (generated)
 
-- App Check debug tokens in `.env.debug` (gitignored)
-- Firebase config in `lib/firebase_options.dart` (generated by flutterfire CLI)
+Breaking Changes
+Developers
 
-## Breaking Changes
+Import paths updated (see Import Path Updates)
 
-### For Developers
-1. **Import paths changed**: `lib/core/providers/*` → `lib/core/services/*`
-2. **Theme config moved**: `lib/core/config/theme_config.dart` → `lib/app/theme.dart`
-3. **Function structure**: Old `functions/src/schemas/` → `functions/src/lib/zodSchemas.ts`
+Theme config moved to lib/app/theme.dart
 
-### For Users
-- **No breaking changes**: This is a code reorganization, not a feature change
+Providers split from service APIs (clear separation)
 
-## Rollback Plan
+Users
 
-If issues arise:
-```bash
-git checkout main
-flutter pub get
-cd functions && npm ci && cd ..
-firebase emulators:start
-```
+No breaking UX changes — refactor is internal.
 
-## Validation Checklist
+Post-Migration Checklist
+ CI/CD passing on PRs
 
-After migration, verify:
-- [ ] `flutter analyze` passes with no errors
-- [ ] `cd functions && npm run lint` passes
-- [ ] `cd functions && npm run build` succeeds
-- [ ] `firebase emulators:start` starts all emulators
-- [ ] `flutter run` connects to emulators
-- [ ] Basic user flow works (Auth → Dashboard)
-- [ ] All documentation links are valid
-- [ ] No secrets in repository (`git log --all --source --full-history -S "sk_live_"`)
+ Emulators start successfully
 
-## Support
+ App builds & runs on Android and iOS
 
-For questions or issues with migration:
-1. Check `docs/Architecture.md` for design decisions
-2. Review file headers for implementation notes
-3. Open an issue using `.github/ISSUE_TEMPLATE/tech-task.md`
+ Auth → Dashboard flow works
+
+ RBAC guards working as intended
+
+ Offline queue shows pending/sync states
+
+ Feature flags pull correctly
+
+ Functions deploy to staging
+
+ Firestore & Storage rules deploy cleanly
+
+ Issue templates render in GitHub
+
+ ADRs readable and linked from README
+
+Validation Checklist
+ flutter analyze clean
+
+ cd functions && npm run lint && npm run typecheck && npm run build
+
+ firebase emulators:start all services up
+
+ flutter run connects to emulators
+
+ No secrets committed (git log --all --source --full-history -S "sk_live_")
+
+Support
+Check docs/Architecture.md for design decisions
+
+Review file headers for contracts and invariants
+
+Open a Tech Task using .github/ISSUE_TEMPLATE/tech-task.md
+
+Summary
+This refactor elevates Sierra Painting to an enterprise-grade codebase:
+
+Documentation & ADRs ensure shared understanding
+
+Clean Architecture improves testability and evolution
+
+Security & Offline are first-class
+
+CI/CD is streamlined and reliable
+
+Most changes are additive; a few moves/renames are documented above. Follow the rebuild steps and validation checklists to complete the migration confidently.

@@ -1,44 +1,45 @@
-# Git attributes for Sierra Painting repository
-# Ensures consistent line endings and merge strategies across platforms
+# .gitattributes for Sierra Painting
+# Normalize line endings, guide merges, and mark binaries appropriately.
 
-# Auto detect text files and normalize line endings to LF
+# Auto-detect text files and normalize to LF
 * text=auto eol=lf
 
-# Force LF on critical config files
-*.sh text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.json text eol=lf
-*.md text eol=lf
+# Enforce LF for common text/config files
+*.sh    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
 
-# Union merge strategy for files that rarely conflict
-.gitignore merge=union
-*.md merge=union
+# Language-specific (text + helpful diff drivers)
+*.dart  text eol=lf diff=dart
+*.ts    text eol=lf diff=typescript
+*.js    text eol=lf diff=javascript
 
-# Binary files
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.pdf binary
-*.zip binary
-*.apk binary
-*.aab binary
-
-# Dart/Flutter specific
-*.dart text diff=dart
-*.g.dart linguist-generated=true
+# Generated Dart files (exclude from stats)
+*.g.dart       linguist-generated=true
 *.freezed.dart linguist-generated=true
 
-# TypeScript/JavaScript
-*.ts text diff=typescript
-*.js text diff=javascript
-*.json text
+# Union merge strategy for files that should combine changes
+.gitignore       merge=union
+*.md             merge=union
+package-lock.json merge=union
+yarn.lock         merge=union
+pubspec.lock      merge=union
 
-# Archives
-*.7z binary
-*.gz binary
+# Binary assets (no diffs)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.apk  binary
+*.aab  binary
+
+# Archives (binary)
+*.7z  binary
+*.gz  binary
 *.jar binary
 *.rar binary
 *.tar binary
