@@ -4,12 +4,13 @@ import {db} from '../index';
 import {isStripeEventProcessed, recordStripeEvent} from '../lib/idempotency';
 
 // Initialize Stripe (will be configured via environment variable)
-const stripeSecretKey = functions.config().stripe?.secret_key || '';
+const stripeConfig = functions.config().stripe as {secret_key?: string; webhook_secret?: string} | undefined;
+const stripeSecretKey = stripeConfig?.secret_key || '';
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2024-06-20',
 });
 
-const webhookSecret = functions.config().stripe?.webhook_secret || '';
+const webhookSecret = stripeConfig?.webhook_secret || '';
 
 /**
  * Handle Stripe webhook events (standardized idempotency pattern)
@@ -32,13 +33,13 @@ const webhookSecret = functions.config().stripe?.webhook_secret || '';
  */
 export async function handleStripeWebhook(
   req: functions.https.Request,
-  res: functions.Response<any>
+  res: functions.Response<{received: boolean; note?: string} | {error: string}>
 ): Promise<void> {
   const sig = req.headers['stripe-signature'] as string;
 
   if (!sig) {
     functions.logger.warn('Missing stripe-signature header');
-    res.status(400).send('Missing stripe-signature header');
+    res.status(400).json({error: 'Missing stripe-signature header'});
     return;
   }
 
@@ -48,8 +49,9 @@ export async function handleStripeWebhook(
     // Verify signature to ensure request is from Stripe
     event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret);
   } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
     functions.logger.error('Webhook signature verification failed:', err);
-    res.status(400).send(`Webhook Error: ${err}`);
+    res.status(400).json({error: `Webhook Error: ${errorMessage}`});
     return;
   }
 
@@ -73,16 +75,19 @@ export async function handleStripeWebhook(
     // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed': {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const session = event.data.object as Stripe.Checkout.Session;
         await handleCheckoutSessionCompleted(session);
         break;
       }
       case 'payment_intent.succeeded': {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         await handlePaymentIntentSucceeded(paymentIntent);
         break;
       }
       case 'payment_intent.payment_failed': {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         await handlePaymentIntentFailed(paymentIntent);
         break;
@@ -140,8 +145,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent): Promise<void> {
   functions.logger.info(`Payment intent succeeded: ${paymentIntent.id}`);
-  
-  // Additional processing if needed
+  // Additional processing can be added here when needed
+  await Promise.resolve(); // Ensure function is async
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent): Promise<void> {

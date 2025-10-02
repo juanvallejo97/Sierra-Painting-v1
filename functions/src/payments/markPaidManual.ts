@@ -118,7 +118,7 @@ async function isAdmin(uid: string): Promise<boolean> {
 // MAIN FUNCTION
 // ============================================================
 
-export const markPaidManual = functions.https.onCall(async (data, context) => {
+export const markPaidManual = functions.https.onCall(async (data: unknown, context) => {
   // ========================================
   // 1. AUTHENTICATION CHECK
   // ========================================
@@ -164,11 +164,15 @@ export const markPaidManual = functions.https.onCall(async (data, context) => {
   let validatedPayment: ManualPayment;
   try {
     validatedPayment = ManualPaymentSchema.parse(data);
-  } catch (error) {
-    functions.logger.warn('Invalid payment data', {error, data});
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    functions.logger.warn('Invalid payment data', {
+      error: errorMessage,
+      data,
+    });
     throw new functions.https.HttpsError(
       'invalid-argument',
-      `Invalid payment data: ${error}`
+      `Invalid payment data: ${errorMessage}`
     );
   }
 
@@ -209,7 +213,14 @@ export const markPaidManual = functions.https.onCall(async (data, context) => {
   const invoiceRef = db.collection(INVOICES_COLLECTION).doc(validatedPayment.invoiceId);
   const paymentRef = db.collection(PAYMENTS_COLLECTION).doc();
 
-  let invoiceData: any;
+  interface InvoiceData {
+    paid?: boolean;
+    orgId?: string;
+    amount?: number;
+    total?: number;
+  }
+  
+  let invoiceData: InvoiceData = {};
   const paymentId = paymentRef.id; // Initialize here
   let paidAt = ''; // Initialize to empty string
 
@@ -225,7 +236,7 @@ export const markPaidManual = functions.https.onCall(async (data, context) => {
         );
       }
 
-      invoiceData = invoiceDoc.data();
+      invoiceData = invoiceDoc.data() as InvoiceData;
 
       // Check if already paid
       if (invoiceData.paid) {
@@ -276,7 +287,7 @@ export const markPaidManual = functions.https.onCall(async (data, context) => {
       action: 'paid',
       actor: userId,
       actorRole: 'admin',
-      orgId: invoiceData.orgId,
+      orgId: invoiceData.orgId || 'unknown',
       ...metadata,
       metadata: {
         paymentId,

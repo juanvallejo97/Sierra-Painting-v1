@@ -250,7 +250,7 @@ export type TimeEntry = z.infer<typeof TimeEntrySchema>;
 // ============================================================
 
 export const AuditLogEntrySchema = z.object({
-  entity: z.enum(['invoice', 'payment', 'estimate', 'user', 'job', 'timeEntry']),
+  entity: z.enum(['invoice', 'payment', 'estimate', 'user', 'job', 'timeEntry', 'lead']),
   entityId: NonEmptyString,
   action: z.enum(['created', 'updated', 'deleted', 'paid', 'sent', 'approved']),
   actor: UserId,
