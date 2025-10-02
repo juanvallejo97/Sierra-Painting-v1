@@ -1,42 +1,154 @@
+/**
+ * Zod Schemas for Sierra Painting
+ * 
+ * Design Principles (from PRD):
+ * - Keep schemas ≤10 lines when possible
+ * - Use strict validation (no .passthrough())
+ * - Server timestamps in ISO-8601 (America/New_York)
+ * - All schemas match story acceptance criteria
+ */
+
 import {z} from "zod";
 
-export const leadSchema = z.object({
-  name: z.string().min(1),
+// ============================================================================
+// Epic A: Authentication & RBAC
+// ============================================================================
+
+/**
+ * A1: Sign-in/out + reliable sessions
+ */
+export const LoginSchema = z.object({
   email: z.string().email(),
-  phone: z.string().min(10),
-  address: z.string().min(1),
-  description: z.string().optional(),
-  createdAt: z.date().optional(),
+  password: z.string().min(8).max(128),
 });
 
-export const estimateSchema = z.object({
-  leadId: z.string(),
-  items: z.array(z.object({
-    description: z.string(),
-    quantity: z.number().positive(),
-    unitPrice: z.number().positive(),
-  })),
-  laborHours: z.number().positive(),
-  laborRate: z.number().positive(),
-  notes: z.string().optional(),
+/**
+ * A2: Admin sets roles (claims)
+ */
+export const SetRoleSchema = z.object({
+  uid: z.string().min(1),
+  role: z.enum(['admin', 'crewLead', 'crew']),
 });
 
-export const markPaidManualSchema = z.object({
-  invoiceId: z.string(),
-  paymentMethod: z.enum(["check", "cash"]),
-  amount: z.number().positive(),
-  checkNumber: z.string().optional(),
-  notes: z.string().optional(),
-  paidAt: z.date().optional(),
+// ============================================================================
+// Epic B: Time Clock
+// ============================================================================
+
+/**
+ * B1: Clock-in (offline + GPS + idempotent)
+ */
+export const TimeInSchema = z.object({
+  jobId: z.string().min(8),
+  at: z.number().int().positive(),  // Epoch milliseconds
+  geo: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }).optional(),
+  clientId: z.string().uuid(),      // For idempotency
 });
 
-export const stripeCheckoutSchema = z.object({
-  invoiceId: z.string(),
-  successUrl: z.string().url(),
-  cancelUrl: z.string().url(),
+/**
+ * B2: Clock-out + overlap guard
+ */
+export const TimeOutSchema = z.object({
+  entryId: z.string().min(1),
+  at: z.number().int().positive(),
+  breakMin: z.number().min(0).max(180).default(0),
 });
 
-export type Lead = z.infer<typeof leadSchema>;
-export type Estimate = z.infer<typeof estimateSchema>;
-export type MarkPaidManual = z.infer<typeof markPaidManualSchema>;
-export type StripeCheckout = z.infer<typeof stripeCheckoutSchema>;
+// ============================================================================
+// Epic C: Invoicing
+// ============================================================================
+
+/**
+ * C1: Create quote + PDF
+ */
+export const LineItemSchema = z.object({
+  type: z.enum(['labor', 'material', 'other']),
+  description: z.string().min(1),
+  qty: z.number().min(0),
+  unitPrice: z.number().min(0),
+});
+
+export const EstimateSchema = z.object({
+  leadId: z.string().min(1),
+  items: z.array(LineItemSchema).min(1),
+  taxRate: z.number().min(0).max(0.15).default(0),
+  discount: z.number().min(0).default(0),
+});
+
+/**
+ * C3: Manual Mark-Paid (check/cash)
+ */
+export const ManualPaymentSchema = z.object({
+  invoiceId: z.string().min(1),
+  method: z.enum(['check', 'cash']),
+  reference: z.string().max(64).optional(),  // Check number, etc.
+  note: z.string().min(3),                   // Required note
+  idempotencyKey: z.string().optional(),     // Client-provided for idempotency
+});
+
+/**
+ * C5: Stripe Checkout (optional)
+ */
+export const StripeCheckoutSchema = z.object({
+  invoiceId: z.string().min(1),
+});
+
+// ============================================================================
+// Epic D: Lead Management & Scheduling
+// ============================================================================
+
+/**
+ * D1: Public lead form (App Check + anti-spam)
+ */
+export const LeadSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email().optional(),
+  phone: z.string().min(7).optional(),
+  address: z.string().min(5),
+  details: z.string().max(2000).optional(),
+})
+.refine(data => data.email || data.phone, {
+  message: "Either email or phone must be provided",
+});
+
+// ============================================================================
+// Audit & Telemetry
+// ============================================================================
+
+/**
+ * E3: Telemetry + Audit Log
+ */
+export const AuditLogSchema = z.object({
+  timestamp: z.number().int().positive(),
+  entity: z.string(),           // 'invoice', 'time_entry', 'user', etc.
+  action: z.string(),           // 'TIME_IN', 'INVOICE_MARK_PAID', etc.
+  actorUid: z.string(),
+  orgId: z.string(),
+  details: z.record(z.any()),   // Flexible details object
+});
+
+// ============================================================================
+// Legacy Schemas (kept for backward compatibility)
+// ============================================================================
+
+export const leadSchema = LeadSchema;
+export const estimateSchema = EstimateSchema;
+export const markPaidManualSchema = ManualPaymentSchema;
+export const stripeCheckoutSchema = StripeCheckoutSchema;
+
+// ============================================================================
+// Type Exports
+// ============================================================================
+
+export type Login = z.infer<typeof LoginSchema>;
+export type SetRole = z.infer<typeof SetRoleSchema>;
+export type TimeIn = z.infer<typeof TimeInSchema>;
+export type TimeOut = z.infer<typeof TimeOutSchema>;
+export type LineItem = z.infer<typeof LineItemSchema>;
+export type Estimate = z.infer<typeof EstimateSchema>;
+export type ManualPayment = z.infer<typeof ManualPaymentSchema>;
+export type StripeCheckout = z.infer<typeof StripeCheckoutSchema>;
+export type Lead = z.infer<typeof LeadSchema>;
+export type AuditLog = z.infer<typeof AuditLogSchema>;
