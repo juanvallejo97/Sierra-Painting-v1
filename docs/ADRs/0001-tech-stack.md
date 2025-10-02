@@ -1,201 +1,222 @@
 # ADR-0001: Technology Stack Selection
 
-**Status**: Accepted  
-**Date**: 2024-01-15  
-**Deciders**: Engineering Team  
-**Tags**: architecture, stack, mobile, backend
+**Status:** Accepted  
+**Date:** 2024-01-15  
+**Deciders:** Engineering Team  
+**Tags:** architecture, stack, mobile, backend  
+**Context:** Need to select a technology stack for a small business painting management application
 
-## Context
+---
 
-Sierra Painting needs a mobile-first application for managing painting business operations (estimates, invoices, time tracking) with the following requirements:
+## Context and Problem Statement
 
-1. **Offline-first**: Field workers often have limited connectivity
-2. **Cross-platform**: Must work on iOS and Android
-3. **Fast development**: MVP needed in 4 weeks
-4. **Scalable backend**: Handle growing user base and data
-5. **Security**: Protect sensitive financial data
-6. **Budget-conscious**: Minimize infrastructure costs for startup
+We need to build a mobile-first application for a small painting business to manage operations (estimates, invoices, time tracking). The solution must be:
 
-We evaluated several technology stacks:
+- **Mobile-first** with potential web support
+- **Offline-capable** to work in areas with poor connectivity
+- **Cross-platform** (iOS and Android)
+- **Fast development** (target MVP in ~4 weeks)
+- **Cost-effective** for a small business
+- **Secure** with proper authentication, authorization, and data protection
+- **Maintainable** by a small team
+- **Scalable** to support growth without heavy infra management
 
-### Option 1: Flutter + Firebase
-- **Frontend**: Flutter (Dart)
-- **Backend**: Firebase (Firestore, Functions, Auth, Storage)
-- **State**: Riverpod
-- **Routing**: go_router
+## Decision Drivers
 
-### Option 2: React Native + AWS
-- **Frontend**: React Native (JavaScript/TypeScript)
-- **Backend**: AWS (DynamoDB, Lambda, Cognito, S3)
-- **State**: Redux Toolkit
-- **Routing**: React Navigation
+- Developer velocity and single codebase
+- Serverless backend with low ops overhead
+- Offline-first architecture and sync
+- Strong type safety (Dart/TypeScript)
+- Ecosystem maturity and community support
+- Pay-as-you-go pricing fit for small business
+- Built-in security features (Security Rules, App Check)
 
-### Option 3: Native (Swift + Kotlin) + Custom Backend
-- **Frontend**: Swift (iOS) + Kotlin (Android)
-- **Backend**: Node.js + PostgreSQL + Express
-- **Infrastructure**: Self-managed on DigitalOcean/Heroku
+## Considered Options
 
-## Decision
+1. **Flutter + Firebase** (**selected**)
+2. React Native + AWS (Amplify/Cognito/DynamoDB/Lambda)
+3. Native iOS (Swift) & Android (Kotlin) + custom Node/Postgres backend
 
-**We chose Flutter + Firebase (Option 1)** for the following reasons:
+---
+
+## Decision Outcome
+
+**Chosen option:** **Flutter + Firebase**
 
 ### Frontend: Flutter
 
-**Pros**:
-- Single codebase for iOS and Android
-- Excellent offline support (Hive, Drift)
-- Strong Material Design 3 implementation
-- Hot reload for fast development
-- Good performance (compiled to native ARM)
-- Growing ecosystem and community
-- Built-in accessibility support
+**Pros**
+- Single codebase for iOS/Android (+ Web potential)
+- Excellent dev experience (hot reload), strong Material Design 3 support
+- Great runtime performance (AOT to native)
+- Accessibility features built-in
+- Healthy plugin ecosystem
+- Good offline patterns (e.g., Hive/Drift for local cache/queue)
 
-**Cons**:
-- Dart language learning curve
-- Larger app size than native
-- Some platform-specific features require plugins
+**Cons**
+- Dart learning curve
+- Larger binary size than fully native
+- Some edge cases require platform channels/plugins
 
 **Why not React Native?**
-- Flutter has better offline capabilities out-of-box
-- Fewer bridge issues between JS and native code
-- Better animation performance
-- Stronger typing with Dart
+- Avoids JS–native bridge complexity; smoother animations
+- Strong typing via Dart without additional tooling
+- Generally better offline story with fewer moving parts
 
-**Why not Native?**
-- 2x development effort (separate iOS and Android codebases)
-- Slower feature development
-- Requires two specialist developers
+**Why not fully Native?**
+- Doubles effort and slows iteration
+- Requires two specialized codebases and skill sets
 
 ### Backend: Firebase
 
-**Pros**:
-- Serverless (no infrastructure management)
-- Built-in authentication and security rules
-- Real-time database with offline persistence
-- File storage with CDN
-- Pay-as-you-go pricing (cost-effective for MVP)
-- Excellent integration with Flutter
-- Automatic scaling
-- Cloud Functions for business logic
+**Services**
+- **Auth** (secure user management)
+- **Cloud Firestore** (real-time NoSQL with offline persistence)
+- **Cloud Functions (TypeScript + Zod)** for business logic and webhooks
+- **Storage** for images/PDFs (CDN-backed)
+- **App Check** to mitigate abuse
+- **Crashlytics & Performance Monitoring** for observability
+- **Remote Config** for feature flags
 
-**Cons**:
-- Vendor lock-in (difficult to migrate away)
-- Limited query capabilities (no JOINs)
-- Potentially expensive at scale
-- Less control over infrastructure
+**Pros**
+- Serverless, autoscaling, minimal ops
+- Security Rules for data-level authorization
+- Pay-as-you-go; generous free tier
+- Tight Flutter integrations and tooling
 
-**Why not AWS?**
-- Steeper learning curve
-- More manual configuration required
-- Higher upfront complexity
-- Less integrated with Flutter
+**Cons / Mitigations**
+- Vendor lock-in → **Mitigate** via repository/service abstractions
+- Query limits (no JOINs) → **Mitigate** with data modeling & indexes; export to BigQuery for reporting
+- Potential cost spikes at scale → **Mitigate** with usage monitoring, caching, budget alerts
 
-**Why not Custom Backend?**
-- Infrastructure management overhead
-- Deployment complexity
-- Scaling challenges
-- Security configuration burden
+### Payments
 
-### State Management: Riverpod
+- **Primary:** Manual check/cash with admin approval (fits current business)
+- **Optional:** Stripe Checkout behind Remote Config flag
+- **Rationale:** Meets current workflows while enabling card payments when ready
 
-**Pros**:
-- Compile-time safety
-- Better testability than Provider
-- Supports code generation
-- Flexible dependency injection
-- Good documentation
+### State Management & Routing
 
-**Why not Bloc?**
-- More boilerplate code
-- Steeper learning curve
-- Overkill for our use case
+- **State:** **Riverpod**
+  - Compile-time safety, testability, flexible DI, code-gen support
+  - Chosen over Bloc (less boilerplate for our scope)
+- **Routing:** **go_router**
+  - Declarative, deep linking, type-safe navigation, RBAC-friendly
 
-### Routing: go_router
+---
 
-**Pros**:
-- Declarative routing
-- Deep linking support
-- Type-safe navigation
-- URL-based routing (web support)
-- Easy RBAC integration
+## Pros and Cons Summary
 
-**Why not Navigator 2.0 directly?**
-- Too low-level
-- More complex implementation
-- go_router provides nice abstractions
+**Pros**
+- ✅ Single codebase, rapid delivery (4-week MVP feasible)
+- ✅ Offline support is battle-tested (Firestore persistence)
+- ✅ Minimal ops with serverless backend
+- ✅ Strong security posture via Security Rules & App Check
+- ✅ Type safety across app and functions
+- ✅ Excellent tooling and ecosystem
+
+**Cons**
+- ⚠️ Vendor lock-in (Firebase)
+- ⚠️ NoSQL modeling complexity
+- ⚠️ Cold starts for Functions (mitigate with min instances on critical paths)
+
+---
 
 ## Consequences
 
-### Positive
+**Positive**
+1. Fast MVP with reduced complexity and cost
+2. Reliable offline experience for field crews
+3. Secure-by-default access controls at the data layer
+4. Seamless scale without infra maintenance
 
-1. **Fast MVP Development**: Single codebase, serverless backend → 4-week target achievable
-2. **Offline-First**: Flutter + Firestore offline persistence is battle-tested
-3. **Cost-Effective**: Firebase free tier covers MVP, pay-as-you-go scales with usage
-4. **Security**: Firebase security rules provide server-side validation
-5. **Developer Experience**: Hot reload, strong typing, good tooling
-6. **Scalability**: Firebase scales automatically, no manual infrastructure work
+**Negative & Mitigations**
+1. Lock-in → repository pattern, modular adapters
+2. Query limitations → denormalization, background aggregations, BigQuery exports (V3+)
+3. Future costs → telemetry + budget alerts, index hygiene, query optimization
 
-### Negative
+---
 
-1. **Vendor Lock-in**: Migration from Firebase would be expensive
-   - **Mitigation**: Abstract Firebase dependencies behind repository pattern
-2. **Query Limitations**: Firestore NoSQL has limited query capabilities
-   - **Mitigation**: Design data model to minimize complex queries
-3. **Dart Ecosystem**: Smaller than JavaScript/TypeScript
-   - **Mitigation**: Most critical packages exist, can write platform channels if needed
-4. **Future Costs**: Firebase can become expensive at scale
-   - **Mitigation**: Monitor usage, optimize queries, consider caching strategies
+## Risks
 
-### Risks
+1. **Pricing variability** if usage spikes  
+   _Mitigation:_ Budget alerts, Remote Config throttles, rate limiting
+2. **Complex reporting** beyond Firestore’s query model  
+   _Mitigation:_ BigQuery exports, scheduled aggregations
+3. **Device/platform edge cases**  
+   _Mitigation:_ Broad device testing, CI on emulators/simulators
 
-1. **Firebase Pricing**: Unpredictable costs if usage spikes
-   - **Mitigation**: Set budget alerts, implement rate limiting
-2. **Firestore Limitations**: Complex reports might require exports to BigQuery
-   - **Mitigation**: Plan for BigQuery integration in V3
-3. **Platform-Specific Issues**: Some device-specific bugs
-   - **Mitigation**: Comprehensive testing on both platforms
+---
 
 ## Implementation Notes
 
-### Code Organization
+### Architecture & Code Organization
 
-```
-lib/
-├── core/
-│   ├── services/        # Firebase service abstractions
-│   └── providers/       # Riverpod providers
-├── features/            # Feature modules
-└── app/
-    └── router.dart      # go_router configuration
-```
 
-### Dependency Abstraction
+- **Repository/Service pattern:** All Firebase calls flow through service layers (e.g., `AuthService`, `FirestoreService`) to enable future migration.
+- **Clean Architecture:** Separate presentation, domain, and data layers.
 
-All Firebase calls go through service layers (e.g., `AuthService`, `FirestoreService`) to minimize coupling and enable future migration if needed.
+### Offline Strategy
+
+- Local cache & write-ahead queue (Hive/Drift) for robust offline writes
+- Conflict policy and retry/backoff logic on reconnect
+
+### Cloud Functions (TypeScript + Zod)
+
+- Input validation with Zod schemas
+- Idempotency keys for payment and critical actions
+- Structured logging (entity, action, actor, orgId)
+- Error taxonomy for predictable client handling
+
+### Security Posture
+
+- **Deny by default** Firestore Rules
+- Role-based access (admin/crew lead/crew)
+- Prevent client writes to protected fields (e.g., `invoice.paid`, `invoice.paidAt`)
+- App Check enforced for callable functions
+- Audit logs for payment operations
 
 ### Testing Strategy
 
-- Unit tests for business logic (no Firebase)
+- Unit tests for domain logic (no Firebase)
 - Integration tests with Firebase emulators
-- Widget tests for UI components
-- E2E tests for critical user flows
+- Widget tests for UI
+- E2E for critical flows
+- Rules tests (emulator) for Security Rules
+- Functions tests (emulator)
+
+### Performance Targets
+
+- P50 < 1s, **P95 < 2.5s** for critical screens/calls
+- PDF generation ≤ 10s
+
+### Observability
+
+- Crashlytics for crash reports
+- Performance Monitoring for traces
+- Analytics for adoption/behavior
+- JSON structured logs for serverless
+
+---
 
 ## Alternatives Considered
 
-See "Context" section above for detailed comparison.
+- **React Native + AWS:** Flexible but higher setup complexity and steeper learning curve for small team velocity
+- **Native + Custom Backend:** Maximum control/perf but doubles app dev effort and adds infra burden
 
 ## Related Decisions
 
-- ADR-0002: Offline-First Architecture
-- ADR-0003: Manual Payments as Primary
+- ADR-0002: Offline-First Architecture  
+- ADR-0003: Manual Payments as Primary  
 - ADR-0004: TypeScript + Zod for Cloud Functions
 
 ## References
 
-- [Flutter Documentation](https://flutter.dev/docs)
-- [Firebase Documentation](https://firebase.google.com/docs)
-- [Riverpod Documentation](https://riverpod.dev)
-- [go_router Documentation](https://pub.dev/packages/go_router)
+- [Flutter Documentation](https://flutter.dev/docs)  
+- [Firebase Documentation](https://firebase.google.com/docs)  
+- [Riverpod Documentation](https://riverpod.dev)  
+- [go_router Package](https://pub.dev/packages/go_router)  
+- [Zod](https://zod.dev/)
 
 ## Superseded By
 
@@ -203,4 +224,6 @@ None (current decision)
 
 ---
 
-**Note**: This ADR is immutable. If we need to change this decision in the future, we'll create a new ADR that supersedes this one.
+> **Note:** ADRs are immutable. Revisions require a new ADR that supersedes this one.
+
+
