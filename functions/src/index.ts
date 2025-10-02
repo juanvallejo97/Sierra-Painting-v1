@@ -42,8 +42,8 @@ import { z } from "zod";
 // Schemas (from schemas/)
 import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 
-// Legacy Stripe webhook handler (kept during migration)
-import { handleStripeWebhook } from "./stripe/webhookHandler";
+// Stripe webhook handler
+import { handleStripeWebhook } from "./payments/stripeWebhook";
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
