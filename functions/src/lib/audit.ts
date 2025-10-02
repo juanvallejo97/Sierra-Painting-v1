@@ -63,7 +63,7 @@ import {AuditLogEntry, AuditLogEntrySchema} from './zodSchemas';
  * Parameters for creating an audit entry
  */
 export interface CreateAuditEntryParams {
-  entity: 'invoice' | 'payment' | 'estimate' | 'user' | 'job' | 'timeEntry';
+  entity: 'invoice' | 'payment' | 'estimate' | 'user' | 'job' | 'timeEntry' | 'lead';
   entityId: string;
   action: 'created' | 'updated' | 'deleted' | 'paid' | 'sent' | 'approved';
   actor: string; // Firebase UID
