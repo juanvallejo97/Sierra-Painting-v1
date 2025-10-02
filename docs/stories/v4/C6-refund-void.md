@@ -5,6 +5,11 @@
 ## User Story
 As an Admin, I WANT to refund or void invoices, SO THAT I can handle cancellations.
 
+## Dependencies
+- **C3** (Mark Paid): Must have paid invoices to refund
+- **C5** (Stripe): Stripe refunds require Stripe integration
+- **A1** (Sign-in): Must be authenticated as admin
+
 ## Acceptance Criteria
 
 ### Success Scenario: Refund

@@ -5,6 +5,10 @@
 ## User Story
 As an Admin, I WANT to review submitted leads, SO THAT I can qualify them and convert to jobs.
 
+## Dependencies
+- **D1** (Public Lead Form): Must have leads to review
+- **A1** (Sign-in): Must be authenticated as admin
+
 ## Acceptance Criteria
 
 ### Success Scenario

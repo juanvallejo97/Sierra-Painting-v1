@@ -5,6 +5,10 @@
 ## User Story
 As an Admin, I WANT to create jobs and assign crews, SO THAT painters know where to work.
 
+## Dependencies
+- **D2** (Review Lead): Typically converts qualified leads to jobs
+- **A1** (Sign-in): Must be authenticated as admin
+
 ## Acceptance Criteria
 
 ### Success Scenario
