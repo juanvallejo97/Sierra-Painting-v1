@@ -1,0 +1,50 @@
+# EditorConfig for Sierra Painting
+# Ensures consistent coding styles across different editors and IDEs
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Dart files
+[*.dart]
+indent_size = 2
+max_line_length = 120
+
+# TypeScript / JavaScript
+[*.{ts,js}]
+indent_size = 2
+max_line_length = 120
+
+# JSON
+[*.json]
+indent_size = 2
+
+# YAML
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# HTML
+[*.html]
+indent_style = space
+indent_size = 2
+
+# Makefiles use tabs
+[Makefile]
+indent_style = tab
+
+# Shell scripts
+[*.{sh,bash}]
+indent_style = space
+indent_size = 2
