@@ -1,112 +1,124 @@
 # Sierra Painting
 
-> A professional mobile-first painting business management application built with Flutter and Firebase.
+> A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
-**[View Architecture](docs/Architecture.md)** | **[Migration Guide](docs/MIGRATION.md)** | **[ADRs](docs/ADRs/)**
+**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)**
 
 ---
 
-## Quick Start
+## 🎯 Overview
+
+Sierra Painting helps small painting businesses manage operations, projects, estimates/invoices, and payments efficiently. The project follows **story-driven development** with comprehensive documentation and best practices.
+
+---
+
+## ⚡ Quick Start
 
 ### Prerequisites
-- **Flutter SDK** ≥ 3.8.0 ([Install](https://flutter.dev/docs/get-started/install))
-- **Node.js** ≥ 18 ([Install](https://nodejs.org/))
-- **Firebase CLI** ([Install](https://firebase.google.com/docs/cli#install_the_firebase_cli))
+- **Flutter SDK** ≥ 3.8.0 — [Install](https://flutter.dev/docs/get-started/install)
+- **Node.js** ≥ 18 — [Install](https://nodejs.org/)
+- **Firebase CLI** — [Install](https://firebase.google.com/docs/cli#install_the_firebase_cli)
 - **Git** and a code editor (VS Code recommended)
 
-### 1. Clone and Install
+### 1) Clone & Install
 
 ```bash
 # Clone the repository
 git clone https://github.com/juanvallejo97/Sierra-Painting-v1.git
 cd Sierra-Painting-v1
 
-# Install Flutter dependencies
+# Flutter deps
 flutter pub get
 
-# Generate Hive adapters for offline storage
+# (Optional) Generate adapters, etc.
 flutter pub run build_runner build --delete-conflicting-outputs
 
-# Install Cloud Functions dependencies
+# Cloud Functions deps
 cd functions
 npm ci
 cd ..
-```
-
-### 2. Firebase Setup
-
-```bash
-# Login to Firebase
+2) Firebase Setup
+bash
+Copy code
 firebase login
+firebase projects:list         # or create a project in the Firebase Console
+firebase use --add             # select or add an alias (e.g., staging, prod)
 
-# List projects (or create one at console.firebase.google.com)
-firebase projects:list
-
-# Link to your Firebase project
-firebase use --add
-
-# Generate Flutter Firebase configuration
+# Generate Flutter firebase_options.dart
 flutterfire configure
-```
-
-### 3. Start Development Environment
-
-```bash
-# Terminal 1: Start Firebase emulators
+3) Start Dev Environment
+bash
+Copy code
+# Terminal 1: Emulators
 firebase emulators:start
 
-# Terminal 2: Run Flutter app (it will connect to emulators)
+# Terminal 2: Run the app (connects to emulators)
 flutter run
 
-# Optional Terminal 3: Watch for Dart code generation
+# Optional: Watch for codegen
 flutter pub run build_runner watch
-```
+Emulator UI: http://localhost:4000
+Firestore: http://localhost:8080 · Auth: http://localhost:9099 · Functions: http://localhost:5001 · Storage: http://localhost:9199
 
-**Emulator UI:** http://localhost:4000  
-**Firestore Emulator:** http://localhost:8080  
-**Auth Emulator:** http://localhost:9099
+🧭 Golden Paths
+GP1: Auth & Time Tracking
+Sign up (Auth emulator) → 2) Clock in/out (offline queue to Firestore) → 3) View today’s jobs & entries
 
----
+GP2: Estimate → Invoice → Payment
+Create estimate with line items → 2) Generate PDF (Cloud Function) → 3) Convert to invoice → 4) Mark paid (admin-only with audit trail)
 
-## What Can You Do?
+GP3: Lead Capture → Schedule
+Submit lead via web form (App Check + captcha) → 2) Admin reviews → 3) Schedule job (lite scheduler)
 
-### Golden Path 1: Authentication & Time Tracking
-1. **Sign up** via the app (creates user in Auth emulator)
-2. **Clock in/out** on a job (writes to Firestore with offline queue)
-3. **View today's jobs** and time entries
+📚 Documentation
+Architecture: docs/Architecture.md
 
-### Golden Path 2: Estimate → Invoice → Payment
-1. **Create an estimate** with line items
-2. **Generate PDF** (server-side via Cloud Function)
-3. **Convert to invoice** (mark as sent)
-4. **Mark as paid** (admin only, with audit trail)
+Migration Guide: docs/MIGRATION.md
 
-### Golden Path 3: Lead Capture → Schedule
-1. **Submit a lead** via web form (validates App Check + captcha)
-2. **Admin reviews** in dashboard
-3. **Schedule job** with crew assignment (lite scheduler placeholder)
+ADRs: docs/ADRs/
 
----
+Feature Flags: docs/FEATURE_FLAGS.md
 
-## Tech Stack
+App Check Setup: docs/APP_CHECK.md
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Flutter (Material 3) | Cross-platform mobile app |
-| **Offline** | Hive | Local storage + sync queue |
-| **Backend** | Firebase (Auth, Firestore, Storage, Functions) | Serverless backend |
-| **Functions** | TypeScript + Zod | Type-safe serverless functions |
-| **Payments** | Manual (primary), Stripe (optional) | Check/cash + optional card payments |
-| **Security** | App Check + Firestore Rules | Deny-by-default authorization |
-| **Observability** | Crashlytics, Performance Monitoring, Analytics | Monitoring and debugging |
+Emulators Guide: docs/EMULATORS.md
 
-**Why this stack?** See [ADR-0001: Tech Stack](docs/ADRs/0001-tech-stack.md)
+Developer Workflow: docs/DEVELOPER_WORKFLOW.md
 
----
+Note: Older standalone setup/quickstart docs were consolidated into the README and docs above.
 
-## Project Structure
+🏗️ Tech Stack
+Layer	Technology	Purpose
+Frontend	Flutter (Material 3)	Cross-platform mobile app
+State	Riverpod	Reactive state & DI
+Routing	go_router	Declarative navigation with RBAC guards
+Offline	Hive	Local storage + sync queue
+Backend	Firebase (Auth, Firestore, Storage, Functions)	Serverless backend
+Functions	TypeScript + Zod	Type-safe serverless logic
+Payments	Manual primary, Stripe optional	Check/cash + optional card payments
+Security	App Check + Firestore Rules	Deny-by-default authorization
+Observability	Crashlytics, Performance, Analytics	Monitoring & debugging
 
-```
+Why this stack? See ADR-0001.
+
+🎯 Development Methodology
+User Stories with BDD acceptance criteria (Given/When/Then)
+
+Sprint Planning (V1, V2, V3, V4)
+
+Feature Flags via Firebase Remote Config for progressive rollout
+
+Idempotency for offline retries & webhooks
+
+Audit Trail for sensitive operations
+
+Observability with structured logs & performance traces
+
+See ADR-011 (Story-Driven Development) for details.
+
+📂 Project Structure
+bash
+Copy code
 /
 ├── lib/                      # Flutter application
 │   ├── app/                  # App bootstrap, theme, router (RBAC)
@@ -125,270 +137,174 @@ flutter pub run build_runner watch
 ├── functions/                # Cloud Functions (TypeScript + Zod)
 │   ├── src/
 │   │   ├── index.ts          # Export wiring
-│   │   ├── lib/              # Shared utilities (audit, idempotency, schemas)
+│   │   ├── lib/              # Shared (audit, idempotency, schemas)
 │   │   ├── leads/            # createLead
 │   │   ├── pdf/              # createEstimatePdf
-│   │   ├── payments/         # markPaidManual, stripe (optional)
-│   │   └── tests/            # Rules tests, function tests
+│   │   ├── payments/         # markPaidManual, Stripe (optional)
+│   │   └── tests/            # Rules & functions tests
 ├── docs/                     # Documentation
-│   ├── Architecture.md       # System design
-│   ├── KickoffTicket.md      # Requirements
-│   ├── MIGRATION.md          # Old→new file mapping
-│   └── ADRs/                 # Architecture decision records
+│   ├── Architecture.md
+│   ├── MIGRATION.md
+│   ├── FEATURE_FLAGS.md
+│   ├── APP_CHECK.md
+│   ├── EMULATORS.md
+│   └── ADRs/
 ├── .github/
 │   ├── workflows/            # CI/CD (analyze, test, deploy)
 │   └── ISSUE_TEMPLATE/       # Story, bug, tech-task templates
-├── firebase.json             # Firebase config (emulators, hosting)
+├── firebase.json             # Emulators & hosting
 ├── firestore.rules           # Security rules (deny-by-default)
 ├── firestore.indexes.json    # Database indexes
-└── storage.rules             # Storage security rules
-```
+└── storage.rules             # Storage rules
+🛡️ Security
+Firestore Rules (deny-by-default) — excerpt:
 
-**Detailed structure:** See [Architecture.md](docs/Architecture.md)
+javascript
+Copy code
+match /{document=**} {
+  allow read, write: if false;
+}
 
----
+match /users/{userId} {
+  allow read: if isOwner(userId) || isAdmin();
+  allow update: if isOwner(userId) && !modifiesRole();
+}
 
-## Environment Setup
+match /jobs/{jobId}/timeEntries/{entryId} {
+  allow create: if isAuthenticated() && isOwnEntry();
+  allow read: if isOwnEntry() || isAdmin();
+  allow update, delete: if false; // Server-only
+}
+Principles
 
-### App Check (Debug Mode for Development)
+Deny-by-default; org-scoped explicit allows
 
-App Check protects backend APIs from abuse. In development, use debug tokens:
+Client cannot set invoice.paid / invoice.paidAt (server-only)
 
-```bash
-# 1. Run the app once to get the debug token from console logs
-flutter run
+App Check enforced on callable functions
 
-# 2. Register the debug token in Firebase Console:
-#    Firebase Console → App Check → Apps → [Your App] → Debug tokens
+Audit logs for all payment operations
 
-# 3. (Optional) Store token locally for reuse
-echo "APP_CHECK_DEBUG_TOKEN=your-token-here" > .env.debug
-# Add .env.debug to .gitignore (already included)
-```
+See Security Architecture.
 
-**Docs:** [docs/APP_CHECK.md](docs/APP_CHECK.md)
-
-### Feature Flags (Firebase Remote Config)
-
-Configure behavior without deploying code:
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `payments.stripeEnabled` | boolean | `false` | Enable Stripe card payments |
-| `features.pdfGeneration` | boolean | `true` | Server-side PDF for estimates |
-| `features.offlineMode` | boolean | `true` | Local queue for offline writes |
-
-**Set in:** Firebase Console → Remote Config
-
-### Emulator Ports
-
-| Service | Port | URL |
-|---------|------|-----|
-| Emulator UI | 4000 | http://localhost:4000 |
-| Auth | 9099 | http://localhost:9099 |
-| Firestore | 8080 | http://localhost:8080 |
-| Functions | 5001 | http://localhost:5001 |
-| Storage | 9199 | http://localhost:9199 |
-
-**Docs:** [docs/EMULATORS.md](docs/EMULATORS.md)
-
----
-
-## Development Workflows
-
-### Run Tests
-
-```bash
-# Flutter unit tests
+🧪 Test, Lint & Analyze
+bash
+Copy code
+# Flutter tests
 flutter test
 
-# Flutter widget tests
-flutter test test/widget_test.dart
+# Flutter analyze
+flutter analyze
 
 # Cloud Functions tests
 cd functions
 npm test
-
-# Security rules tests (requires emulators running)
-npm run test:rules
-cd ..
-```
-
-### Lint & Analyze
-
-```bash
-# Flutter
-flutter analyze
-
-# Cloud Functions
-cd functions
+npm run test:rules       # requires emulators running
 npm run lint
 npm run typecheck
 cd ..
-```
+Integration & E2E
+bash
+Copy code
+# Emulators
+firebase emulators:start
 
-### Build
-
-```bash
-# Flutter (Android)
-flutter build apk --release
-flutter build appbundle --release
-
-# Flutter (iOS)
-flutter build ios --release
-
-# Flutter (Web)
-flutter build web --release
-
-# Cloud Functions
+# Functions integration tests
 cd functions
-npm run build  # Output: functions/lib/
+npm run test:integration
 cd ..
-```
 
----
+# Flutter E2E
+flutter test integration_test/
+🧰 Environment Setup
+App Check (Debug Mode)
+Run flutter run to get the debug token in logs
 
-## Deployment
+Register it in Firebase Console → App Check → Debug tokens
 
-### Staging (Auto-deploys on merge to main)
+(Optional) Save locally:
 
-```bash
-# Manual staging deployment
+bash
+Copy code
+echo "APP_CHECK_DEBUG_TOKEN=your-token-here" > .env.debug
+/.env.debug is gitignored.
+
+Feature Flags (Remote Config)
+Flag	Type	Default	Description
+payments.stripeEnabled	boolean	false	Enable Stripe payments
+features.pdfGeneration	boolean	true	Server-side PDF generation
+features.offlineMode	boolean	true	Offline queue & sync
+
+Example:
+
+dart
+Copy code
+final clockInEnabled = ref.watch(clockInEnabledProvider);
+return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
+🚢 Deployment
+Staging (auto on merge to main)
+CI runs tests, deploys Functions & Rules to staging
+
+Manual staging:
+
+bash
+Copy code
 firebase use staging
 firebase deploy
-```
-
-### Production (Tag-based)
-
-```bash
-# Create a version tag
-git tag v1.0.0
+Production (tag-based)
+bash
+Copy code
+git tag -a v1.0.0 -m "Sprint V1 release"
 git push origin v1.0.0
+# GitHub Actions builds & deploys to production
+CI config: .github/workflows/ci.yml
 
-# GitHub Actions will automatically deploy to production
-```
+📊 Performance Targets
+Operation	Target (P95)
+Sign-in	≤ 2.5s
+Clock-in (online)	≤ 2.5s
+Jobs Today load	≤ 2.0s
+Offline sync	≤ 5s per item
+PDF generation	≤ 10s
 
-**CI/CD:** `.github/workflows/ci.yml`
+Monitored via Firebase Performance & structured logs.
 
----
+🧑‍💻 Contributing
+Create a branch: git checkout -b feature/my-feature
 
-## Key Features
+Use issue templates in .github/ISSUE_TEMPLATE/
 
-### Security
-- **Deny-by-default** Firestore security rules
-- **App Check** for API abuse prevention
-- **Role-based access control** (Admin, Crew Lead, Crew)
-- **Audit trails** for all payment operations
-- **Client restrictions**: Cannot write `invoice.paid` or `invoice.paidAt`
+Follow CONTRIBUTING.md
 
-### Offline Support
-- Local caching with Hive
-- Offline write queue with automatic sync
-- **Pending Sync** UI badges for queued operations
-- Automatic reconciliation when online
+Run tests & lint before PR:
+flutter test && flutter analyze && (cd functions && npm test && npm run lint)
 
-### Accessibility (WCAG 2.2 AA)
-- Minimum 48x48 touch targets
-- Semantic labels on all interactive elements
-- Text scaling support (up to 130%)
-- High contrast color schemes
-- Screen reader compatibility
+Open a PR using the template
 
-### Payment Processing
-- **Primary**: Manual check/cash (admin "mark paid" + audit trail)
-- **Optional**: Stripe Checkout (behind `payments.stripeEnabled` flag)
-- Idempotent webhook handlers
-- Complete audit trail for all transactions
+🆘 Troubleshooting
+Emulators won’t start
 
-### Performance Targets
-- **P50 < 1s** for API calls
-- **P95 < 2.5s** for API calls
-- **PDF generation ≤ 10s**
-- **App launch < 3s** on mid-range devices
-
----
-
-## Architecture Highlights
-
-### Security Posture
-1. **Firestore Rules**: Deny-by-default; explicit allow for org-scoped reads/writes
-2. **Payment Protection**: Only Cloud Functions can set `invoice.paid` and `invoice.paidAt`
-3. **Role Enforcement**: Admin checks at router level + Firestore rules
-4. **App Check**: Enforced on all callable functions (anti-abuse)
-5. **Audit Logging**: Immutable activity log for sensitive operations
-
-### Offline-First Strategy
-- **Local Queue**: Hive-backed queue for writes when offline
-- **Sync State**: UI shows "Pending Sync" badge for queued operations
-- **Reconciliation**: Automatic retry with exponential backoff
-- **Conflict Resolution**: Last-write-wins (timestamps)
-
-### Observability
-- **Structured Logs**: `{ entity, action, actor, orgId, timestamp, ... }`
-- **Crashlytics**: Auto-capture unhandled exceptions
-- **Performance Monitoring**: Screen load times, API call durations, PDF generation
-- **Analytics Events**: Feature usage, user flows (names stubbed)
-
-**Full details:** [docs/Architecture.md](docs/Architecture.md)
-
----
-
-## Contributing
-
-1. **Create a branch**: `git checkout -b feature/my-feature`
-2. **Use issue templates**: `.github/ISSUE_TEMPLATE/`
-3. **Follow conventions**: See [CONTRIBUTING.md](CONTRIBUTING.md)
-4. **Run tests**: `flutter test && cd functions && npm test`
-5. **Lint code**: `flutter analyze && cd functions && npm run lint`
-6. **Submit PR**: Use the PR template
-
-**Code of Conduct:** Be respectful, inclusive, and professional.
-
----
-
-## Troubleshooting
-
-### Emulators Won't Start
-```bash
-# Kill existing processes
+bash
+Copy code
 lsof -ti:4000,8080,9099,5001,9199 | xargs kill -9
-
-# Clear emulator data
 firebase emulators:start --clean
-```
+Flutter build fails
 
-### Flutter Build Fails
-```bash
-# Clean build artifacts
+bash
+Copy code
 flutter clean
 flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs
-```
+Functions deploy fails
 
-### Functions Deployment Fails
-```bash
-# Rebuild functions
+bash
+Copy code
 cd functions
 rm -rf node_modules lib
 npm ci
 npm run build
 firebase deploy --only functions
-```
+More help: docs/EMULATORS.md · docs/APP_CHECK.md
 
-**More help:** See [docs/EMULATORS.md](docs/EMULATORS.md) and [docs/APP_CHECK.md](docs/APP_CHECK.md)
-
----
-
-## License
-
-Copyright © 2024 Sierra Painting. All rights reserved.
-
----
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/juanvallejo97/Sierra-Painting-v1/issues)
-- **Docs**: [docs/](docs/)
-- **ADRs**: [docs/ADRs/](docs/ADRs/)
-
-For questions about architecture decisions, see the [Architecture Decision Records](docs/ADRs/).
+📄 License
+Copyright © 2024 Sierra Painting
