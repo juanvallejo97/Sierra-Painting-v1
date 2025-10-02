@@ -1,7 +1,15 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service for managing feature flags using Firebase Remote Config
-/// Allows toggling features like optional Stripe integration
+/// 
+/// Design principles:
+/// - Flags map to sprint stories (feature_b1_clock_in_enabled)
+/// - Default to OFF for new features, ON for released features
+/// - Support gradual rollout via Remote Config conditions
+/// - Cache for performance, refresh every 1 hour
+/// 
+/// See: docs/FEATURE_FLAGS.md for complete documentation
 class FeatureFlagService {
   static final FeatureFlagService _instance = FeatureFlagService._internal();
   factory FeatureFlagService() => _instance;
@@ -10,9 +18,22 @@ class FeatureFlagService {
   FirebaseRemoteConfig? _remoteConfig;
   bool _initialized = false;
 
-  // Feature flag keys
-  static const String _stripeEnabledKey = 'stripe_enabled';
-  static const String _offlineModeKey = 'offline_mode_enabled';
+  // Feature flag keys - Sprint-based organization
+  // V1 Features (active)
+  static const String clockInEnabled = 'feature_b1_clock_in_enabled';
+  static const String clockOutEnabled = 'feature_b2_clock_out_enabled';
+  static const String jobsTodayEnabled = 'feature_b3_jobs_today_enabled';
+  
+  // V2 Features (gated)
+  static const String createQuoteEnabled = 'feature_c1_create_quote_enabled';
+  static const String markPaidEnabled = 'feature_c3_mark_paid_enabled';
+  
+  // V4 Features (optional)
+  static const String stripeCheckoutEnabled = 'feature_c5_stripe_checkout_enabled';
+  
+  // Operational flags
+  static const String offlineModeEnabled = 'offline_mode_enabled';
+  static const String gpsTrackingEnabled = 'gps_tracking_enabled';
 
   /// Initialize the feature flag service
   static Future<void> initialize() async {
@@ -20,10 +41,23 @@ class FeatureFlagService {
       final instance = FeatureFlagService();
       instance._remoteConfig = FirebaseRemoteConfig.instance;
 
-      // Set default values
+      // Set default values matching docs/FEATURE_FLAGS.md
       await instance._remoteConfig!.setDefaults(<String, dynamic>{
-        _stripeEnabledKey: false, // Stripe is OFF by default
-        _offlineModeKey: true, // Offline mode is ON by default
+        // V1 Features (active)
+        clockInEnabled: true,
+        clockOutEnabled: true,
+        jobsTodayEnabled: true,
+        
+        // V2 Features (gated)
+        createQuoteEnabled: false,
+        markPaidEnabled: false,
+        
+        // V4 Features (optional)
+        stripeCheckoutEnabled: false,
+        
+        // Operational flags
+        offlineModeEnabled: true,
+        gpsTrackingEnabled: true,
       });
 
       // Set fetch timeout and cache expiration
@@ -42,21 +76,34 @@ class FeatureFlagService {
     }
   }
 
-  /// Check if Stripe payments are enabled
-  bool get isStripeEnabled {
+  /// Check if a feature is enabled
+  bool isEnabled(String key) {
     if (!_initialized || _remoteConfig == null) {
-      return false; // Default to disabled
+      // Return safe defaults
+      return _getDefaultValue(key);
     }
-    return _remoteConfig!.getBool(_stripeEnabledKey);
+    return _remoteConfig!.getBool(key);
   }
 
-  /// Check if offline mode is enabled
-  bool get isOfflineModeEnabled {
-    if (!_initialized || _remoteConfig == null) {
-      return true; // Default to enabled
+  /// Get default value for a feature flag
+  bool _getDefaultValue(String key) {
+    // V1 features default to ON
+    if (key == clockInEnabled || 
+        key == clockOutEnabled || 
+        key == jobsTodayEnabled ||
+        key == offlineModeEnabled ||
+        key == gpsTrackingEnabled) {
+      return true;
     }
-    return _remoteConfig!.getBool(_offlineModeKey);
+    // All other features default to OFF
+    return false;
   }
+
+  /// Check if Stripe payments are enabled (legacy)
+  bool get isStripeEnabled => isEnabled(stripeCheckoutEnabled);
+
+  /// Check if offline mode is enabled (legacy)
+  bool get isOfflineModeEnabled => isEnabled(offlineModeEnabled);
 
   /// Get a boolean feature flag value
   bool getBoolean(String key, {bool defaultValue = false}) {
@@ -100,3 +147,56 @@ class FeatureFlagService {
     }
   }
 }
+
+// =============================================================================
+// Riverpod Providers for feature flags
+// =============================================================================
+
+/// Provider for the feature flag service
+final featureFlagServiceProvider = Provider<FeatureFlagService>((ref) {
+  return FeatureFlagService();
+});
+
+/// Sprint V1 Feature Providers
+final clockInEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.clockInEnabled);
+});
+
+final clockOutEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.clockOutEnabled);
+});
+
+final jobsTodayEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.jobsTodayEnabled);
+});
+
+/// Sprint V2 Feature Providers
+final createQuoteEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.createQuoteEnabled);
+});
+
+final markPaidEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.markPaidEnabled);
+});
+
+/// Sprint V4 Feature Providers
+final stripeCheckoutEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.stripeCheckoutEnabled);
+});
+
+/// Operational Flag Providers
+final offlineModeEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.offlineModeEnabled);
+});
+
+final gpsTrackingEnabledProvider = Provider<bool>((ref) {
+  final service = ref.watch(featureFlagServiceProvider);
+  return service.isEnabled(FeatureFlagService.gpsTrackingEnabled);
+});

@@ -24,35 +24,34 @@ export async function createPdfService(estimate: Estimate): Promise<Buffer> {
 
     let subtotal = 0;
     estimate.items.forEach((item) => {
-      const total = item.quantity * item.unitPrice;
+      const total = item.qty * item.unitPrice;  // Changed from quantity to qty
       subtotal += total;
       doc.fontSize(10)
         .text(
-          `${item.description} - Qty: ${item.quantity} x $${item.unitPrice} = $${total.toFixed(2)}`
+          `${item.description} - Qty: ${item.qty} x $${item.unitPrice} = $${total.toFixed(2)}`
         );
     });
 
     doc.moveDown();
 
-    // Labor
-    const laborTotal = estimate.laborHours * estimate.laborRate;
-    doc.text(
-      `Labor: ${estimate.laborHours} hours x $${estimate.laborRate}/hr = $${laborTotal.toFixed(2)}`
-    );
+    // Tax and discount
+    const taxAmount = subtotal * estimate.taxRate;
+    const afterDiscount = subtotal - estimate.discount;
+    const grandTotal = afterDiscount + taxAmount;
+
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`);
+    if (estimate.discount > 0) {
+      doc.text(`Discount: -$${estimate.discount.toFixed(2)}`);
+    }
+    if (estimate.taxRate > 0) {
+      doc.text(`Tax (${(estimate.taxRate * 100).toFixed(1)}%): $${taxAmount.toFixed(2)}`);
+    }
 
     doc.moveDown();
 
     // Total
-    const grandTotal = subtotal + laborTotal;
     doc.fontSize(14)
       .text(`Total: $${grandTotal.toFixed(2)}`, {align: "right"});
-
-    // Notes
-    if (estimate.notes) {
-      doc.moveDown();
-      doc.fontSize(10).text("Notes:", {underline: true});
-      doc.text(estimate.notes);
-    }
 
     doc.end();
   });

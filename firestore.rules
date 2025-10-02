@@ -16,6 +16,11 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
+    function isCrewLead() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'crewLead';
+    }
+    
     function hasValidAppCheck() {
       return request.app.appCheck.token.aud[0] == request.app.projectId;
     }
@@ -37,14 +42,41 @@ service cloud.firestore {
       allow read: if isOwner(userId);
       // Users can create their profile on signup
       allow create: if isOwner(userId);
-      // Users can update their own profile (except role)
+      // Users can update their own profile (except role and orgId)
       allow update: if isOwner(userId) && 
-                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'orgId']));
       // Only admins can delete users
       allow delete: if isAdmin();
       
       // Admin can read/write all users
       allow read, write: if isAdmin();
+    }
+    
+    // Jobs collection
+    match /jobs/{jobId} {
+      // Users can read jobs in their org that they're assigned to
+      allow read: if isAuthenticated() && 
+                     (belongsToOrg(resource.data) && 
+                      (resource.data.crewIds.hasAny([request.auth.uid]) || isAdmin()));
+      // Only admins can create/update/delete jobs
+      allow create, update, delete: if isAdmin();
+      
+      // Time entries subcollection (B1, B2)
+      match /timeEntries/{entryId} {
+        // Users can create their own entries (B1)
+        allow create: if isAuthenticated()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.orgId == 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+        
+        // Users can read their own entries OR admins can read all
+        allow read: if isAuthenticated() 
+          && (request.auth.uid == resource.data.userId 
+              || isAdmin());
+        
+        // No client updates (clock-out is via callable function)
+        allow update, delete: if false;
+      }
     }
     
     // Projects collection
@@ -94,6 +126,37 @@ service cloud.firestore {
       
       // Invoices cannot be deleted
       allow delete: if false;
+    }
+    
+    // Estimates collection
+    match /estimates/{estimateId} {
+      allow read: if isAuthenticated() && (belongsToOrg(resource.data) || isAdmin());
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+    
+    // Leads collection (D1)
+    match /leads/{leadId} {
+      // Admins can read all leads
+      allow read: if isAdmin();
+      // NO client writes - only via callable function with App Check
+      allow create, update, delete: if false;
+    }
+    
+    // Activity logs collection (E3) - audit trail
+    match /activity_logs/{logId} {
+      // Only admins can read activity logs
+      allow read: if isAdmin();
+      // NO client writes - only server-side
+      allow write: if false;
+    }
+    
+    // Idempotency collection (ADR-006)
+    match /idempotency/{key} {
+      // Only admins can read (for debugging)
+      allow read: if isAdmin();
+      // NO client writes - only server-side
+      allow write: if false;
     }
   }
 }
