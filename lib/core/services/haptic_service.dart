@@ -1,6 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Haptic enabled state provider
+///
+/// Used for settings toggle and to control haptic feedback globally
+final hapticEnabledProvider = StateProvider<bool>((ref) => true);
+
 /// Haptic feedback service
 ///
 /// Provides tactile confirmation for user interactions.
@@ -12,15 +17,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// - Heavy: Errors, warnings, critical feedback
 /// - Selection: Tab/item selection, checkboxes
 class HapticService {
-  bool _isEnabled = true;
+  HapticService(this.ref);
+
+  final Ref ref;
+
+  /// Check if haptics are enabled
+  bool get isEnabled => ref.read(hapticEnabledProvider);
 
   /// Enable or disable haptic feedback
   void setEnabled(bool enabled) {
-    _isEnabled = enabled;
+    ref.read(hapticEnabledProvider.notifier).state = enabled;
   }
-
-  /// Check if haptics are enabled
-  bool get isEnabled => _isEnabled;
 
   /// Light haptic feedback
   ///
@@ -30,7 +37,7 @@ class HapticService {
   /// - Form field focus
   /// - Minor UI interactions
   Future<void> light() async {
-    if (_isEnabled) {
+    if (isEnabled) {
       await HapticFeedback.lightImpact();
     }
   }
@@ -44,7 +51,7 @@ class HapticService {
   /// - Save actions
   /// - Successful completions
   Future<void> medium() async {
-    if (_isEnabled) {
+    if (isEnabled) {
       await HapticFeedback.mediumImpact();
     }
   }
@@ -57,7 +64,7 @@ class HapticService {
   /// - Critical alerts
   /// - Failed operations
   Future<void> heavy() async {
-    if (_isEnabled) {
+    if (isEnabled) {
       await HapticFeedback.heavyImpact();
     }
   }
@@ -70,7 +77,7 @@ class HapticService {
   /// - Item selection in list
   /// - Picker/slider interaction
   Future<void> selection() async {
-    if (_isEnabled) {
+    if (isEnabled) {
       await HapticFeedback.selectionClick();
     }
   }
@@ -82,18 +89,16 @@ class HapticService {
   /// - Alarms
   /// - Long-running task completion
   Future<void> vibrate() async {
-    if (_isEnabled) {
+    if (isEnabled) {
       await HapticFeedback.vibrate();
     }
   }
 }
 
 /// Haptic service provider
-final hapticServiceProvider = Provider<HapticService>((ref) {
-  return HapticService();
-});
-
-/// Haptic enabled state provider
 ///
-/// Used for settings toggle
-final hapticEnabledProvider = StateProvider<bool>((ref) => true);
+/// Provides a HapticService instance that automatically syncs with
+/// the hapticEnabledProvider state
+final hapticServiceProvider = Provider<HapticService>((ref) {
+  return HapticService(ref);
+});
