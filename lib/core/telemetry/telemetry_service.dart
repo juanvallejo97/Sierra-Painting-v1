@@ -1,166 +1,240 @@
-/// Telemetry Service for Sierra Painting
+/// Performance Monitor for Screen Tracking
 ///
 /// PURPOSE:
-/// Centralized observability service for structured logging, analytics, and crash reporting.
-/// Provides consistent telemetry across the application with minimal performance overhead.
-///
-/// RESPONSIBILITIES:
-/// - Structured logging with standard fields (entity, action, actorUid, orgId, requestId)
-/// - Analytics event tracking for user behavior
-/// - Crashlytics integration for error tracking
-/// - Performance monitoring hooks
+/// Track screen load times, interaction latency, and performance metrics.
+/// Integrates with Firebase Performance Monitoring.
 ///
 /// USAGE:
 /// ```dart
-/// final telemetry = ref.read(telemetryServiceProvider);
-/// telemetry.logEvent('CLOCK_IN', {
-///   'entity': 'timeEntry',
-///   'jobId': jobId,
-///   'timestamp': DateTime.now().toIso8601String(),
-/// });
+/// class MyScreen extends StatefulWidget {
+///   @override
+///   State<MyScreen> createState() => _MyScreenState();
+/// }
+///
+/// class _MyScreenState extends State<MyScreen> with PerformanceMonitorMixin {
+///   @override
+///   String get screenName => 'my_screen';
+///
+///   @override
+///   void initState() {
+///     super.initState();
+///     startScreenTrace();
+///   }
+///
+///   @override
+///   void dispose() {
+///     stopScreenTrace();
+///     super.dispose();
+///   }
+/// }
 /// ```
 ///
-/// PERFORMANCE NOTES:
-/// - Logs are buffered and sent in batches
-/// - Analytics events are throttled (max 100/session)
-/// - Crashes are reported with full context
-///
-/// PRIVACY:
-/// - No PII in standard logs
-/// - User IDs are hashed for analytics
-/// - Opt-out supported via Remote Config
+/// METRICS:
+/// - Screen render time (time to first meaningful paint)
+/// - Interaction latency (button tap to response)
+/// - Network request duration
+/// - Custom metrics per screen
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart'; // ✅ needed for State/StatefulWidget/BuildContext/StatelessWidget
 
-class TelemetryService {
-  static final TelemetryService _instance = TelemetryService._internal();
-  factory TelemetryService() => _instance;
-  TelemetryService._internal();
+/// Performance trace
+class PerformanceTrace {
+  final String name;
+  final DateTime startTime;
+  DateTime? endTime;
+  final Map<String, dynamic> attributes;
+  final Map<String, num> metrics;
 
-  /// Current requestId for correlation
-  String? _currentRequestId;
+  PerformanceTrace(this.name)
+      : startTime = DateTime.now(),
+        attributes = {},
+        metrics = {};
 
-  /// Set the current requestId for log correlation
-  void setRequestId(String? requestId) {
-    _currentRequestId = requestId;
+  /// Stop the trace
+  void stop() {
+    endTime = DateTime.now();
+    _logTrace();
   }
 
-  /// Get the current requestId
-  String? get currentRequestId => _currentRequestId;
-
-  /// Initialize telemetry services
-  /// Sets up Crashlytics, Analytics, and Performance Monitoring
-  static Future<void> initialize() async {
-    // TODO: Initialize Firebase Crashlytics
-    // TODO: Initialize Firebase Analytics
-    // TODO: Initialize Firebase Performance Monitoring
-    debugPrint('[Telemetry] Service initialized');
+  /// Add an attribute to the trace
+  void setAttribute(String key, String value) {
+    attributes[key] = value;
   }
 
-  /// Log a structured event
-  ///
-  /// [action] - The action being performed (e.g., 'CLOCK_IN', 'INVOICE_CREATED')
-  /// [data] - Additional structured data (should include entity, actorUid, orgId, etc.)
-  /// [requestId] - Optional requestId for correlation (defaults to current requestId)
-  void logEvent(String action, Map<String, dynamic> data, {String? requestId}) {
-    final effectiveRequestId = requestId ?? _currentRequestId;
-    final enrichedData = {
-      ...data,
-      if (effectiveRequestId != null) 'requestId': effectiveRequestId,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
+  /// Add a metric to the trace
+  void setMetric(String key, num value) {
+    metrics[key] = value;
+  }
 
+  /// Get duration in milliseconds
+  int get durationMs {
+    final end = endTime ?? DateTime.now();
+    return end.difference(startTime).inMilliseconds;
+  }
+
+  void _logTrace() {
     if (kDebugMode) {
-      debugPrint('[Telemetry] Event: $action, Data: $enrichedData');
-    }
-    // TODO: Send to Firebase Analytics
-    // TODO: Add to structured log buffer
-  }
-
-  /// Log an error with context
-  ///
-  /// [error] - The error that occurred
-  /// [stackTrace] - Optional stack trace
-  /// [context] - Additional context about where/when the error occurred
-  /// [requestId] - Optional requestId for correlation (defaults to current requestId)
-  void logError(
-    dynamic error, {
-    StackTrace? stackTrace,
-    Map<String, dynamic>? context,
-    String? requestId,
-  }) {
-    final effectiveRequestId = requestId ?? _currentRequestId;
-    final enrichedContext = {
-      ...?context,
-      if (effectiveRequestId != null) 'requestId': effectiveRequestId,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-
-    if (kDebugMode) {
-      debugPrint('[Telemetry] Error: $error');
-      if (stackTrace != null) {
-        debugPrint('[Telemetry] Stack: $stackTrace');
+      debugPrint('[Performance] Trace: $name');
+      debugPrint('  Duration: ${durationMs}ms');
+      if (attributes.isNotEmpty) {
+        debugPrint('  Attributes: $attributes');
       }
-      if (enrichedContext.isNotEmpty) {
-        debugPrint('[Telemetry] Context: $enrichedContext');
+      if (metrics.isNotEmpty) {
+        debugPrint('  Metrics: $metrics');
       }
     }
-    // TODO: Send to Firebase Crashlytics with enriched context
-  }
-
-  /// Track screen view
-  ///
-  /// [screenName] - Name of the screen/route
-  /// [screenClass] - Optional class name
-  void trackScreenView(String screenName, {String? screenClass}) {
-    if (kDebugMode) {
-      debugPrint('[Telemetry] Screen: $screenName');
-    }
-    // TODO: Send to Firebase Analytics
-  }
-
-  /// Track performance trace
-  ///
-  /// [name] - Name of the operation being traced
-  /// Returns a function to call when the operation completes
-  Function startTrace(String name) {
-    final startTime = DateTime.now();
-    
-    return () {
-      final duration = DateTime.now().difference(startTime);
-      if (kDebugMode) {
-        debugPrint('[Telemetry] Trace: $name took ${duration.inMilliseconds}ms');
-      }
-      // TODO: Send to Firebase Performance Monitoring
-    };
-  }
-
-  /// Set user properties for analytics
-  ///
-  /// [userId] - User ID (will be hashed)
-  /// [properties] - Additional user properties (no PII)
-  void setUserProperties(String userId, Map<String, String> properties) {
-    if (kDebugMode) {
-      debugPrint('[Telemetry] User properties set for $userId');
-    }
-    // TODO: Set user properties in Firebase Analytics
-  }
-
-  /// Record custom metric
-  ///
-  /// [name] - Metric name
-  /// [value] - Metric value
-  void recordMetric(String name, num value) {
-    if (kDebugMode) {
-      debugPrint('[Telemetry] Metric: $name = $value');
-    }
-    // TODO: Send custom metric to Firebase
+    // TODO: Send to Firebase Performance Monitoring
   }
 }
 
-/// Riverpod Provider for TelemetryService
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+/// Performance Monitor Service
+class PerformanceMonitor {
+  static final PerformanceMonitor _instance = PerformanceMonitor._internal();
+  factory PerformanceMonitor() => _instance;
+  PerformanceMonitor._internal();
 
-final telemetryServiceProvider = Provider<TelemetryService>((ref) {
-  return TelemetryService();
-});
+  final Map<String, PerformanceTrace> _activeTraces = {};
+
+  /// Start a custom trace
+  PerformanceTrace startTrace(String name) {
+    final trace = PerformanceTrace(name);
+    _activeTraces[name] = trace;
+    return trace;
+  }
+
+  /// Stop a trace
+  void stopTrace(String name) {
+    final trace = _activeTraces[name];
+    if (trace != null) {
+      trace.stop();
+      _activeTraces.remove(name);
+    }
+  }
+
+  /// Get an active trace
+  PerformanceTrace? getTrace(String name) {
+    return _activeTraces[name];
+  }
+
+  /// Record a network request
+  void recordNetworkRequest({
+    required String url,
+    required String method,
+    required int statusCode,
+    required int durationMs,
+    int? requestSize,
+    int? responseSize,
+  }) {
+    if (kDebugMode) {
+      debugPrint('[Performance] Network: $method $url');
+      debugPrint('  Status: $statusCode, Duration: ${durationMs}ms');
+      if (requestSize != null) {
+        debugPrint('  Request size: ${requestSize}B');
+      }
+      if (responseSize != null) {
+        debugPrint('  Response size: ${responseSize}B');
+      }
+    }
+    // TODO: Send to Firebase Performance Monitoring
+  }
+
+  /// Record custom metric
+  void recordMetric({
+    required String name,
+    required num value,
+    Map<String, String>? attributes,
+  }) {
+    if (kDebugMode) {
+      debugPrint('[Performance] Metric: $name = $value');
+      if (attributes != null && attributes.isNotEmpty) {
+        debugPrint('  Attributes: $attributes');
+      }
+    }
+    // TODO: Send to Firebase Performance Monitoring
+  }
+}
+
+/// Mixin for automatic screen performance tracking
+mixin PerformanceMonitorMixin<T extends StatefulWidget> on State<T> {
+  PerformanceTrace? _screenTrace;
+
+  /// Screen name for tracking (must be overridden)
+  String get screenName;
+
+  /// Start screen trace
+  void startScreenTrace() {
+    final monitor = PerformanceMonitor();
+    _screenTrace = monitor.startTrace('screen_$screenName');
+    _screenTrace?.setAttribute('screen', screenName);
+  }
+
+  /// Stop screen trace
+  void stopScreenTrace() {
+    _screenTrace?.stop();
+    _screenTrace = null;
+  }
+
+  /// Record an interaction
+  void recordInteraction(String name, int durationMs) {
+    final monitor = PerformanceMonitor();
+    monitor.recordMetric(
+      name: 'interaction_${name}_latency',
+      value: durationMs,
+      attributes: {'screen': screenName},
+    );
+  }
+
+  /// Record a custom metric for this screen
+  void recordScreenMetric(String name, num value) {
+    final monitor = PerformanceMonitor();
+    monitor.recordMetric(
+      name: '${screenName}_$name',
+      value: value,
+      attributes: {'screen': screenName},
+    );
+  }
+}
+
+/// Widget that tracks its build time
+class PerformanceTrackedWidget extends StatelessWidget {
+  final String name;
+  final Widget Function(BuildContext) builder;
+
+  const PerformanceTrackedWidget({
+    super.key,
+    required this.name,
+    required this.builder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final stopwatch = Stopwatch()..start();
+    final built = builder(context);
+    stopwatch.stop();
+
+    if (kDebugMode && stopwatch.elapsedMilliseconds > 16) {
+      debugPrint('[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms');
+    }
+
+    return built;
+  }
+}
+
+/// Extension for performance tracking on async operations
+extension PerformanceTracking<T> on Future<T> {
+  /// Track duration of async operation
+  Future<T> tracked(String name) async {
+    final monitor = PerformanceMonitor();
+    final trace = monitor.startTrace(name);
+    try {
+      final result = await this;
+      trace.stop();
+      return result;
+    } catch (e) {
+      trace.setAttribute('error', e.toString());
+      trace.stop();
+      rethrow;
+    }
+  }
+}
