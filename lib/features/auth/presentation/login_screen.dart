@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
+import 'package:sierra_painting/core/services/haptic_service.dart';
 import 'package:sierra_painting/design/design.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -24,7 +25,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Light haptic on button press
+    await ref.read(hapticServiceProvider).light();
+
+    if (!_formKey.currentState!.validate()) {
+      // Heavy haptic on validation failure
+      await ref.read(hapticServiceProvider).heavy();
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -33,7 +41,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      // Medium haptic on successful login
+      await ref.read(hapticServiceProvider).medium();
     } catch (e) {
+      // Heavy haptic on error
+      await ref.read(hapticServiceProvider).heavy();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${e.toString()}')),
