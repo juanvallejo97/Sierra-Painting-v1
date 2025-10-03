@@ -83,7 +83,7 @@ jobs:
           path: mobile_metrics.txt
           retention-days: 30
 
-  backend_smoke:
+  backend-health-check:
     name: Backend Health Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -162,7 +162,7 @@ jobs:
   smoke-test-summary:
     name: Smoke Test Summary
     runs-on: ubuntu-latest
-    needs: [mobile-app-smoke-tests, backend_smoke]
+    needs: [mobile-app-smoke-tests, backend-health-check]
     if: always()
     
     steps:
@@ -180,7 +180,7 @@ jobs:
           
           # Check job results
           MOBILE_STATUS="${{ needs.mobile-app-smoke-tests.result }}"
-          BACKEND_STATUS="${{ needs.backend_smoke.result }}"
+          BACKEND_STATUS="${{ needs.backend-health-check.result }}"
           
           echo "Mobile Smoke Tests: $MOBILE_STATUS"
           echo "Backend Health Check: $BACKEND_STATUS"
@@ -212,7 +212,7 @@ jobs:
         with:
           script: |
             const mobileStatus = '${{ needs.mobile-app-smoke-tests.result }}';
-            const backendStatus = '${{ needs.backend_smoke.result }}';
+            const backendStatus = '${{ needs.backend-health-check.result }}';
             
             const mobileIcon = mobileStatus === 'success' ? '✅' : '❌';
             const backendIcon = backendStatus === 'success' ? '✅' : '❌';
