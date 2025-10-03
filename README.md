@@ -83,6 +83,8 @@ Emulators Guide: docs/EMULATORS.md
 
 Developer Workflow: docs/DEVELOPER_WORKFLOW.md
 
+UI/UX Overhaul: docs/ui_overhaul_mobile.md
+
 Note: Older standalone setup/quickstart docs were consolidated into the README and docs above.
 
 🏗️ Tech Stack
