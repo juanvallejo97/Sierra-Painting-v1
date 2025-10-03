@@ -4,7 +4,8 @@
   "private": true,
   "description": "Root package for CI testing infrastructure including Firestore rules tests",
   "scripts": {
-    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\""
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+    "smoke": "dart run tool/smoke/smoke.dart"
   },
   "devDependencies": {
     "firebase-tools": "^13.9.1",
