@@ -20,11 +20,13 @@
  */
 
 import type {Request, Response} from 'firebase-functions/v1';
+import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
 
 type HttpHandler = (req: Request, res: Response) => void | Promise<void>;
 
 export const requireAppCheck = (handler: HttpHandler): HttpHandler => {
-  return (req: Request, res: Response) => {
+  return async (req: Request, res: Response) => {
     // Check for X-Firebase-AppCheck header
     const token = req.header('X-Firebase-AppCheck');
     
@@ -33,10 +35,17 @@ export const requireAppCheck = (handler: HttpHandler): HttpHandler => {
       return;
     }
     
-    // TODO: Optionally verify token using Firebase Admin SDK
-    // For now, just check presence. Full verification can be added:
-    // const appCheck = admin.appCheck();
-    // await appCheck.verifyToken(token);
+    // Verify token using Firebase Admin SDK
+    // This provides defense-in-depth validation beyond Firebase's automatic checks
+    try {
+      const appCheck = admin.appCheck();
+      await appCheck.verifyToken(token);
+      // Token is valid, proceed with handler
+    } catch (error) {
+      functions.logger.warn('App Check token verification failed', { error });
+      res.status(401).send('Invalid App Check token');
+      return;
+    }
     
     return handler(req, res);
   };
