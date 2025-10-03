@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
+import 'package:sierra_painting/core/services/haptic_service.dart';
 
 /// Navigation items
 class NavigationItem {
@@ -63,6 +64,7 @@ class AppNavigationBar extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final isAdmin = user?.email?.contains('admin') ?? false;
     final currentRoute = GoRouterState.of(context).matchedLocation;
+    final hapticService = ref.read(hapticServiceProvider);
 
     // Filter items based on admin status
     final visibleItems = _navigationItems
@@ -76,7 +78,9 @@ class AppNavigationBar extends ConsumerWidget {
 
     return BottomNavigationBar(
       currentIndex: currentIndex >= 0 ? currentIndex : 0,
-      onTap: (index) {
+      onTap: (index) async {
+        // Selection haptic feedback on tab change
+        await hapticService.selection();
         final route = visibleItems[index].route;
         context.go(route);
       },

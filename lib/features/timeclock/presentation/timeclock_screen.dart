@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/core/services/feature_flag_service.dart';
+import 'package:sierra_painting/design/design.dart';
 
 class TimeclockScreen extends ConsumerWidget {
   const TimeclockScreen({super.key});
@@ -33,34 +34,39 @@ class _TimeclockBody extends ConsumerWidget {
     final clockOutEnabled = ref.watch(clockOutEnabledProvider);
 
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.access_time, size: 100),
-          const SizedBox(height: 24),
-          Text(
-            'Welcome, ${user?.email ?? "User"}',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 48),
-          if (clockInEnabled)
-            FilledButton.icon(
-              onPressed: () {
-                // Clock in logic - TODO: integrate with repository
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Clock In'),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceLG),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.access_time, size: 100),
+            const SizedBox(height: DesignTokens.spaceLG),
+            Text(
+              'Welcome, ${user?.email ?? "User"}',
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
             ),
-          const SizedBox(height: 16),
-          if (clockOutEnabled)
-            OutlinedButton.icon(
-              onPressed: () {
-                // Clock out logic - TODO: integrate with repository
-              },
-              icon: const Icon(Icons.stop),
-              label: const Text('Clock Out'),
-            ),
-        ],
+            const SizedBox(height: DesignTokens.spaceXXL),
+            if (clockInEnabled)
+              AppButton(
+                label: 'Clock In',
+                icon: Icons.play_arrow,
+                onPressed: () {
+                  // Clock in logic - TODO: integrate with repository
+                },
+              ),
+            const SizedBox(height: DesignTokens.spaceMD),
+            if (clockOutEnabled)
+              AppButton(
+                label: 'Clock Out',
+                icon: Icons.stop,
+                variant: ButtonVariant.outlined,
+                onPressed: () {
+                  // Clock out logic - TODO: integrate with repository
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

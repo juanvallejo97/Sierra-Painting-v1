@@ -2,15 +2,17 @@
 
 > **Purpose**: Complete mapping of all routes, navigation flows, and deep links in the Flutter application
 >
-> **Last Updated**: 2024
+> **Last Updated**: 2025-10-03 (UI Overhaul - PR-02)
 >
-> **Status**: Current (v2.0.0-refactor)
+> **Status**: Current (v2.0.0-refactor + UI Overhaul)
 
 ---
 
 ## Overview
 
 The Sierra Painting Flutter app uses `go_router` for declarative routing with role-based access control (RBAC). This document maps all routes, their guards, and navigation flows.
+
+**Total Routes**: 5 (1 public, 4 authenticated)
 
 ---
 
@@ -22,10 +24,35 @@ The Sierra Painting Flutter app uses `go_router` for declarative routing with ro
 
 **Features**:
 - Declarative routing with `GoRouter`
-- Role-based access guards
-- Deep link support
+- Role-based access guards (RBAC)
+- Deep link support (iOS & Android)
 - Authentication state-based redirects
 - Error handling with custom error screen
+- 404 handling
+
+**Navigation Patterns**:
+- Bottom navigation for main flows
+- Drawer navigation for secondary actions
+- Push navigation for detail views
+- Deep links for notifications
+
+---
+
+## Route Reachability Matrix
+
+| Route | Auth Required | Role Required | Deep Link | Status |
+|-------|---------------|---------------|-----------|--------|
+| `/login` | No | None | ✅ `sierrapainting://login` | ✅ Reachable |
+| `/timeclock` | Yes | Any | ✅ `sierrapainting://timeclock` | ✅ Reachable |
+| `/estimates` | Yes | Any | ✅ `sierrapainting://estimates` | ✅ Reachable |
+| `/invoices` | Yes | Any | ✅ `sierrapainting://invoices` | ✅ Reachable |
+| `/admin` | Yes | Admin | ✅ `sierrapainting://admin` | ✅ Reachable (with guard) |
+
+**Guard Behavior**:
+- Non-authenticated users accessing authenticated routes → Redirect to `/login`
+- Authenticated users accessing `/login` → Redirect to `/timeclock`
+- Non-admin users accessing `/admin` → Redirect to `/timeclock`
+- Invalid routes → Show error screen with "Go Home" button
 
 ---
 
