@@ -65,3 +65,13 @@ functions/.runtimeconfig.json
 functions/.env
 functions/.env.*
 functions/*.log
+
+# --- Next.js Web App ---
+webapp/node_modules/
+webapp/.next/
+webapp/out/
+webapp/.env
+webapp/.env.local
+webapp/.env*.local
+webapp/.env.staging
+webapp/.env.production
