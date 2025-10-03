@@ -8,6 +8,7 @@ module.exports = {
     'src/**/*.ts',
     '!src/**/*.test.ts',
     '!src/**/__tests__/**',
+    '!src/**/test/**',
   ],
   globals: {
     'ts-jest': {
