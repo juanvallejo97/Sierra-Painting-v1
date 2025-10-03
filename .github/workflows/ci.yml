@@ -34,6 +34,42 @@ jobs:
       
       - name: Build APK
         run: flutter build apk --release
+      
+      - name: Check APK size budget
+        run: |
+          APK_SIZE=$(stat -c%s "build/app/outputs/flutter-apk/app-release.apk")
+          APK_SIZE_MB=$((APK_SIZE / 1024 / 1024))
+          MAX_SIZE_MB=50
+          echo "APK Size: ${APK_SIZE_MB}MB (Budget: ${MAX_SIZE_MB}MB)"
+          if [ $APK_SIZE_MB -gt $MAX_SIZE_MB ]; then
+            echo "❌ APK size exceeds budget! ${APK_SIZE_MB}MB > ${MAX_SIZE_MB}MB"
+            exit 1
+          else
+            echo "✅ APK size within budget"
+          fi
+      
+      - name: Report APK size
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const stats = fs.statSync('build/app/outputs/flutter-apk/app-release.apk');
+            const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+            const maxSizeMB = 50;
+            const status = sizeMB <= maxSizeMB ? '✅' : '❌';
+            const body = `## 📦 APK Size Report
+            
+            ${status} **${sizeMB}MB** / ${maxSizeMB}MB budget
+            
+            ${sizeMB > maxSizeMB ? '⚠️ APK size exceeds budget!' : '✅ Within budget'}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
   analyze-functions:
     name: Analyze Cloud Functions

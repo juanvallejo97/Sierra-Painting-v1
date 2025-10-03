@@ -153,6 +153,37 @@ If yes to any above, explain:
 - [ ] Performance improved
 - [ ] Performance decreased (explain below)
 
+#### Performance Checklist (for all PRs)
+<!-- Mark completed items with an [x] -->
+
+**Flutter/Dart:**
+- [ ] Added `const` to all static widgets
+- [ ] State changes localized (minimal rebuild scope)
+- [ ] Heavy work offloaded to isolates (`compute()`)
+- [ ] Lists use `.builder()` pattern
+- [ ] Images cached appropriately (cached_network_image)
+- [ ] Controllers disposed properly
+- [ ] Network calls have timeouts (30s default)
+- [ ] Optimistic updates for writes where appropriate
+
+**Firestore:**
+- [ ] Queries have necessary indexes
+- [ ] Queries use `.limit()` for pagination
+- [ ] No unbounded queries (N+1 patterns avoided)
+- [ ] Offline persistence enabled where needed
+
+**Performance Testing:**
+- [ ] No frame drops in profile mode (DevTools checked)
+- [ ] Memory leaks checked
+- [ ] APK size within budget (≤50MB)
+- [ ] Startup time measured if changed (P90 <2s)
+
+**Backend (if applicable):**
+- [ ] Functions have timeout limits
+- [ ] Functions use minInstances for critical paths
+- [ ] Payloads compressed (gzip/Brotli)
+- [ ] Batch operations used where possible
+
 ### Rollback Plan
 <!-- How can this change be rolled back if issues arise? -->
 
