@@ -5,7 +5,7 @@
  * Verify the /health endpoint returns correct response and dependencies status
  * 
  * SETUP:
- * Run with: npm test -- health_test.ts
+ * Run with: npm test -- test/smoke/
  * 
  * SUCCESS CRITERIA:
  * - Health endpoint returns 200 status
@@ -13,11 +13,10 @@
  * - Response time < 50ms (local) or < 200ms (deployed)
  */
 
-import * as admin from 'firebase-admin';
-import * as test from 'firebase-functions-test';
+import functionsTest from 'firebase-functions-test';
 
 // Initialize test environment
-const testEnv = test();
+const testEnv = functionsTest();
 
 describe('Health Check Function', () => {
   let healthCheckFunction: any;
