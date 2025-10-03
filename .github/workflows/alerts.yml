@@ -1,0 +1,18 @@
+name: Alerts (placeholders)
+on:
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Configure GCP Monitoring or custom alerts to call webhooks here."
+      - name: Placeholder for alert configuration
+        run: |
+          echo "TODO: Wire up alerting to:"
+          echo "- Slack webhook (secrets.SLACK_WEBHOOK_URL)"
+          echo "- Email via SendGrid or similar"
+          echo "- PagerDuty for P0/P1 incidents"
+          echo ""
+          echo "Example integration:"
+          echo "curl -X POST \$SLACK_WEBHOOK_URL -d '{\"text\": \"Alert triggered\"}'"

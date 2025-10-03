@@ -1,39 +1,47 @@
-name: Security Checks
-
+name: Security - Firestore Rules
 on:
-  push:
-    branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
-  schedule:
-    - cron: '0 0 * * 1'  # Weekly on Monday
+  push:
+    branches: [ main ]
 
 jobs:
-  firebase-rules:
+  rules:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Validate Firestore Rules
-      run: |
-        if [ -f "firestore.rules" ]; then
-          echo "Firestore rules file found"
-          # Add validation logic here if needed
-        else
-          echo "No firestore.rules file found"
-          exit 1
-        fi
-    
-    - name: Validate Storage Rules
-      run: |
-        if [ -f "storage.rules" ]; then
-          echo "Storage rules file found"
-          # Add validation logic here if needed
-        else
-          echo "No storage.rules file found"
-          exit 1
-        fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install deps
+        run: |
+          if [ -f package.json ]; then npm ci || npm i; else echo "No package.json"; fi
+      - name: Run Firestore rule tests
+        run: npm run test:rules
+  
+  validate-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate Firestore Rules
+        run: |
+          if [ -f "firestore.rules" ]; then
+            echo "Firestore rules file found"
+            # Add validation logic here if needed
+          else
+            echo "No firestore.rules file found"
+            exit 1
+          fi
+      
+      - name: Validate Storage Rules
+        run: |
+          if [ -f "storage.rules" ]; then
+            echo "Storage rules file found"
+            # Add validation logic here if needed
+          else
+            echo "No storage.rules file found"
+            exit 1
+          fi
 
   dependency-check:
     runs-on: ubuntu-latest
