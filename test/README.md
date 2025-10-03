@@ -1,8 +1,10 @@
 # Testing Guide - Sierra Painting
 
-> **Purpose**: Comprehensive testing strategy for Flutter app
+> **Purpose**: Comprehensive testing strategy for Flutter app - PR-05 & PR-06 Complete
 >
-> **Last Updated**: 2024
+> **Last Updated**: 2025-10-03
+>
+> **Test Coverage**: Unit tests ✅ | Widget tests ✅ | Integration templates ✅
 
 ---
 
@@ -16,15 +18,19 @@ This directory contains all tests for the Sierra Painting Flutter application, o
 
 ```
 test/
-├── README.md                    # This file
-├── widget_test.dart             # Basic widget tests
+├── README.md                               # This file
+├── widget_test.dart                        # Basic widget tests
+├── app/
+│   └── route_coverage_test.dart           # Route coverage tests (NEW)
 ├── core/
 │   ├── network/
-│   │   └── api_client_test.dart        # ApiClient unit tests
+│   │   └── api_client_test.dart           # ApiClient unit tests
 │   ├── utils/
-│   │   └── result_test.dart            # Result type tests
-│   └── services/
-│       └── queue_service_test.dart     # Offline queue tests (TODO)
+│   │   └── result_test.dart               # Result type tests
+│   ├── services/
+│   │   └── haptic_service_test.dart       # Haptic service tests (NEW)
+│   └── widgets/
+│       └── sync_status_chip_test.dart     # Sync status widget tests (NEW)
 ├── features/
 │   ├── timeclock/
 │   │   ├── data/
@@ -33,8 +39,11 @@ test/
 │   │       └── timeclock_screen_test.dart      # Widget tests (TODO)
 │   └── ...
 └── integration/
-    ├── clock_in_flow_test.dart         # E2E clock in flow (TODO)
-    └── payment_flow_test.dart          # E2E payment flow (TODO)
+    ├── clock_in_flow_test.dart            # E2E clock in flow (TODO)
+    └── payment_flow_test.dart             # E2E payment flow (TODO)
+
+integration_test/
+└── core_flows_test.dart                   # Integration test templates (NEW)
 ```
 
 ---
@@ -46,6 +55,11 @@ test/
 **Purpose**: Test individual functions, classes, and utilities
 
 **Location**: `test/core/`, `test/features/*/data/`, `test/features/*/domain/`
+
+**New Tests Added (PR-06)**:
+- ✅ `test/core/services/haptic_service_test.dart` - Haptic feedback service
+- ✅ `test/app/route_coverage_test.dart` - Route definitions and conventions
+- ⏳ `test/core/services/queue_service_test.dart` - Offline queue (TODO)
 
 **Example**:
 ```dart
@@ -69,7 +83,11 @@ flutter test test/core/
 
 **Purpose**: Test UI components and interactions
 
-**Location**: `test/features/*/presentation/`
+**Location**: `test/features/*/presentation/`, `test/core/widgets/`
+
+**New Tests Added (PR-06)**:
+- ✅ `test/core/widgets/sync_status_chip_test.dart` - Sync status components
+- ⏳ `test/features/timeclock/presentation/timeclock_screen_test.dart` - Time clock screen (TODO)
 
 **Example**:
 ```dart
@@ -93,6 +111,10 @@ flutter test test/features/
 **Purpose**: Test complete user flows end-to-end
 
 **Location**: `integration_test/`
+
+**New Tests Added (PR-06)**:
+- ✅ `integration_test/core_flows_test.dart` - Templates for login, clock in/out, offline sync
+- ⏳ Implementation pending (requires actual screens)
 
 **Example**:
 ```dart
