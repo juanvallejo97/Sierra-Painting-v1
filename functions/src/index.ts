@@ -37,7 +37,6 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { z } from "zod";
 
 // Schemas (from schemas/)
 import { TimeInSchema, ManualPaymentSchema } from "./schemas";
@@ -46,7 +45,10 @@ import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 import { handleStripeWebhook } from "./payments/stripeWebhook";
 
 // Ops library
-import { log, getOrCreateRequestId, withSpan, initializeTracer } from "./lib/ops";
+import { log, withSpan, initializeTracer } from "./lib/ops";
+
+// Middleware
+import { withValidation, authenticatedEndpoint, adminEndpoint } from "./middleware/withValidation";
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -183,35 +185,24 @@ export const healthCheck = functions.https.onRequest((req, res) => {
  * - Idempotency via clientId
  * - Prevents duplicate open entries
  */
-export const clockIn = functions
-  .runWith({
-    enforceAppCheck: true, // A5: App Check required
-  })
-  .https.onCall(async (data, context) => {
-    // 1) Verify authentication
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
-    }
+export const clockIn = withValidation(
+  TimeInSchema,
+  authenticatedEndpoint()
+)(async (validated, context) => {
+  const userId = context.auth.uid;
+  const requestId = context.requestId;
+  const startTime = Date.now();
 
-    const userId = context.auth.uid;
-    const requestId = getOrCreateRequestId(context.rawRequest?.headers as Record<string, string | string[]> | undefined);
-    const startTime = Date.now();
-
-    return withSpan('clockIn', async (span) => {
-      const logger = log.child({ requestId, userId });
-      
-      span.setAttribute('userId', userId);
-      
-      try {
-        // 2) Validate input
-        const validated = TimeInSchema.parse(data);
-        
-        logger.info('clock_in_initiated', { 
-          jobId: validated.jobId,
-          hasGeo: !!validated.geo 
-        });
-        
-        span.setAttribute('jobId', validated.jobId);
+  return withSpan('clockIn', async (span) => {
+    const logger = log.child({ requestId, userId });
+    
+    span.setAttribute('userId', userId);
+    span.setAttribute('jobId', validated.jobId);
+    
+    logger.info('clock_in_initiated', { 
+      jobId: validated.jobId,
+      hasGeo: !!validated.geo 
+    });
 
       // 3) Check idempotency (prevent duplicate from offline queue)
       const idempotencyKey = `clock_in:${validated.jobId}:${validated.clientId}`;
@@ -320,23 +311,15 @@ export const clockIn = functions
         hasGeo: !!validated.geo,
       });
       
-      orgLogger.info('clock_in_success', {
-        jobId: validated.jobId,
-        hasGeo: !!validated.geo,
-        entryId: entryRef.id,
-      });
-
-      return result;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        logger.error('clock_in_validation_error', { error: error.message });
-        throw new functions.https.HttpsError("invalid-argument", error.message);
-      }
-      logger.error('clock_in_error', error as Error);
-      throw error;
-    }
+    orgLogger.info('clock_in_success', {
+      jobId: validated.jobId,
+      hasGeo: !!validated.geo,
+      entryId: entryRef.id,
     });
+
+    return result;
   });
+});
 
 // ============================================================
 // Legacy markPaymentPaid (compat; prefer payments/markPaidManual)
@@ -347,51 +330,25 @@ export const clockIn = functions
  * Legacy callable maintained temporarily for backward compatibility.
  * Prefer using payments/markPaidManual.
  */
-export const markPaymentPaid = functions
-  .runWith({
-    enforceAppCheck: true,
-    consumeAppCheckToken: true, // Prevent replay attacks
-  })
-  .https.onCall(async (data, context) => {
-  // Verify authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
-  }
-
+export const markPaymentPaid = withValidation(
+  ManualPaymentSchema,
+  adminEndpoint()
+)(async (validatedData, context) => {
   const userId = context.auth.uid;
-  const requestId = getOrCreateRequestId(context.rawRequest?.headers as Record<string, string | string[]> | undefined);
+  const requestId = context.requestId;
   const startTime = Date.now();
   
   return withSpan('markPaymentPaid', async (span) => {
     const logger = log.child({ requestId, userId });
     
     span.setAttribute('userId', userId);
-
-    // App Check validation (defense in depth)
-    if (!context.app) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "App Check validation failed"
-      );
-    }
-
-    // Verify admin role
-    const userDoc = await db.collection("users").doc(userId).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
-      throw new functions.https.HttpsError("permission-denied", "User must be an admin");
-    }
-
-    try {
-      // Validate input using current schema
-      const validatedData = ManualPaymentSchema.parse(data);
-      
-      logger.info('mark_paid_initiated', {
-        invoiceId: validatedData.invoiceId,
-        method: validatedData.method,
-      });
-      
-      span.setAttribute('invoiceId', validatedData.invoiceId);
-      span.setAttribute('paymentMethod', validatedData.method);
+    span.setAttribute('invoiceId', validatedData.invoiceId);
+    span.setAttribute('paymentMethod', validatedData.method);
+    
+    logger.info('mark_paid_initiated', {
+      invoiceId: validatedData.invoiceId,
+      method: validatedData.method,
+    });
 
     // Idempotency
     const idempotencyKey =
@@ -509,13 +466,5 @@ export const markPaymentPaid = functions
     });
     
     return result;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      logger.error('mark_paid_validation_error', { error: error.message });
-      throw new functions.https.HttpsError("invalid-argument", error.message);
-    }
-    logger.error('mark_paid_error', error as Error);
-    throw new functions.https.HttpsError("internal", "An error occurred");
-  }
   });
 });
