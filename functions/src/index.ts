@@ -45,12 +45,24 @@ import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 // Stripe webhook handler
 import { handleStripeWebhook } from "./payments/stripeWebhook";
 
+// Ops library
+import { log, getOrCreateRequestId, withSpan, initializeTracer } from "./lib/ops";
+
 // Initialize Firebase Admin SDK
 admin.initializeApp();
+
+// Initialize OpenTelemetry tracer
+initializeTracer();
 
 // Export shared instances for use in other modules
 export const db = admin.firestore();
 export const auth = admin.auth();
+
+// ============================================================
+// OPS FUNCTIONS
+// ============================================================
+
+export { initializeFlagsFunction as initializeFlags } from "./ops/initializeFlags";
 
 // ============================================================
 // LEAD FUNCTIONS
@@ -181,9 +193,25 @@ export const clockIn = functions
       throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
 
-    try {
-      // 2) Validate input
-      const validated = TimeInSchema.parse(data);
+    const userId = context.auth.uid;
+    const requestId = getOrCreateRequestId(context.rawRequest?.headers as Record<string, string | string[]> | undefined);
+    const startTime = Date.now();
+
+    return withSpan('clockIn', async (span) => {
+      const logger = log.child({ requestId, userId });
+      
+      span.setAttribute('userId', userId);
+      
+      try {
+        // 2) Validate input
+        const validated = TimeInSchema.parse(data);
+        
+        logger.info('clock_in_initiated', { 
+          jobId: validated.jobId,
+          hasGeo: !!validated.geo 
+        });
+        
+        span.setAttribute('jobId', validated.jobId);
 
       // 3) Check idempotency (prevent duplicate from offline queue)
       const idempotencyKey = `clock_in:${validated.jobId}:${validated.clientId}`;
@@ -191,18 +219,21 @@ export const clockIn = functions
       const idempotencyDoc = await idempotencyDocRef.get();
 
       if (idempotencyDoc.exists) {
-        functions.logger.info(`Idempotent clock-in request: ${idempotencyKey}`);
+        logger.info('clock_in_idempotent', { idempotencyKey });
         const data = idempotencyDoc.data();
         return data?.result as Record<string, unknown>;
       }
 
       // 4) Get user profile for org scope
-      const userDoc = await db.collection("users").doc(context.auth.uid).get();
+      const userDoc = await db.collection("users").doc(userId).get();
       if (!userDoc.exists) {
         throw new functions.https.HttpsError("not-found", "User profile not found");
       }
       const userData = userDoc.data();
       const userOrgId = userData?.orgId as string | undefined;
+      
+      // Add orgId to logger context
+      const orgLogger = logger.child({ orgId: userOrgId });
 
       // 5) Verify job exists & assignment
       const jobDoc = await db.collection("jobs").doc(validated.jobId).get();
@@ -215,22 +246,21 @@ export const clockIn = functions
         throw new functions.https.HttpsError("permission-denied", "Job not in your organization");
       }
 
-      if (!Array.isArray(jobData?.crewIds) || !(jobData.crewIds as string[]).includes(context.auth.uid)) {
+      if (!Array.isArray(jobData?.crewIds) || !(jobData.crewIds as string[]).includes(userId)) {
         throw new functions.https.HttpsError("permission-denied", "Not assigned to this job");
       }
 
       // 6) Prevent overlap (no open entry for this job)
       const openEntries = await db
         .collectionGroup("timeEntries")
-        .where("userId", "==", context.auth.uid)
+        .where("userId", "==", userId)
         .where("jobId", "==", validated.jobId)
         .where("clockOut", "==", null)
         .limit(1)
         .get();
 
       if (!openEntries.empty) {
-        functions.logger.warn("Clock-in overlap blocked", {
-          userId: context.auth.uid,
+        orgLogger.warn('clock_in_overlap_blocked', {
           jobId: validated.jobId,
           existingEntryId: openEntries.docs[0].id,
         });
@@ -244,7 +274,7 @@ export const clockIn = functions
         .collection("timeEntries")
         .add({
           orgId: userOrgId,
-          userId: context.auth.uid,
+          userId: userId,
           jobId: validated.jobId,
           clockIn: validated.at,
           clockOut: null,
@@ -261,7 +291,7 @@ export const clockIn = functions
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         entity: "time_entry",
         action: "TIME_IN",
-        actorUid: context.auth.uid,
+        actorUid: userId,
         orgId: userOrgId,
         details: {
           jobId: validated.jobId,
@@ -283,8 +313,14 @@ export const clockIn = functions
       });
 
       // 10) Telemetry
-      functions.logger.info("Clock-in success", {
-        userId: context.auth.uid,
+      const latencyMs = Date.now() - startTime;
+      orgLogger.perf('clockIn', latencyMs, {
+        firestoreReads: 3,
+        firestoreWrites: 3,
+        hasGeo: !!validated.geo,
+      });
+      
+      orgLogger.info('clock_in_success', {
         jobId: validated.jobId,
         hasGeo: !!validated.geo,
         entryId: entryRef.id,
@@ -293,10 +329,13 @@ export const clockIn = functions
       return result;
     } catch (error) {
       if (error instanceof z.ZodError) {
+        logger.error('clock_in_validation_error', { error: error.message });
         throw new functions.https.HttpsError("invalid-argument", error.message);
       }
+      logger.error('clock_in_error', error as Error);
       throw error;
     }
+    });
   });
 
 // ============================================================
@@ -314,15 +353,32 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
   }
 
-  // Verify admin role
-  const userDoc = await db.collection("users").doc(context.auth.uid).get();
-  if (!userDoc.exists || userDoc.data()?.role !== "admin") {
-    throw new functions.https.HttpsError("permission-denied", "User must be an admin");
-  }
+  const userId = context.auth.uid;
+  const requestId = getOrCreateRequestId(context.rawRequest?.headers as Record<string, string | string[]> | undefined);
+  const startTime = Date.now();
+  
+  return withSpan('markPaymentPaid', async (span) => {
+    const logger = log.child({ requestId, userId });
+    
+    span.setAttribute('userId', userId);
 
-  try {
-    // Validate input using current schema
-    const validatedData = ManualPaymentSchema.parse(data);
+    // Verify admin role
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      throw new functions.https.HttpsError("permission-denied", "User must be an admin");
+    }
+
+    try {
+      // Validate input using current schema
+      const validatedData = ManualPaymentSchema.parse(data);
+      
+      logger.info('mark_paid_initiated', {
+        invoiceId: validatedData.invoiceId,
+        method: validatedData.method,
+      });
+      
+      span.setAttribute('invoiceId', validatedData.invoiceId);
+      span.setAttribute('paymentMethod', validatedData.method);
 
     // Idempotency
     const idempotencyKey =
@@ -359,7 +415,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       reference: validatedData.reference ?? null,
       status: "completed",
       notes: validatedData.note,
-      markedBy: context.auth.uid,
+      markedBy: userId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -367,7 +423,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
     // Audit nested under payment
     await paymentRef.collection("audit").add({
       action: "payment_marked_paid",
-      performedBy: context.auth.uid,
+      performedBy: userId,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       details: {
         amount: invoiceData?.total ?? 0,
@@ -382,7 +438,7 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
       entity: "invoice",
       action: "INVOICE_MARK_PAID_MANUAL",
-      actorUid: context.auth.uid,
+      actorUid: userId,
       orgId: invoiceData?.orgId ?? null,
       details: {
         invoiceId: validatedData.invoiceId,
@@ -411,13 +467,27 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
       invoiceId: validatedData.invoiceId,
     });
 
-    functions.logger.info("Payment marked as paid", { paymentId: paymentRef.id });
+    const latencyMs = Date.now() - startTime;
+    logger.perf('markPaymentPaid', latencyMs, {
+      firestoreReads: 2,
+      firestoreWrites: 5,
+      amount: invoiceData?.total ?? 0,
+    });
+    
+    logger.info('payment_marked_paid', { 
+      paymentId: paymentRef.id,
+      invoiceId: validatedData.invoiceId,
+      amount: invoiceData?.total ?? 0,
+    });
+    
     return result;
   } catch (error) {
     if (error instanceof z.ZodError) {
+      logger.error('mark_paid_validation_error', { error: error.message });
       throw new functions.https.HttpsError("invalid-argument", error.message);
     }
-    functions.logger.error("Error marking payment as paid", error);
+    logger.error('mark_paid_error', error as Error);
     throw new functions.https.HttpsError("internal", "An error occurred");
   }
+  });
 });
