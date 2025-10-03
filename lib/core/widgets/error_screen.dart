@@ -56,7 +56,7 @@ class ErrorScreen extends StatelessWidget {
               const SizedBox(height: DesignTokens.spaceMD),
               if (path != null) ...[
                 Text(
-                  'The page you're looking for doesn't exist.',
+                  'The page you\'re looking for doesn\'t exist.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
@@ -90,16 +90,15 @@ class ErrorScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: DesignTokens.spaceSM),
-                if (error != null)
-                  Text(
-                    error.toString(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  error.toString(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ] else ...[
                 Text(
                   'Something unexpected happened. Please try again.',
