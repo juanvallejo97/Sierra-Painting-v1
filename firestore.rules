@@ -1,5 +1,21 @@
 rules_version = '2';
 
+/**
+ * Firestore Security Rules for Sierra Painting
+ * 
+ * SECURITY POSTURE:
+ * - Deny-by-default: All access denied unless explicitly allowed
+ * - Authentication required: All operations require authenticated user
+ * - Role-based access control: Admin, crew_lead, crew roles
+ * - Organization scoping: Multi-tenant data isolation via orgId
+ * - App Check: Enforced at Cloud Functions level; available for Firestore rules
+ * 
+ * APP CHECK NOTE:
+ * - All callable Cloud Functions enforce App Check with consumeAppCheckToken
+ * - Direct Firestore client access can optionally check App Check via hasValidAppCheck()
+ * - Current rules rely on authentication + role checks; App Check adds anti-abuse layer
+ */
+
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper functions
@@ -21,6 +37,8 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'crewLead';
     }
     
+    // App Check validation helper (optional enforcement at Firestore level)
+    // Primary enforcement is at Cloud Functions level
     function hasValidAppCheck() {
       return request.app.appCheck.token.aud[0] == request.app.projectId;
     }
@@ -119,12 +137,14 @@ service cloud.firestore {
       // Only admins can create invoices
       allow create: if isAdmin();
       
-      // Block client writes that include the 'paid' or 'paidAt' fields
+      // Block client writes that include sensitive payment fields
       // These fields can only be set server-side via markPaymentPaid function
+      // RISK-SEC-002 mitigation: Prevent client tampering with invoice amounts
       allow update: if isAdmin() && 
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['paid', 'paidAt']);
+                       !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['paid', 'paidAt', 'total', 'amount']);
       
-      // Invoices cannot be deleted
+      // Invoices cannot be deleted (audit trail preservation)
       allow delete: if false;
     }
     

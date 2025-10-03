@@ -113,18 +113,24 @@ function verifyCaptcha(token: string): boolean {
 // MAIN FUNCTION
 // ============================================================
 
-export const createLead = functions.https.onCall(async (data: unknown, context) => {
+export const createLead = functions
+  .runWith({
+    enforceAppCheck: true,
+    consumeAppCheckToken: true, // Prevent replay attacks
+  })
+  .https.onCall(async (data: unknown, context) => {
   // ========================================
   // 1. APP CHECK VALIDATION
   // ========================================
   
-  // Uncomment when App Check is configured
-  // if (!context.app) {
-  //   throw new functions.https.HttpsError(
-  //     'failed-precondition',
-  //     'App Check validation failed'
-  //   );
-  // }
+  // App Check is enforced at the function level via runWith config
+  // Additional runtime check for defense in depth
+  if (!context.app) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'App Check validation failed'
+    );
+  }
 
   // ========================================
   // 2. INPUT VALIDATION (Zod)
