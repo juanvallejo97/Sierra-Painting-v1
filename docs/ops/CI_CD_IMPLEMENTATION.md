@@ -175,27 +175,39 @@ This document summarizes the comprehensive CI/CD automation and guardrails imple
 
 ### GitHub Environments
 
+**⚠️ UPDATED: This repository now uses Workload Identity Federation (OIDC)**
+
 **To activate the workflows, repository administrators must:**
 
-1. **Create `staging` Environment**
+1. **Complete GCP Workload Identity Setup**
+   - Follow: [docs/ops/gcp-workload-identity-setup.md](./gcp-workload-identity-setup.md)
+   - Create Workload Identity Pool and Provider for each environment
+   - Create `ci-deployer` service account with least-privilege IAM roles
+   - Bind service account to Workload Identity Pool
+
+2. **Create `staging` Environment**
    - Navigate to: Settings → Environments → New environment
    - Name: `staging`
    - Deployment branches: `main` only
-   - Add secret: `FIREBASE_SERVICE_ACCOUNT` (staging credentials)
+   - Add variables (not secrets):
+     - `GCP_WORKLOAD_IDENTITY_PROVIDER`: Full provider path from GCP
+     - `GCP_SERVICE_ACCOUNT`: `ci-deployer@sierra-painting-staging.iam.gserviceaccount.com`
 
-2. **Create `production` Environment**
+3. **Create `production` Environment**
    - Name: `production`
    - Deployment branches: All branches (for tags)
-   - Add secret: `FIREBASE_SERVICE_ACCOUNT` (production credentials)
+   - Add variables (not secrets):
+     - `GCP_WORKLOAD_IDENTITY_PROVIDER`: Full provider path from GCP
+     - `GCP_SERVICE_ACCOUNT`: `ci-deployer@sierra-painting-prod.iam.gserviceaccount.com`
    - **Required reviewers:** 1 (select authorized approvers)
 
-3. **Get Service Account Credentials**
-   - Firebase Console → Project Settings → Service Accounts
-   - Click "Generate new private key"
-   - Save JSON securely
-   - Copy content to GitHub Environment secret
+**Security Benefits:**
+- ✅ No long-lived credentials stored in GitHub
+- ✅ Automatic credential rotation by GCP
+- ✅ Least-privilege IAM roles
+- ✅ Audit trail of all authentication attempts
 
-**Detailed instructions:** [docs/ops/github-environments.md](docs/ops/github-environments.md)
+**Detailed instructions:** [docs/ops/github-environments.md](./github-environments.md)
 
 ---
 
