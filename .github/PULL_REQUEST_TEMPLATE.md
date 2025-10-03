@@ -58,6 +58,29 @@ If yes to any above, explain:
 ### Deployment Notes
 <!-- Any special instructions for deployment -->
 
+#### Pre-Deployment Checklist
+<!-- Complete before merging to main (staging) or creating version tag (production) -->
+
+**Code Quality:**
+- [ ] All tests pass locally (`flutter test` && `cd functions && npm test`)
+- [ ] Linting passes (`flutter analyze` && `cd functions && npm run lint`)
+- [ ] Build succeeds (`flutter build apk --debug` && `cd functions && npm run build`)
+
+**Security:**
+- [ ] No hardcoded secrets or API keys
+- [ ] Firestore security rules tested
+- [ ] Authentication/authorization checks in place
+
+**Configuration:**
+- [ ] Environment variables updated (if needed)
+- [ ] Remote Config flags configured
+- [ ] Database indexes created (if needed): `firebase deploy --only firestore:indexes`
+
+**Planning:**
+- [ ] Rollback plan documented
+- [ ] Monitoring dashboards prepared
+- [ ] Team notified of deployment
+
 #### Required Secrets
 <!-- List any new secrets that need to be configured -->
 
