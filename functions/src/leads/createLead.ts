@@ -155,6 +155,10 @@ export const createLead = functions
   // 3. CAPTCHA VERIFICATION
   // ========================================
 
+  // ========================================
+  // CAPTCHA VERIFICATION
+  // ========================================
+
   const captchaValid = verifyCaptcha(validatedLead.captchaToken);
   if (!captchaValid) {
     functions.logger.warn('Captcha verification failed', {
@@ -167,7 +171,7 @@ export const createLead = functions
   }
 
   // ========================================
-  // 4. IDEMPOTENCY CHECK
+  // IDEMPOTENCY CHECK
   // ========================================
 
   // Generate idempotency key from email + phone (prevent duplicate submissions)
@@ -192,79 +196,70 @@ export const createLead = functions
   }
 
   // ========================================
-  // 5. WRITE TO FIRESTORE
+  // WRITE TO FIRESTORE
   // ========================================
 
-  try {
-    const db = admin.firestore();
-    const leadRef = db.collection(LEADS_COLLECTION).doc();
+  const db = admin.firestore();
+  const leadRef = db.collection(LEADS_COLLECTION).doc();
 
-    const leadData = {
-      ...validatedLead,
-      status: 'new',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
+  const leadData = {
+    ...validatedLead,
+    status: 'new',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  };
 
-    // Remove captcha token (don't store it)
-    const leadDataWithoutCaptcha = {...leadData};
-    delete (leadDataWithoutCaptcha as Record<string, unknown> & {captchaToken?: string}).captchaToken;
+  // Remove captcha token (don't store it)
+  const leadDataWithoutCaptcha = {...leadData};
+  delete (leadDataWithoutCaptcha as Record<string, unknown> & {captchaToken?: string}).captchaToken;
 
-    await leadRef.set(leadDataWithoutCaptcha);
+  await leadRef.set(leadDataWithoutCaptcha);
 
-    const leadId = leadRef.id;
+  const leadId = leadRef.id;
 
-    // ========================================
-    // 6. RECORD IDEMPOTENCY
-    // ========================================
+  // ========================================
+  // RECORD IDEMPOTENCY
+  // ========================================
 
-    await recordIdempotency(idempotencyKey, {leadId}, 24 * 60 * 60); // 24 hour TTL
+  await recordIdempotency(idempotencyKey, {leadId}, 24 * 60 * 60); // 24 hour TTL
 
-    // ========================================
-    // 7. AUDIT LOG
-    // ========================================
+  // ========================================
+  // AUDIT LOG
+  // ========================================
 
-    const metadata = extractCallableMetadata(context);
-    await logAudit(createAuditEntry({
-      entity: 'lead', // Lead entity type
-      entityId: leadId,
-      action: 'created',
-      actor: 'anonymous', // No auth required for lead submission
-      orgId: 'default', // Leads don't belong to an org yet
-      ...metadata,
-      metadata: {
-        source: validatedLead.source,
-        email: validatedLead.email,
-      },
-    }));
-
-    // ========================================
-    // 8. SEND NOTIFICATIONS
-    // ========================================
-
-    // TODO: Send email notification to admin
-    // TODO: Log Analytics event (lead_submitted)
-
-    functions.logger.info('Lead created', {
-      leadId,
-      email: validatedLead.email,
+  const metadata = extractCallableMetadata(context);
+  await logAudit(createAuditEntry({
+    entity: 'lead', // Lead entity type
+    entityId: leadId,
+    action: 'created',
+    actor: 'anonymous', // No auth required for lead submission
+    orgId: 'default', // Leads don't belong to an org yet
+    ...metadata,
+    metadata: {
       source: validatedLead.source,
-    });
+      email: validatedLead.email,
+    },
+  }));
 
-    // ========================================
-    // 9. RETURN RESULT
-    // ========================================
+  // ========================================
+  // SEND NOTIFICATIONS
+  // ========================================
 
-    return {
-      leadId,
-      message: 'Lead submitted successfully',
-    };
-  } catch (error) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    functions.logger.error('Failed to create lead', {error, data: validatedLead});
-    throw new functions.https.HttpsError(
-      'internal',
-      'Failed to create lead'
-    );
-  }
+  // TODO: Send email notification to admin
+  // TODO: Log Analytics event (lead_submitted)
+
+  functions.logger.info('Lead created', {
+    leadId,
+    email: validatedLead.email,
+    source: validatedLead.source,
+  });
+
+  // ========================================
+  // RETURN RESULT
+  // ========================================
+
+  return {
+    leadId,
+    message: 'Lead submitted successfully',
+  };
 });
