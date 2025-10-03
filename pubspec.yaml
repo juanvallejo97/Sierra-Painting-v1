@@ -80,7 +80,7 @@ dependency_overrides:
   # Reference: Flutter SDK includes integration_test with material_color_utilities 0.5.0
   material_color_utilities: 0.5.0
   
-  # Pin analyzer to match the version required by build_runner and dart_code_metrics
+  # Pin analyzer to match the version required by build_runner
   # This ensures consistent analysis results across development and CI environments
   analyzer: ^6.4.1
 
