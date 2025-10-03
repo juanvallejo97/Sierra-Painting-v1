@@ -277,6 +277,59 @@ cd functions
 npm run test:rules
 ```
 
+### Emergency Rollback Procedure
+
+If rules need to be rolled back due to blocking legitimate traffic:
+
+**Option 1: Redeploy Previous Rules from Git**
+```bash
+# Find the previous commit with working rules
+git log --oneline firestore.rules
+
+# Check out the previous rules file
+git show <commit-hash>:firestore.rules > firestore.rules.rollback
+
+# Deploy the rollback
+firebase deploy --only firestore:rules
+
+# Verify deployment
+firebase firestore:rules get
+```
+
+**Option 2: Firebase Console Emergency Rollback**
+1. Go to Firebase Console → Firestore → Rules
+2. Click "History" tab
+3. Select a previous working version
+4. Click "Deploy"
+
+**Option 3: Local Backup**
+```bash
+# Before deploying new rules, create a backup
+cp firestore.rules firestore.rules.backup
+
+# If rollback needed
+cp firestore.rules.backup firestore.rules
+firebase deploy --only firestore:rules
+```
+
+**Post-Rollback Actions:**
+1. Document the issue that caused the rollback
+2. Update tests to catch the issue
+3. Fix the rules locally
+4. Verify all tests pass: `npm run test:rules`
+5. Re-deploy with confidence
+
+**Testing Before Deployment:**
+```bash
+# Always run tests before deploying
+cd functions
+npm run test:rules
+
+# If tests pass, deploy
+cd ..
+firebase deploy --only firestore:rules
+```
+
 ---
 
 ## Cloud Functions Security
