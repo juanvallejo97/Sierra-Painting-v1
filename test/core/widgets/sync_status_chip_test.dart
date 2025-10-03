@@ -18,20 +18,16 @@ void main() {
     testWidgets('Pending status shows yellow chip', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: SyncStatusChip(
-              status: SyncStatus.pending,
-            ),
-          ),
+          home: Scaffold(body: SyncStatusChip(status: SyncStatus.pending)),
         ),
       );
 
       // Verify chip is rendered
       expect(find.byType(Chip), findsOneWidget);
-      
+
       // Verify label text
       expect(find.text('Pending'), findsOneWidget);
-      
+
       // Verify icon
       expect(find.byIcon(Icons.schedule), findsOneWidget);
     });
@@ -39,11 +35,7 @@ void main() {
     testWidgets('Synced status shows green chip', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(
-            body: SyncStatusChip(
-              status: SyncStatus.synced,
-            ),
-          ),
+          home: Scaffold(body: SyncStatusChip(status: SyncStatus.synced)),
         ),
       );
 
@@ -54,7 +46,7 @@ void main() {
 
     testWidgets('Error status shows red chip with retry', (tester) async {
       var retryCalled = false;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -72,11 +64,11 @@ void main() {
       expect(find.byType(Tooltip), findsOneWidget);
       expect(find.text('Error'), findsOneWidget);
       expect(find.byIcon(Icons.error), findsOneWidget);
-      
+
       // Tap to retry
       await tester.tap(find.byType(InkWell));
       await tester.pumpAndSettle();
-      
+
       expect(retryCalled, isTrue);
     });
 
@@ -105,12 +97,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
-              actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 0,
-                  isSyncing: false,
-                ),
-              ],
+              actions: [GlobalSyncIndicator(pendingCount: 0, isSyncing: false)],
             ),
           ),
         ),
@@ -125,12 +112,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
-              actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 5,
-                  isSyncing: false,
-                ),
-              ],
+              actions: [GlobalSyncIndicator(pendingCount: 5, isSyncing: false)],
             ),
           ),
         ),
@@ -146,12 +128,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
-              actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 0,
-                  isSyncing: true,
-                ),
-              ],
+              actions: [GlobalSyncIndicator(pendingCount: 0, isSyncing: true)],
             ),
           ),
         ),
@@ -163,7 +140,7 @@ void main() {
 
     testWidgets('Tapping indicator triggers callback', (tester) async {
       var tapped = false;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -184,7 +161,7 @@ void main() {
 
       await tester.tap(find.byType(IconButton));
       await tester.pumpAndSettle();
-      
+
       expect(tapped, isTrue);
     });
 
@@ -193,12 +170,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
-              actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 1,
-                  isSyncing: false,
-                ),
-              ],
+              actions: [GlobalSyncIndicator(pendingCount: 1, isSyncing: false)],
             ),
           ),
         ),
@@ -208,16 +180,15 @@ void main() {
       expect(iconButton.tooltip, equals('1 item pending sync'));
     });
 
-    testWidgets('Shows correct tooltip for multiple pending items', (tester) async {
+    testWidgets('Shows correct tooltip for multiple pending items', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
               actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 10,
-                  isSyncing: false,
-                ),
+                GlobalSyncIndicator(pendingCount: 10, isSyncing: false),
               ],
             ),
           ),
@@ -233,12 +204,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             appBar: AppBar(
-              actions: [
-                GlobalSyncIndicator(
-                  pendingCount: 0,
-                  isSyncing: true,
-                ),
-              ],
+              actions: [GlobalSyncIndicator(pendingCount: 0, isSyncing: true)],
             ),
           ),
         ),

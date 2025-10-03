@@ -43,10 +43,7 @@ class ClockInRequest {
       'jobId': jobId,
       'at': Timestamp.fromDate(at),
       'clientId': clientId,
-      if (geo != null) 'geo': {
-        'lat': geo!.latitude,
-        'lng': geo!.longitude,
-      },
+      if (geo != null) 'geo': {'lat': geo!.latitude, 'lng': geo!.longitude},
     };
   }
 }
@@ -56,10 +53,7 @@ class ClockInResponse {
   final bool success;
   final String entryId;
 
-  ClockInResponse({
-    required this.success,
-    required this.entryId,
-  });
+  ClockInResponse({required this.success, required this.entryId});
 
   factory ClockInResponse.fromJson(Map<String, dynamic> json) {
     return ClockInResponse(
@@ -80,9 +74,9 @@ class TimeclockRepository {
     required ApiClient apiClient,
     required FirebaseFirestore firestore,
     QueueService? queueService,
-  })  : _apiClient = apiClient,
-        _firestore = firestore,
-        _queueService = queueService;
+  }) : _apiClient = apiClient,
+       _firestore = firestore,
+       _queueService = queueService;
 
   /// Clock in to a job
   ///
@@ -108,19 +102,23 @@ class TimeclockRepository {
     if (!online && _queueService != null) {
       // Queue for offline sync
       try {
-        await _queueService!.addToQueue(QueueItem(
-          id: clientId,
-          operation: 'clockIn',
-          data: request.toJson(),
-          timestamp: DateTime.now(),
-          processed: false,
-          retryCount: 0,
-        ));
+        await _queueService!.addToQueue(
+          QueueItem(
+            id: clientId,
+            operation: 'clockIn',
+            data: request.toJson(),
+            timestamp: DateTime.now(),
+            processed: false,
+            retryCount: 0,
+          ),
+        );
 
-        return Result.success(ClockInResponse(
-          success: true,
-          entryId: clientId, // Temporary ID
-        ));
+        return Result.success(
+          ClockInResponse(
+            success: true,
+            entryId: clientId, // Temporary ID
+          ),
+        );
       } on QueueFullException catch (e) {
         return Result.failure(e.message);
       } catch (e) {
@@ -156,7 +154,8 @@ class TimeclockRepository {
     int? limit,
   }) async {
     try {
-      Query query = _firestore.collectionGroup('timeEntries')
+      Query query = _firestore
+          .collectionGroup('timeEntries')
           .where('userId', isEqualTo: userId);
 
       if (jobId != null) {
@@ -164,11 +163,17 @@ class TimeclockRepository {
       }
 
       if (startDate != null) {
-        query = query.where('clockIn', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        query = query.where(
+          'clockIn',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
+        );
       }
 
       if (endDate != null) {
-        query = query.where('clockIn', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+        query = query.where(
+          'clockIn',
+          isLessThanOrEqualTo: Timestamp.fromDate(endDate),
+        );
       }
 
       query = query.orderBy('clockIn', descending: true);
@@ -209,7 +214,8 @@ class TimeclockRepository {
     String? jobId,
   }) async {
     try {
-      Query query = _firestore.collectionGroup('timeEntries')
+      Query query = _firestore
+          .collectionGroup('timeEntries')
           .where('userId', isEqualTo: userId)
           .where('clockOut', isEqualTo: null);
 
@@ -246,7 +252,8 @@ class TimeclockRepository {
       case ApiErrorType.resourceExhausted:
         return 'Too many requests. Please try again later.';
       case ApiErrorType.failedPrecondition:
-        return error.message; // Use specific message (e.g., "Already clocked in")
+        return error
+            .message; // Use specific message (e.g., "Already clocked in")
       case ApiErrorType.internal:
         return 'Server error. Please try again.';
       case ApiErrorType.unknown:

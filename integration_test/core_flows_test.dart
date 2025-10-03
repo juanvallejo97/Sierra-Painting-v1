@@ -31,18 +31,18 @@ void main() {
 
       // TODO: Implementation depends on actual login screen
       // This is a template showing the expected flow
-      
+
       // Step 1: Verify we're on the login screen
       expect(find.text('Sign In'), findsWidgets);
-      
+
       // Step 2: Enter credentials
       // await tester.enterText(find.byType(TextField).first, 'test@example.com');
       // await tester.enterText(find.byType(TextField).last, 'password123');
-      
+
       // Step 3: Tap sign in button
       // await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
       // await tester.pumpAndSettle();
-      
+
       // Step 4: Verify we're signed in (redirected to home screen)
       // expect(find.text('Time Clock'), findsOneWidget);
     });
@@ -81,18 +81,18 @@ void main() {
 
       // TODO: Implementation
       // Prerequisites: User must be signed in
-      
+
       // Step 1: Navigate to time clock screen
       // await tester.tap(find.text('Time Clock'));
       // await tester.pumpAndSettle();
-      
+
       // Step 2: Tap clock in button
       // await tester.tap(find.widgetWithText(ElevatedButton, 'Clock In'));
       // await tester.pumpAndSettle();
-      
+
       // Step 3: Verify success message
       // expect(find.text('Clocked in successfully'), findsOneWidget);
-      
+
       // Step 4: Verify clock in is recorded
       // expect(find.byType(SyncStatusChip), findsOneWidget);
     });
@@ -104,7 +104,7 @@ void main() {
 
       // TODO: Implementation
       // Prerequisites: User must be clocked in
-      
+
       // Step 1: Navigate to time clock screen
       // Step 2: Tap clock out button
       // Step 3: Verify success message
@@ -118,7 +118,7 @@ void main() {
 
       // TODO: Implementation
       // This requires mocking network to be offline
-      
+
       // Step 1: Disable network (mock)
       // Step 2: Clock in
       // Step 3: Verify pending status badge
@@ -130,14 +130,16 @@ void main() {
   });
 
   group('Offline Sync Flow', () {
-    testWidgets('Pending operations sync when connectivity restored', (tester) async {
+    testWidgets('Pending operations sync when connectivity restored', (
+      tester,
+    ) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
       // This is a complex flow requiring network mocking
-      
+
       // Step 1: Go offline
       // Step 2: Perform several operations (clock in, create invoice, etc.)
       // Step 3: Verify operations show pending status
@@ -214,15 +216,15 @@ void main() {
 
       // TODO: Implementation
       // Prerequisites: User must be signed in
-      
+
       // Step 1: Verify on time clock screen
       // expect(find.text('Time Clock'), findsOneWidget);
-      
+
       // Step 2: Tap invoices tab
       // await tester.tap(find.byIcon(Icons.receipt_long));
       // await tester.pumpAndSettle();
       // expect(find.text('Invoices'), findsOneWidget);
-      
+
       // Step 3: Tap estimates tab
       // await tester.tap(find.byIcon(Icons.request_quote));
       // await tester.pumpAndSettle();
@@ -240,7 +242,9 @@ void main() {
   });
 
   group('Accessibility Flow', () {
-    testWidgets('All interactive elements have semantic labels', (tester) async {
+    testWidgets('All interactive elements have semantic labels', (
+      tester,
+    ) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle();

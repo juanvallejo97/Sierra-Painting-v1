@@ -26,13 +26,13 @@ import 'package:sierra_painting/core/utils/result.dart';
 class ApiConfig {
   /// Default timeout for API calls
   static const Duration defaultTimeout = Duration(seconds: 30);
-  
+
   /// Maximum number of retry attempts
   static const int maxRetries = 3;
-  
+
   /// Initial retry delay (doubles with each retry)
   static const Duration initialRetryDelay = Duration(seconds: 1);
-  
+
   /// Maximum retry delay
   static const Duration maxRetryDelay = Duration(seconds: 10);
 }
@@ -68,7 +68,8 @@ class ApiError {
   });
 
   @override
-  String toString() => 'ApiError($type): $message ${requestId != null ? "(requestId: $requestId)" : ""}';
+  String toString() =>
+      'ApiError($type): $message ${requestId != null ? "(requestId: $requestId)" : ""}';
 }
 
 /// API Client for Cloud Functions
@@ -77,7 +78,7 @@ class ApiClient {
   final Uuid _uuid = const Uuid();
 
   ApiClient({FirebaseFunctions? functions})
-      : _functions = functions ?? FirebaseFunctions.instance;
+    : _functions = functions ?? FirebaseFunctions.instance;
 
   /// Call a Cloud Function with timeout, retry, and requestId
   Future<Result<T, ApiError>> call<T>({
@@ -92,16 +93,10 @@ class ApiClient {
     final effectiveMaxRetries = maxRetries ?? ApiConfig.maxRetries;
 
     // Prepare headers with requestId
-    final effectiveHeaders = {
-      'X-Request-Id': requestId,
-      ...?headers,
-    };
+    final effectiveHeaders = {'X-Request-Id': requestId, ...?headers};
 
     // Add requestId to data for backend correlation
-    final dataWithRequestId = {
-      ...?data,
-      '_requestId': requestId,
-    };
+    final dataWithRequestId = {...?data, '_requestId': requestId};
 
     for (var attempt = 0; attempt <= effectiveMaxRetries; attempt++) {
       try {
@@ -118,13 +113,15 @@ class ApiClient {
           await _delay(attempt);
           continue;
         }
-        return Result.failure(ApiError(
-          type: ApiErrorType.timeout,
-          message: 'Request timed out after ${effectiveTimeout.inSeconds}s',
-          requestId: requestId,
-          functionName: functionName,
-          originalError: e,
-        ));
+        return Result.failure(
+          ApiError(
+            type: ApiErrorType.timeout,
+            message: 'Request timed out after ${effectiveTimeout.inSeconds}s',
+            requestId: requestId,
+            functionName: functionName,
+            originalError: e,
+          ),
+        );
       } on FirebaseFunctionsException catch (e) {
         // Don't retry client errors (4xx)
         if (!_shouldRetry(e)) {
@@ -143,23 +140,27 @@ class ApiClient {
           continue;
         }
 
-        return Result.failure(ApiError(
-          type: ApiErrorType.unknown,
-          message: 'Unknown error: $e',
-          requestId: requestId,
-          functionName: functionName,
-          originalError: e,
-        ));
+        return Result.failure(
+          ApiError(
+            type: ApiErrorType.unknown,
+            message: 'Unknown error: $e',
+            requestId: requestId,
+            functionName: functionName,
+            originalError: e,
+          ),
+        );
       }
     }
 
     // Should never reach here
-    return Result.failure(ApiError(
-      type: ApiErrorType.unknown,
-      message: 'Unexpected error',
-      requestId: requestId,
-      functionName: functionName,
-    ));
+    return Result.failure(
+      ApiError(
+        type: ApiErrorType.unknown,
+        message: 'Unexpected error',
+        requestId: requestId,
+        functionName: functionName,
+      ),
+    );
   }
 
   /// Call function with timeout
@@ -169,10 +170,8 @@ class ApiClient {
     required Duration timeout,
   }) async {
     final callable = _functions.httpsCallable(functionName);
-    
-    final result = await callable
-        .call(data)
-        .timeout(timeout);
+
+    final result = await callable.call(data).timeout(timeout);
 
     return result.data as T;
   }

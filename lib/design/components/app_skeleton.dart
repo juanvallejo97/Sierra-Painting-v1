@@ -21,36 +21,35 @@ class AppSkeleton extends StatelessWidget {
     this.width = double.infinity,
     this.height = 120,
   }) : borderRadius = const BorderRadius.all(
-          Radius.circular(DesignTokens.radiusLG),
-        );
+         Radius.circular(DesignTokens.radiusLG),
+       );
 
   const AppSkeleton.text({
     super.key,
     this.width = double.infinity,
     this.height = 16,
   }) : borderRadius = const BorderRadius.all(
-          Radius.circular(DesignTokens.radiusSM),
-        );
+         Radius.circular(DesignTokens.radiusSM),
+       );
 
-  const AppSkeleton.circle({
-    super.key,
-    required double size,
-  })  : width = size,
-        height = size,
-        borderRadius = null;
+  const AppSkeleton.circle({super.key, required double size})
+    : width = size,
+      height = size,
+      borderRadius = null;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: borderRadius ?? 
-            (width == height 
-                ? BorderRadius.circular(width! / 2) 
+        borderRadius:
+            borderRadius ??
+            (width == height
+                ? BorderRadius.circular(width! / 2)
                 : BorderRadius.circular(DesignTokens.radiusSM)),
       ),
     );

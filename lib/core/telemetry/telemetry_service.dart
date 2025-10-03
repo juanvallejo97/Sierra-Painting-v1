@@ -120,7 +120,9 @@ class TelemetryService {
     return () {
       final duration = DateTime.now().difference(startTime);
       if (kDebugMode) {
-        debugPrint('[Telemetry] Trace: $name took ${duration.inMilliseconds}ms');
+        debugPrint(
+          '[Telemetry] Trace: $name took ${duration.inMilliseconds}ms',
+        );
       }
       // TODO: Send to Firebase Performance Monitoring
     };

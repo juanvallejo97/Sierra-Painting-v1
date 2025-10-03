@@ -47,9 +47,9 @@ class PerformanceTrace {
   final Map<String, num> metrics;
 
   PerformanceTrace(this.name)
-      : startTime = DateTime.now(),
-        attributes = {},
-        metrics = {};
+    : startTime = DateTime.now(),
+      attributes = {},
+      metrics = {};
 
   /// Stop the trace
   void stop() {
@@ -214,7 +214,9 @@ class PerformanceTrackedWidget extends StatelessWidget {
     stopwatch.stop();
 
     if (kDebugMode && stopwatch.elapsedMilliseconds > 16) {
-      debugPrint('[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint(
+        '[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms',
+      );
     }
 
     return built;

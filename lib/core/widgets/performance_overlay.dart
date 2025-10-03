@@ -65,13 +65,14 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
     for (final timing in timings) {
       final frameTime = timing.totalSpan.inMilliseconds;
       _frameTimes.add(frameTime.toDouble());
-      
+
       if (_frameTimes.length > _maxSamples) {
         _frameTimes.removeAt(0);
       }
 
       _frameCount++;
-      _averageFrameTime = _frameTimes.reduce((a, b) => a + b) / _frameTimes.length;
+      _averageFrameTime =
+          _frameTimes.reduce((a, b) => a + b) / _frameTimes.length;
       _maxFrameTime = _frameTimes.reduce((a, b) => a > b ? a : b);
     }
 
@@ -139,24 +140,15 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
                   ),
                   Text(
                     'Max: ${_maxFrameTime.toStringAsFixed(1)}ms',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   Text(
                     'FPS: ${(1000 / _averageFrameTime).toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                   Text(
                     'Frames: $_frameCount',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 10),
                   ),
                 ],
               ),
@@ -172,10 +164,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
 class DebugPerformanceBanner extends StatelessWidget {
   final Widget child;
 
-  const DebugPerformanceBanner({
-    super.key,
-    required this.child,
-  });
+  const DebugPerformanceBanner({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

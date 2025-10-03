@@ -8,9 +8,7 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin'),
-      ),
+      appBar: AppBar(title: const Text('Admin')),
       drawer: const AppDrawer(),
       body: const _AdminBody(),
       bottomNavigationBar: const AppNavigationBar(),
@@ -40,8 +38,8 @@ class _AdminBody extends StatelessWidget {
             Text(
               'RBAC Protected',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: DesignTokens.spaceXL),
             const Text(

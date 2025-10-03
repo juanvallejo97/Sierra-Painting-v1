@@ -20,45 +20,33 @@ class AppBadge extends StatelessWidget {
     this.variant = BadgeVariant.neutral,
   });
 
-  const AppBadge.success({
-    super.key,
-    required this.label,
-    this.icon,
-  })  : backgroundColor = DesignTokens.successGreen,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.success;
+  const AppBadge.success({super.key, required this.label, this.icon})
+    : backgroundColor = DesignTokens.successGreen,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.success;
 
-  const AppBadge.warning({
-    super.key,
-    required this.label,
-    this.icon,
-  })  : backgroundColor = DesignTokens.warningAmber,
-        foregroundColor = Colors.black87,
-        variant = BadgeVariant.warning;
+  const AppBadge.warning({super.key, required this.label, this.icon})
+    : backgroundColor = DesignTokens.warningAmber,
+      foregroundColor = Colors.black87,
+      variant = BadgeVariant.warning;
 
-  const AppBadge.error({
-    super.key,
-    required this.label,
-    this.icon,
-  })  : backgroundColor = DesignTokens.errorRed,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.error;
+  const AppBadge.error({super.key, required this.label, this.icon})
+    : backgroundColor = DesignTokens.errorRed,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.error;
 
-  const AppBadge.info({
-    super.key,
-    required this.label,
-    this.icon,
-  })  : backgroundColor = DesignTokens.infoBlue,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.info;
+  const AppBadge.info({super.key, required this.label, this.icon})
+    : backgroundColor = DesignTokens.infoBlue,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.info;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final effectiveBackgroundColor = backgroundColor ?? 
-        _getDefaultBackgroundColor(colorScheme);
-    final effectiveForegroundColor = foregroundColor ?? 
-        _getDefaultForegroundColor(colorScheme);
+    final effectiveBackgroundColor =
+        backgroundColor ?? _getDefaultBackgroundColor(colorScheme);
+    final effectiveForegroundColor =
+        foregroundColor ?? _getDefaultForegroundColor(colorScheme);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -73,11 +61,7 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: 16,
-              color: effectiveForegroundColor,
-            ),
+            Icon(icon, size: 16, color: effectiveForegroundColor),
             const SizedBox(width: DesignTokens.spaceXS),
           ],
           Text(
@@ -122,10 +106,4 @@ class AppBadge extends StatelessWidget {
   }
 }
 
-enum BadgeVariant {
-  neutral,
-  success,
-  warning,
-  error,
-  info,
-}
+enum BadgeVariant { neutral, success, warning, error, info }

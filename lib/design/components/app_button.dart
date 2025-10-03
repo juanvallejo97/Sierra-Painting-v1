@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sierra_painting/design/tokens.dart';
 
 /// Primary button component
-/// 
+///
 /// Filled button for primary actions with proper touch targets and accessibility.
 class AppButton extends StatelessWidget {
   final String label;
@@ -29,15 +29,15 @@ class AppButton extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           )
         : icon != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 20),
-                  const SizedBox(width: DesignTokens.spaceSM),
-                  Text(label),
-                ],
-              )
-            : Text(label);
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: DesignTokens.spaceSM),
+              Text(label),
+            ],
+          )
+        : Text(label);
 
     switch (variant) {
       case ButtonVariant.filled:
@@ -59,8 +59,4 @@ class AppButton extends StatelessWidget {
   }
 }
 
-enum ButtonVariant {
-  filled,
-  outlined,
-  text,
-}
+enum ButtonVariant { filled, outlined, text }

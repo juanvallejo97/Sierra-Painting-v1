@@ -39,7 +39,7 @@ class QueueService {
     await _cleanupOldItems();
 
     final pendingCount = getPendingItems().length;
-    
+
     if (pendingCount >= maxQueueSize) {
       throw QueueFullException(
         'Queue is full ($maxQueueSize items). Please sync pending items before adding more.',
@@ -107,7 +107,7 @@ class QueueService {
   Future<int> _cleanupOldItems() async {
     final now = DateTime.now();
     final expiryDate = now.subtract(Duration(days: queueItemExpiryDays));
-    
+
     int removedCount = 0;
     final itemsToRemove = <int>[];
 
@@ -161,7 +161,7 @@ class QueueService {
     final pending = allItems.where((item) => !item.processed).length;
     final processed = allItems.where((item) => item.processed).length;
     final failed = allItems.where((item) => item.retryCount > 0).length;
-    
+
     return QueueStats(
       total: allItems.length,
       pending: pending,
@@ -207,4 +207,3 @@ final queueServiceProvider = Provider<QueueService?>((ref) {
     error: (_, __) => null,
   );
 });
-

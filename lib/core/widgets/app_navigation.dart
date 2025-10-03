@@ -86,10 +86,12 @@ class AppNavigationBar extends ConsumerWidget {
       },
       type: BottomNavigationBarType.fixed,
       items: visibleItems
-          .map((item) => BottomNavigationBarItem(
-                icon: Icon(item.icon),
-                label: item.label,
-              ))
+          .map(
+            (item) => BottomNavigationBarItem(
+              icon: Icon(item.icon),
+              label: item.label,
+            ),
+          )
           .toList(),
     );
   }
@@ -120,30 +122,32 @@ class AppDrawer extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Sierra Painting',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: Colors.white),
                 ),
                 if (user?.email != null)
                   Text(
                     user!.email!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
                   ),
               ],
             ),
           ),
           ..._navigationItems
               .where((item) => !item.adminOnly || isAdmin)
-              .map((item) => ListTile(
-                    leading: Icon(item.icon),
-                    title: Text(item.label),
-                    onTap: () {
-                      context.go(item.route);
-                      Navigator.pop(context);
-                    },
-                  )),
+              .map(
+                (item) => ListTile(
+                  leading: Icon(item.icon),
+                  title: Text(item.label),
+                  onTap: () {
+                    context.go(item.route);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout),

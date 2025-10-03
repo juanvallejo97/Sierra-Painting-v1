@@ -16,10 +16,7 @@ void main() {
   group('Route Coverage', () {
     test('Public routes are defined', () {
       // Routes that should be accessible without authentication
-      final publicRoutes = [
-        '/login',
-        '/',
-      ];
+      final publicRoutes = ['/login', '/'];
 
       expect(publicRoutes.length, greaterThan(0));
       expect(publicRoutes, contains('/login'));
@@ -41,9 +38,7 @@ void main() {
     });
 
     test('Admin routes require elevated permissions', () {
-      final adminRoutes = [
-        '/admin',
-      ];
+      final adminRoutes = ['/admin'];
 
       expect(adminRoutes.length, greaterThan(0));
       expect(adminRoutes, contains('/admin'));
@@ -60,18 +55,30 @@ void main() {
 
       // Routes should start with /
       for (final route in allRoutes) {
-        expect(route.startsWith('/'), isTrue, reason: 'Route $route should start with /');
+        expect(
+          route.startsWith('/'),
+          isTrue,
+          reason: 'Route $route should start with /',
+        );
       }
 
       // Routes should be lowercase
       for (final route in allRoutes) {
-        expect(route, equals(route.toLowerCase()), reason: 'Route $route should be lowercase');
+        expect(
+          route,
+          equals(route.toLowerCase()),
+          reason: 'Route $route should be lowercase',
+        );
       }
 
       // Routes should not end with /
       for (final route in allRoutes) {
         if (route != '/') {
-          expect(route.endsWith('/'), isFalse, reason: 'Route $route should not end with /');
+          expect(
+            route.endsWith('/'),
+            isFalse,
+            reason: 'Route $route should not end with /',
+          );
         }
       }
     });
@@ -83,11 +90,7 @@ void main() {
       ];
 
       // From authenticated routes, user should reach these
-      final authenticatedReachable = [
-        '/timeclock',
-        '/invoices',
-        '/estimates',
-      ];
+      final authenticatedReachable = ['/timeclock', '/invoices', '/estimates'];
 
       expect(alwaysReachable.length, greaterThan(0));
       expect(authenticatedReachable.length, greaterThan(0));
@@ -95,15 +98,16 @@ void main() {
 
     test('Deep link routes are documented', () {
       // Routes that should support deep linking
-      final deepLinkRoutes = [
-        '/invoices/:id',
-        '/estimates/:id',
-      ];
+      final deepLinkRoutes = ['/invoices/:id', '/estimates/:id'];
 
       // Verify path parameter syntax
       for (final route in deepLinkRoutes) {
         final hasPathParam = route.contains(':');
-        expect(hasPathParam, isTrue, reason: 'Deep link route $route should have path parameter');
+        expect(
+          hasPathParam,
+          isTrue,
+          reason: 'Deep link route $route should have path parameter',
+        );
       }
     });
   });
@@ -126,9 +130,7 @@ void main() {
     });
 
     test('Non-admin users cannot access admin routes', () {
-      final adminOnlyRoutes = [
-        '/admin',
-      ];
+      final adminOnlyRoutes = ['/admin'];
 
       for (final route in adminOnlyRoutes) {
         expect(route, isNotEmpty);
@@ -139,7 +141,7 @@ void main() {
     test('Authenticated users can access their home screen', () {
       // After login, users should land on a useful home screen
       final defaultRoute = '/timeclock';
-      
+
       expect(defaultRoute, isNotEmpty);
       // Expected: Authenticated users land on $defaultRoute
     });
@@ -147,11 +149,7 @@ void main() {
 
   group('Navigation Patterns', () {
     test('Bottom navigation includes all main routes', () {
-      final bottomNavRoutes = [
-        '/timeclock',
-        '/invoices',
-        '/estimates',
-      ];
+      final bottomNavRoutes = ['/timeclock', '/invoices', '/estimates'];
 
       expect(bottomNavRoutes.length, equals(3));
       // Expected: Bottom nav has exactly 3 main tabs

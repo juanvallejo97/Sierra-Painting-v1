@@ -9,7 +9,7 @@ class ThemeConfig {
   // Primary color scheme
   static const Color _primaryColor = Color(0xFF1976D2); // Blue
   static const Color _secondaryColor = Color(0xFFFF9800); // Orange
-  
+
   // Light theme
   static ThemeData get lightTheme {
     const colorScheme = ColorScheme.light(
@@ -18,14 +18,14 @@ class ThemeConfig {
       error: Color(0xFFD32F2F),
       surface: Color(0xFFFAFAFA),
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      
+
       // Accessibility: Minimum touch target size
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      
+
       // Typography with WCAG AA contrast
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400),
@@ -44,7 +44,7 @@ class ThemeConfig {
         labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
       ),
-      
+
       // App bar theme
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -52,42 +52,37 @@ class ThemeConfig {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
       ),
-      
+
       // Card theme
       cardTheme: CardThemeData(
         elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      
+
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
@@ -95,7 +90,7 @@ class ThemeConfig {
       ),
     );
   }
-  
+
   // Dark theme
   static ThemeData get darkTheme {
     const colorScheme = ColorScheme.dark(
@@ -104,14 +99,14 @@ class ThemeConfig {
       error: Color(0xFFEF5350),
       surface: Color(0xFF121212),
     );
-    
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      
+
       // Accessibility: Minimum touch target size
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      
+
       // Typography with WCAG AA contrast
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400),
@@ -130,7 +125,7 @@ class ThemeConfig {
         labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
       ),
-      
+
       // App bar theme
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -138,42 +133,37 @@ class ThemeConfig {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
       ),
-      
+
       // Card theme
       cardTheme: CardThemeData(
         elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
-      
+
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(88, 48), // WCAG touch target
