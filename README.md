@@ -1,5 +1,9 @@
 # Sierra Painting
 
+[![Staging CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
+[![Production CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
+[![Flutter CI](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
+
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
 **[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)**
@@ -236,21 +240,123 @@ dart
 Copy code
 final clockInEnabled = ref.watch(clockInEnabledProvider);
 return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
-🚢 Deployment
-Staging (auto on merge to main)
-CI runs tests, deploys Functions & Rules to staging
+## 🚢 Deployment
 
-Manual staging:
+### CI/CD Pipeline
 
+Sierra Painting uses GitHub Actions for automated CI/CD with separate workflows for staging and production.
+
+**Workflows:**
+- **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
+- **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
+- **[CI Tests](.github/workflows/ci.yml)** - Runs on all PRs
+
+**Pipeline Stages:**
+1. **Setup** - Cache dependencies (Flutter, Node, Gradle)
+2. **Lint & Test** - Flutter analyze + test, Functions lint + test
+3. **Build Check** - Validate Flutter builds (APK for staging, release builds for production)
+4. **Emulator Smoke** - Run smoke tests against Firebase emulators
+5. **Deploy Indexes** - Deploy Firestore indexes
+6. **Deploy Functions** - Deploy Cloud Functions with authentication
+7. **Post Checks** - Print monitoring links and deployment status
+
+### Staging Deployment (Automatic)
+
+**Trigger:** Push to `main` branch
+
+```bash
+git checkout main
+git pull origin main
+git merge feature/my-feature
+git push origin main
+
+# GitHub Actions automatically:
+# 1. Runs all tests
+# 2. Builds Flutter app
+# 3. Deploys to staging project
+```
+
+**Environment:** `sierra-painting-staging`
+
+**Manual staging deploy:**
+```bash
 firebase use staging
 firebase deploy
-Production (tag-based)
-bash
-Copy code
+```
+
+### Production Deployment (Manual Approval)
+
+**Trigger:** Version tag push (e.g., `v1.0.0`)
+
+```bash
+# After staging validation
 git tag -a v1.0.0 -m "Sprint V1 release"
 git push origin v1.0.0
-# GitHub Actions builds & deploys to production
-CI config: .github/workflows/ci.yml
+
+# GitHub Actions will:
+# 1. Run all tests
+# 2. Build release APK/AAB
+# 3. Wait for manual approval (required)
+# 4. Deploy to production after approval
+# 5. Create GitHub Release
+```
+
+**Environment:** `sierra-painting-prod`
+
+**Approval:** Required (configured in GitHub Environments)
+
+### GitHub Environments Setup
+
+**Required Configuration:**
+- `staging` environment - No approval needed
+- `production` environment - Requires 1 reviewer approval
+
+**Secrets:**
+- `FIREBASE_SERVICE_ACCOUNT` - Service account JSON for Firebase deployment
+
+See [GitHub Environments Setup Guide](docs/ops/github-environments.md) for detailed configuration.
+
+### Deployment Scripts
+
+**Helper scripts available:**
+- `scripts/ci/firebase-login.sh` - Validate Firebase authentication
+- `scripts/smoke/run.sh` - Run emulator smoke tests
+- `scripts/remote-config/manage-flags.sh` - Manage feature flags
+- `scripts/rollback/rollback-functions.sh` - Emergency rollback
+
+### Monitoring Post-Deployment
+
+**Staging:**
+- Firebase Console: https://console.firebase.google.com/project/sierra-painting-staging
+- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-staging
+
+**Production:**
+- Firebase Console: https://console.firebase.google.com/project/sierra-painting-prod
+- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-prod
+- Crashlytics: Monitor for 24 hours post-deployment
+
+See [Monitoring Guide](docs/ops/monitoring.md) for detailed monitoring procedures.
+
+### Rollback Procedures
+
+If issues are detected post-deployment:
+
+1. **Feature Flag Rollback** (fastest):
+   ```bash
+   scripts/remote-config/manage-flags.sh disable FEATURE_FLAG --project production
+   ```
+
+2. **Code Rollback** (requires redeployment):
+   ```bash
+   # Checkout previous version
+   git checkout v1.x.x
+   
+   # Deploy
+   cd functions && npm ci && npm run build
+   firebase deploy --only functions --project production
+   ```
+
+See [Rollback Procedures](docs/ui/ROLLBACK_PROCEDURES.md) for detailed rollback steps.
 
 📊 Performance Targets
 Operation	Target (P95)
