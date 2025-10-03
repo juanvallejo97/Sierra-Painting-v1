@@ -1,3 +1,20 @@
+/// Estimates Screen
+///
+/// PURPOSE:
+/// Manage and view customer estimates/quotes.
+/// Create new estimates and track their status.
+///
+/// FEATURES:
+/// - List all estimates
+/// - Create new estimates
+/// - View estimate details
+/// - Generate estimate PDFs
+/// - Track estimate status (draft, sent, accepted, rejected)
+///
+/// TODO:
+/// - Implement estimate creation form
+/// - Add PDF generation integration
+/// - Add estimate filtering and search
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';

@@ -1,16 +1,34 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
-import 'core/config/firebase_options.dart';
-import 'core/config/theme_config.dart';
-import 'core/services/feature_flag_service.dart';
-import 'core/services/offline_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/app/app.dart';
+import 'package:sierra_painting/firebase_options.dart';
+import 'package:sierra_painting/core/services/feature_flag_service.dart';
+import 'package:sierra_painting/core/services/offline_service.dart';
 
+/// Sierra Painting Flutter Application
+///
+/// PURPOSE:
+/// Entry point for the Sierra Painting mobile application.
+/// Initializes Firebase, offline storage, and feature flags before app launch.
+///
+/// ARCHITECTURE:
+/// - Uses Riverpod for state management and dependency injection
+/// - Implements offline-first architecture with queue synchronization
+/// - Follows Material Design 3 guidelines
+///
+/// INITIALIZATION ORDER:
+/// 1. Firebase (auth, firestore, functions)
+/// 2. Offline storage (Hive)
+/// 3. Feature flags
+/// 4. App widget tree
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize offline storage
   await OfflineService.initialize();
@@ -18,74 +36,9 @@ void main() async {
   // Initialize feature flags
   await FeatureFlagService.initialize();
 
-  runApp(const SierraPaintingApp());
-}
-
-class SierraPaintingApp extends StatelessWidget {
-  const SierraPaintingApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<FeatureFlagService>(create: (_) => FeatureFlagService()),
-        Provider<OfflineService>(create: (_) => OfflineService()),
-      ],
-      child: MaterialApp(
-        title: 'Sierra Painting',
-        theme: ThemeConfig.lightTheme,
-        darkTheme: ThemeConfig.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const HomeScreen(),
-        debugShowCheckedModeBanner: false,
-
-        // Accessibility
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(
-                MediaQuery.of(context).textScaleFactor.clamp(1.0, 1.3),
-              ),
-            ),
-            child: child!,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sierra Painting'), centerTitle: true),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.format_paint,
-              size: 100,
-              color: Theme.of(context).colorScheme.primary,
-              semanticLabel: 'Painting app icon',
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Welcome to Sierra Painting',
-              style: Theme.of(context).textTheme.headlineMedium,
-              semanticsLabel: 'Welcome to Sierra Painting',
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Small Business Management',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  runApp(
+    const ProviderScope(
+      child: SierraPaintingApp(),
+    ),
+  );
 }

@@ -109,7 +109,7 @@ export async function handleStripeWebhook(
       eventType: event.type,
       error,
     });
-    // Don't record as processed so it can be retried
+    // Do not record as processed so it can be retried
     res.status(500).json({error: 'Processing failed'});
   }
 }

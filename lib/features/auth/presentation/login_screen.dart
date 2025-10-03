@@ -1,3 +1,19 @@
+/// Login Screen
+///
+/// PURPOSE:
+/// Authentication screen for user sign-in.
+/// Entry point for unauthenticated users.
+///
+/// FEATURES:
+/// - Email/password authentication via Firebase Auth
+/// - Form validation
+/// - Haptic feedback for interactions
+/// - Loading states
+/// - Error handling with user-friendly messages
+///
+/// NAVIGATION:
+/// - On successful login: redirects to /timeclock
+/// - On failed login: shows error message
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
