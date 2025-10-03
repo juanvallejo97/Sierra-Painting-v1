@@ -207,7 +207,7 @@ jobs:
     name: Deploy Firestore Indexes (Production)
     runs-on: ubuntu-latest
     needs: [build_flutter_release, lint_and_test_functions]
-    environment: 
+    environment:
       name: production
       url: https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/overview
     steps:
@@ -302,21 +302,21 @@ jobs:
           prerelease: false
           body: |
             ## Sierra Painting ${{ needs.setup.outputs.version }}
-            
+
             ### 📱 Mobile App Builds
             - **APK**: app-release.apk (for direct installation)
             - **AAB**: app-release.aab (for Google Play Store)
-            
+
             ### 🚀 Deployment
             - Cloud Functions deployed to production
             - Firestore rules and indexes updated
             - Storage rules updated
-            
+
             ### 📊 Monitoring
             - [Firebase Console](https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/overview)
             - [Cloud Functions Logs](https://console.cloud.google.com/logs/query?project=${{ env.FIREBASE_PROJECT_PROD }})
             - [Crashlytics](https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/crashlytics)
-            
+
             ### 📝 Notes
             - Manual app store submission required for iOS
             - Monitor error rates for 24 hours post-deployment
