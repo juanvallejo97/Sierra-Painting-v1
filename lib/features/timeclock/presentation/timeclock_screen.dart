@@ -13,9 +13,7 @@ class TimeclockScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Time Clock'),
-      ),
+      appBar: AppBar(title: const Text('Time Clock')),
       drawer: const AppDrawer(),
       body: const _TimeclockBody(),
       bottomNavigationBar: const AppNavigationBar(),

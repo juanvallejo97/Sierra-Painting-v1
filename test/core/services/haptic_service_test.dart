@@ -31,54 +31,39 @@ void main() {
     test('Can re-enable haptic feedback', () {
       service.setEnabled(false);
       expect(service.isEnabled, isFalse);
-      
+
       service.setEnabled(true);
       expect(service.isEnabled, isTrue);
     });
 
     test('Light haptic completes without error when enabled', () async {
       service.setEnabled(true);
-      await expectLater(
-        service.light(),
-        completes,
-      );
+      await expectLater(service.light(), completes);
     });
 
     test('Medium haptic completes without error when enabled', () async {
       service.setEnabled(true);
-      await expectLater(
-        service.medium(),
-        completes,
-      );
+      await expectLater(service.medium(), completes);
     });
 
     test('Heavy haptic completes without error when enabled', () async {
       service.setEnabled(true);
-      await expectLater(
-        service.heavy(),
-        completes,
-      );
+      await expectLater(service.heavy(), completes);
     });
 
     test('Selection haptic completes without error when enabled', () async {
       service.setEnabled(true);
-      await expectLater(
-        service.selection(),
-        completes,
-      );
+      await expectLater(service.selection(), completes);
     });
 
     test('Vibrate completes without error when enabled', () async {
       service.setEnabled(true);
-      await expectLater(
-        service.vibrate(),
-        completes,
-      );
+      await expectLater(service.vibrate(), completes);
     });
 
     test('Haptics do not trigger when disabled', () async {
       service.setEnabled(false);
-      
+
       // All haptic methods should complete immediately without error
       await expectLater(service.light(), completes);
       await expectLater(service.medium(), completes);
@@ -89,24 +74,24 @@ void main() {
 
     test('Multiple haptic calls succeed', () async {
       service.setEnabled(true);
-      
+
       await service.light();
       await service.light();
       await service.medium();
-      
+
       // All calls should complete successfully
       expect(service.isEnabled, isTrue);
     });
 
     test('Haptic state toggle works correctly', () {
       expect(service.isEnabled, isTrue);
-      
+
       service.setEnabled(false);
       expect(service.isEnabled, isFalse);
-      
+
       service.setEnabled(true);
       expect(service.isEnabled, isTrue);
-      
+
       service.setEnabled(false);
       expect(service.isEnabled, isFalse);
     });
@@ -121,7 +106,7 @@ void main() {
         'Form field focus',
         'Minor UI interactions',
       ];
-      
+
       expect(lightUseCases.length, equals(4));
     });
 
@@ -134,7 +119,7 @@ void main() {
         'Save actions',
         'Successful completions',
       ];
-      
+
       expect(mediumUseCases.length, equals(5));
     });
 
@@ -146,7 +131,7 @@ void main() {
         'Critical alerts',
         'Failed operations',
       ];
-      
+
       expect(heavyUseCases.length, equals(4));
     });
 
@@ -158,7 +143,7 @@ void main() {
         'Item selection in list',
         'Picker/slider interaction',
       ];
-      
+
       expect(selectionUseCases.length, equals(4));
     });
   });

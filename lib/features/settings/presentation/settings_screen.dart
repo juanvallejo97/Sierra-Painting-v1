@@ -23,10 +23,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final hapticService = ref.watch(hapticServiceProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
       body: ListView(
         children: [
           // Accessibility Section
@@ -40,11 +37,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               if (value) {
                 hapticService.light();
               }
-              
+
               // Update state
               ref.read(hapticEnabledProvider.notifier).state = value;
               hapticService.setEnabled(value);
-              
+
               // Show confirmation
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -60,7 +57,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             secondary: const Icon(Icons.vibration),
           ),
           const Divider(),
-          
+
           // Theme Section (placeholder for future implementation)
           _buildSectionHeader(context, 'Appearance'),
           ListTile(
@@ -79,7 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           const Divider(),
-          
+
           // About Section
           _buildSectionHeader(context, 'About'),
           ListTile(
@@ -116,9 +113,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

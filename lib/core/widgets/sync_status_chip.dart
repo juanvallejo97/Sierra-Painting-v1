@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Status of a sync operation
-enum SyncStatus {
-  pending,
-  synced,
-  error,
-}
+enum SyncStatus { pending, synced, error }
 
 /// Sync status chip to show sync state of offline operations
 ///
@@ -62,11 +58,7 @@ class SyncStatusChip extends StatelessWidget {
     }
 
     final chip = Chip(
-      avatar: Icon(
-        icon,
-        size: 16,
-        color: foregroundColor,
-      ),
+      avatar: Icon(icon, size: 16, color: foregroundColor),
       label: Text(
         label,
         style: TextStyle(
@@ -128,9 +120,7 @@ class GlobalSyncIndicator extends StatelessWidget {
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.cloud_upload),
       ),

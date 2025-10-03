@@ -16,17 +16,21 @@ class OfflineService {
   static Future<void> initialize() async {
     final instance = OfflineService();
     await Hive.initFlutter();
-    
+
     // Open cache box
     instance._cacheBox = await Hive.openBox('offline_cache');
-    
+
     // Check initial connectivity
     final connectivityResult = await instance._connectivity.checkConnectivity();
     instance._isOnline = connectivityResult != ConnectivityResult.none;
-    
+
     // Listen to connectivity changes
-    instance._connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      instance._isOnline = results.any((result) => result != ConnectivityResult.none);
+    instance._connectivity.onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
+      instance._isOnline = results.any(
+        (result) => result != ConnectivityResult.none,
+      );
     });
   }
 
@@ -79,16 +83,19 @@ class OfflineService {
   }
 
   /// Save pending sync operation
-  Future<void> addPendingSync(String operation, Map<String, dynamic> data) async {
+  Future<void> addPendingSync(
+    String operation,
+    Map<String, dynamic> data,
+  ) async {
     if (_cacheBox == null) return;
-    
+
     final pendingSyncs = getFromCache<List>('pending_syncs') ?? [];
     pendingSyncs.add({
       'operation': operation,
       'data': data,
       'timestamp': DateTime.now().toIso8601String(),
     });
-    
+
     await saveToCache('pending_syncs', pendingSyncs);
   }
 

@@ -53,8 +53,8 @@ class TimeEntry {
       userId: data['userId'] as String,
       jobId: data['jobId'] as String,
       clockIn: (data['clockIn'] as Timestamp).toDate(),
-      clockOut: data['clockOut'] != null 
-          ? (data['clockOut'] as Timestamp).toDate() 
+      clockOut: data['clockOut'] != null
+          ? (data['clockOut'] as Timestamp).toDate()
           : null,
       geo: data['geo'] as GeoPoint?,
       gpsMissing: data['gpsMissing'] as bool? ?? false,

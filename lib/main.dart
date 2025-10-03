@@ -8,19 +8,16 @@ import 'core/services/offline_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize offline storage
   await OfflineService.initialize();
-  
+
   // Initialize feature flags
   await FeatureFlagService.initialize();
-  
+
   runApp(const SierraPaintingApp());
 }
 
@@ -31,12 +28,8 @@ class SierraPaintingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<FeatureFlagService>(
-          create: (_) => FeatureFlagService(),
-        ),
-        Provider<OfflineService>(
-          create: (_) => OfflineService(),
-        ),
+        Provider<FeatureFlagService>(create: (_) => FeatureFlagService()),
+        Provider<OfflineService>(create: (_) => OfflineService()),
       ],
       child: MaterialApp(
         title: 'Sierra Painting',
@@ -45,12 +38,14 @@ class SierraPaintingApp extends StatelessWidget {
         themeMode: ThemeMode.system,
         home: const HomeScreen(),
         debugShowCheckedModeBanner: false,
-        
+
         // Accessibility
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(MediaQuery.of(context).textScaleFactor.clamp(1.0, 1.3)),
+              textScaler: TextScaler.linear(
+                MediaQuery.of(context).textScaleFactor.clamp(1.0, 1.3),
+              ),
             ),
             child: child!,
           );
@@ -66,10 +61,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sierra Painting'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Sierra Painting'), centerTitle: true),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

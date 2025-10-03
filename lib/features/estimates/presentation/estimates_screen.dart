@@ -8,9 +8,7 @@ class EstimatesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Estimates'),
-      ),
+      appBar: AppBar(title: const Text('Estimates')),
       drawer: const AppDrawer(),
       body: const _EstimatesBody(),
       bottomNavigationBar: const AppNavigationBar(),
@@ -45,8 +43,6 @@ class _EstimatesBody extends StatelessWidget {
     }
 
     // TODO: Implement list with ListView.builder for performance
-    return const Center(
-      child: Text('Estimates list will go here'),
-    );
+    return const Center(child: Text('Estimates list will go here'));
   }
 }

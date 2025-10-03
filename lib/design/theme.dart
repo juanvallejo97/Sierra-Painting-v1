@@ -20,33 +20,33 @@ class AppTheme {
       onPrimary: Colors.white,
       primaryContainer: const Color(0xFFD3E4FF),
       onPrimaryContainer: const Color(0xFF001D36),
-      
+
       secondary: DesignTokens.paintingOrange,
       onSecondary: Colors.white,
       secondaryContainer: const Color(0xFFFFDCC4),
       onSecondaryContainer: const Color(0xFF2B1700),
-      
+
       tertiary: DesignTokens.successGreen,
       onTertiary: Colors.white,
       tertiaryContainer: const Color(0xFFC8E6C9),
       onTertiaryContainer: const Color(0xFF002106),
-      
+
       error: DesignTokens.errorRed,
       onError: Colors.white,
       errorContainer: const Color(0xFFFFDAD6),
       onErrorContainer: const Color(0xFF410002),
-      
+
       surface: DesignTokens.surfaceLight,
       onSurface: const Color(0xFF1A1C1E),
       surfaceContainerHighest: DesignTokens.surfaceElevation3Light,
       onSurfaceVariant: const Color(0xFF43474E),
-      
+
       outline: const Color(0xFF73777F),
       outlineVariant: const Color(0xFFC3C7CF),
-      
+
       shadow: Colors.black,
       scrim: Colors.black,
-      
+
       inverseSurface: const Color(0xFF2F3033),
       onInverseSurface: const Color(0xFFF1F0F4),
       inversePrimary: const Color(0xFF9ECAFF),
@@ -65,33 +65,33 @@ class AppTheme {
       onPrimary: const Color(0xFF003258),
       primaryContainer: const Color(0xFF00497D),
       onPrimaryContainer: const Color(0xFFD3E4FF),
-      
+
       secondary: const Color(0xFFFFB74D),
       onSecondary: const Color(0xFF472A00),
       secondaryContainer: const Color(0xFF653F00),
       onSecondaryContainer: const Color(0xFFFFDCC4),
-      
+
       tertiary: const Color(0xFF81C784),
       onTertiary: const Color(0xFF003910),
       tertiaryContainer: const Color(0xFF005319),
       onTertiaryContainer: const Color(0xFFC8E6C9),
-      
+
       error: const Color(0xFFEF5350),
       onError: const Color(0xFF690005),
       errorContainer: const Color(0xFF93000A),
       onErrorContainer: const Color(0xFFFFDAD6),
-      
+
       surface: DesignTokens.surfaceDark,
       onSurface: const Color(0xFFE3E2E6),
       surfaceContainerHighest: DesignTokens.surfaceElevation3Dark,
       onSurfaceVariant: const Color(0xFFC3C7CF),
-      
+
       outline: const Color(0xFF8D9199),
       outlineVariant: const Color(0xFF43474E),
-      
+
       shadow: Colors.black,
       scrim: Colors.black,
-      
+
       inverseSurface: const Color(0xFFE3E2E6),
       onInverseSurface: const Color(0xFF1A1C1E),
       inversePrimary: const Color(0xFF0061A4),
@@ -109,16 +109,16 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
-      
+
       // Accessibility: Minimum touch target size
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      
+
       // Visual density - standard for mobile
       visualDensity: VisualDensity.standard,
-      
+
       // Typography with proper scale
       textTheme: _buildTextTheme(colorScheme),
-      
+
       // App bar theme
       appBarTheme: AppBarTheme(
         centerTitle: true,
@@ -133,7 +133,7 @@ class AppTheme {
           color: colorScheme.onSurface,
         ),
       ),
-      
+
       // Card theme
       cardTheme: CardTheme(
         elevation: DesignTokens.elevation1,
@@ -146,7 +146,7 @@ class AppTheme {
         ),
         clipBehavior: Clip.antiAlias,
       ),
-      
+
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -176,7 +176,7 @@ class AppTheme {
           vertical: DesignTokens.spaceMD,
         ),
       ),
-      
+
       // Button themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -190,7 +190,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(88, DesignTokens.touchTargetComfortable),
@@ -203,7 +203,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(88, DesignTokens.touchTargetComfortable),
@@ -216,7 +216,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           minimumSize: const Size(88, DesignTokens.touchTargetComfortable),
@@ -226,7 +226,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // FAB theme
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: DesignTokens.elevation2,
@@ -234,14 +234,14 @@ class AppTheme {
           borderRadius: BorderRadius.circular(DesignTokens.radiusXL),
         ),
       ),
-      
+
       // Navigation bar theme
       navigationBarTheme: NavigationBarThemeData(
         elevation: DesignTokens.elevation1,
         height: 80,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
-      
+
       // Drawer theme
       drawerTheme: DrawerThemeData(
         elevation: DesignTokens.elevation4,
@@ -252,15 +252,13 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // List tile theme
       listTileTheme: const ListTileThemeData(
         minVerticalPadding: DesignTokens.spaceSM,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceMD,
-        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: DesignTokens.spaceMD),
       ),
-      
+
       // Chip theme
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
@@ -271,14 +269,14 @@ class AppTheme {
           vertical: DesignTokens.spaceSM,
         ),
       ),
-      
+
       // Divider theme
       dividerTheme: DividerThemeData(
         space: DesignTokens.spaceMD,
         thickness: 1,
         color: colorScheme.outlineVariant,
       ),
-      
+
       // Snackbar theme
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -287,7 +285,7 @@ class AppTheme {
         ),
         actionTextColor: colorScheme.inversePrimary,
       ),
-      
+
       // Dialog theme
       dialogTheme: DialogTheme(
         elevation: DesignTokens.elevation3,
@@ -295,7 +293,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(DesignTokens.radiusXL),
         ),
       ),
-      
+
       // Bottom sheet theme
       bottomSheetTheme: BottomSheetThemeData(
         elevation: DesignTokens.elevation3,
@@ -338,7 +336,7 @@ class AppTheme {
         height: 1.22,
         color: colorScheme.onSurface,
       ),
-      
+
       // Headline styles
       headlineLarge: TextStyle(
         fontSize: 32,
@@ -361,7 +359,7 @@ class AppTheme {
         height: 1.33,
         color: colorScheme.onSurface,
       ),
-      
+
       // Title styles
       titleLarge: TextStyle(
         fontSize: 22,
@@ -384,7 +382,7 @@ class AppTheme {
         height: 1.43,
         color: colorScheme.onSurface,
       ),
-      
+
       // Body styles
       bodyLarge: TextStyle(
         fontSize: 16,
@@ -407,7 +405,7 @@ class AppTheme {
         height: 1.33,
         color: colorScheme.onSurfaceVariant,
       ),
-      
+
       // Label styles
       labelLarge: TextStyle(
         fontSize: 14,

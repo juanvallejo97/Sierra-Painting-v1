@@ -45,10 +45,12 @@ sealed class Result<T, E> {
   bool get isFailure => this is Failure<T, E>;
 
   /// Get the success value or null
-  T? get valueOrNull => this is Success<T, E> ? (this as Success<T, E>).value : null;
+  T? get valueOrNull =>
+      this is Success<T, E> ? (this as Success<T, E>).value : null;
 
   /// Get the error or null
-  E? get errorOrNull => this is Failure<T, E> ? (this as Failure<T, E>).error : null;
+  E? get errorOrNull =>
+      this is Failure<T, E> ? (this as Failure<T, E>).error : null;
 
   /// Get the value or throw
   T get value {

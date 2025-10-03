@@ -37,26 +37,17 @@ class MotionUtils {
 
   /// Get a fast duration for quick animations
   static Duration getFastDuration(BuildContext context) {
-    return getDuration(
-      context,
-      normal: const Duration(milliseconds: 150),
-    );
+    return getDuration(context, normal: const Duration(milliseconds: 150));
   }
 
   /// Get a medium duration for standard animations
   static Duration getMediumDuration(BuildContext context) {
-    return getDuration(
-      context,
-      normal: const Duration(milliseconds: 300),
-    );
+    return getDuration(context, normal: const Duration(milliseconds: 300));
   }
 
   /// Get a slow duration for emphasis animations
   static Duration getSlowDuration(BuildContext context) {
-    return getDuration(
-      context,
-      normal: const Duration(milliseconds: 500),
-    );
+    return getDuration(context, normal: const Duration(milliseconds: 500));
   }
 
   /// Check if animations should be disabled

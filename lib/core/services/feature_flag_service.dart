@@ -2,13 +2,13 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service for managing feature flags using Firebase Remote Config
-/// 
+///
 /// Design principles:
 /// - Flags map to sprint stories (feature_b1_clock_in_enabled)
 /// - Default to OFF for new features, ON for released features
 /// - Support gradual rollout via Remote Config conditions
 /// - Cache for performance, refresh every 1 hour
-/// 
+///
 /// See: docs/FEATURE_FLAGS.md for complete documentation
 class FeatureFlagService {
   static final FeatureFlagService _instance = FeatureFlagService._internal();
@@ -23,14 +23,15 @@ class FeatureFlagService {
   static const String clockInEnabled = 'feature_b1_clock_in_enabled';
   static const String clockOutEnabled = 'feature_b2_clock_out_enabled';
   static const String jobsTodayEnabled = 'feature_b3_jobs_today_enabled';
-  
+
   // V2 Features (gated)
   static const String createQuoteEnabled = 'feature_c1_create_quote_enabled';
   static const String markPaidEnabled = 'feature_c3_mark_paid_enabled';
-  
+
   // V4 Features (optional)
-  static const String stripeCheckoutEnabled = 'feature_c5_stripe_checkout_enabled';
-  
+  static const String stripeCheckoutEnabled =
+      'feature_c5_stripe_checkout_enabled';
+
   // Operational flags
   static const String offlineModeEnabled = 'offline_mode_enabled';
   static const String gpsTrackingEnabled = 'gps_tracking_enabled';
@@ -47,24 +48,26 @@ class FeatureFlagService {
         clockInEnabled: true,
         clockOutEnabled: true,
         jobsTodayEnabled: true,
-        
+
         // V2 Features (gated)
         createQuoteEnabled: false,
         markPaidEnabled: false,
-        
+
         // V4 Features (optional)
         stripeCheckoutEnabled: false,
-        
+
         // Operational flags
         offlineModeEnabled: true,
         gpsTrackingEnabled: true,
       });
 
       // Set fetch timeout and cache expiration
-      await instance._remoteConfig!.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(minutes: 1),
-        minimumFetchInterval: const Duration(hours: 1),
-      ));
+      await instance._remoteConfig!.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(minutes: 1),
+          minimumFetchInterval: const Duration(hours: 1),
+        ),
+      );
 
       // Fetch and activate
       await instance._remoteConfig!.fetchAndActivate();
@@ -88,8 +91,8 @@ class FeatureFlagService {
   /// Get default value for a feature flag
   bool _getDefaultValue(String key) {
     // V1 features default to ON
-    if (key == clockInEnabled || 
-        key == clockOutEnabled || 
+    if (key == clockInEnabled ||
+        key == clockOutEnabled ||
         key == jobsTodayEnabled ||
         key == offlineModeEnabled ||
         key == gpsTrackingEnabled) {

@@ -12,11 +12,11 @@
 ///   ErrorTracker.recordError(
 ///     error: e,
 ///     stackTrace: stackTrace,
-///     context: {
-///       'userId': user.id,
-///       'screen': 'timeclock',
-///       'action': 'clock_in',
-///     },
+///     context: ErrorContext(
+///       userId: user.id,
+///       screen: 'timeclock',
+///       action: 'clock_in',
+///     ),
 ///   );
 /// }
 /// ```
@@ -28,17 +28,10 @@
 /// - Non-fatal error reporting
 /// - Fatal error reporting with crash
 
-import 'dart:ui' show PlatformDispatcher;                  // ✅ needed for PlatformDispatcher
 import 'package:flutter/foundation.dart';
-import 'package:sierra_painting/core/utils/result.dart';
 
 /// Error severity levels
-enum ErrorSeverity {
-  info,
-  warning,
-  error,
-  fatal,
-}
+enum ErrorSeverity { info, warning, error, fatal }
 
 /// Error context
 class ErrorContext {
@@ -81,21 +74,17 @@ class ErrorTracker {
   ErrorContext _globalContext = ErrorContext();
 
   /// Set global user context
-  void setUserContext({
-    String? userId,
-    String? orgId,
-    String? email,
-  }) {
+  void setUserContext({String? userId, String? orgId, String? email}) {
     _globalContext = ErrorContext(
       userId: userId,
       orgId: orgId,
-      extra: {
-        if (email != null) 'email': email,
-      },
+      extra: {if (email != null) 'email': email},
     );
 
     if (kDebugMode) {
-      debugPrint('[ErrorTracker] User context set: userId=$userId, orgId=$orgId');
+      debugPrint(
+        '[ErrorTracker] User context set: userId=$userId, orgId=$orgId',
+      );
     }
     // TODO: Set user context in Firebase Crashlytics
   }
@@ -165,10 +154,7 @@ class ErrorTracker {
   }
 
   /// Merge global and local contexts
-  static ErrorContext _mergeContexts(
-    ErrorContext global,
-    ErrorContext? local,
-  ) {
+  static ErrorContext _mergeContexts(ErrorContext global, ErrorContext? local) {
     if (local == null) return global;
 
     return ErrorContext(
@@ -177,10 +163,7 @@ class ErrorTracker {
       requestId: local.requestId ?? global.requestId,
       screen: local.screen ?? global.screen,
       action: local.action ?? global.action,
-      extra: {
-        ...global.extra,
-        ...local.extra,
-      },
+      extra: {...global.extra, ...local.extra},
     );
   }
 }

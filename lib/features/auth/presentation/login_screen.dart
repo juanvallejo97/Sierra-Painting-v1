@@ -37,10 +37,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(firebaseAuthProvider).signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      await ref
+          .read(firebaseAuthProvider)
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
       // Medium haptic on successful login
       await ref.read(hapticServiceProvider).medium();
     } catch (e) {

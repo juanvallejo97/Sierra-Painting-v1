@@ -8,9 +8,7 @@ class InvoicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Invoices'),
-      ),
+      appBar: AppBar(title: const Text('Invoices')),
       drawer: const AppDrawer(),
       body: const _InvoicesBody(),
       bottomNavigationBar: const AppNavigationBar(),
@@ -45,8 +43,6 @@ class _InvoicesBody extends StatelessWidget {
     }
 
     // TODO: Implement list with ListView.builder for performance
-    return const Center(
-      child: Text('Invoices list will go here'),
-    );
+    return const Center(child: Text('Invoices list will go here'));
   }
 }

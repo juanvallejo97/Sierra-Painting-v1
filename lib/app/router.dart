@@ -26,15 +26,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       return null;
     },
-    errorBuilder: (context, state) => ErrorScreen(
-      error: state.error,
-      path: state.uri.toString(),
-    ),
+    errorBuilder: (context, state) =>
+        ErrorScreen(error: state.error, path: state.uri.toString()),
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/timeclock',
         builder: (context, state) => const TimeclockScreen(),
