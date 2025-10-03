@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
+import 'package:sierra_painting/core/services/haptic_service.dart';
+import 'package:sierra_painting/design/design.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +25,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Light haptic on button press
+    await ref.read(hapticServiceProvider).light();
+
+    if (!_formKey.currentState!.validate()) {
+      // Heavy haptic on validation failure
+      await ref.read(hapticServiceProvider).heavy();
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -32,7 +41,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      // Medium haptic on successful login
+      await ref.read(hapticServiceProvider).medium();
     } catch (e) {
+      // Heavy haptic on error
+      await ref.read(hapticServiceProvider).heavy();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${e.toString()}')),
@@ -47,10 +60,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(DesignTokens.spaceLG),
           child: Form(
             key: _formKey,
             child: Column(
@@ -59,57 +74,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Icon(
                   Icons.format_paint,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
+                  size: 100,
+                  color: theme.colorScheme.primary,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: DesignTokens.spaceLG),
                 Text(
                   'Sierra Painting',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                const SizedBox(height: DesignTokens.spaceSM),
+                Text(
+                  'Professional painting services',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: DesignTokens.spaceXXL),
+                AppInput(
+                  controller: _emailController,
+                  label: 'Email',
+                  prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
                     }
+                    if (!value.contains('@')) {
+                      return 'Please enter a valid email';
+                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
+                const SizedBox(height: DesignTokens.spaceMD),
+                AppInput(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
-                  ),
+                  label: 'Password',
+                  prefixIcon: Icons.lock,
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
                     }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _isLoading ? null : _signIn,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Sign In'),
+                const SizedBox(height: DesignTokens.spaceXL),
+                AppButton(
+                  label: 'Sign In',
+                  icon: Icons.login,
+                  onPressed: _signIn,
+                  isLoading: _isLoading,
                 ),
               ],
             ),
