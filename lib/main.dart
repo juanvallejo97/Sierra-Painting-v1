@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,9 +25,10 @@ import 'package:sierra_painting/core/services/offline_service.dart';
 ///
 /// INITIALIZATION ORDER:
 /// 1. Firebase (auth, firestore, functions, performance, crashlytics)
-/// 2. Offline storage (Hive)
-/// 3. Feature flags
-/// 4. App widget tree
+/// 2. Firebase App Check (security)
+/// 3. Offline storage (Hive)
+/// 4. Feature flags
+/// 5. App widget tree
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -34,6 +36,26 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Firebase App Check
+  // Use dart-define flag to enable/disable: --dart-define=ENABLE_APP_CHECK=true
+  const enableAppCheck = String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
+  final shouldEnableAppCheck = enableAppCheck == 'true' || kReleaseMode;
+  
+  if (shouldEnableAppCheck) {
+    await FirebaseAppCheck.instance.activate(
+      // Android: Play Integrity API for production
+      androidProvider: kDebugMode 
+        ? AndroidProvider.debug 
+        : AndroidProvider.playIntegrity,
+      // iOS: App Attest for iOS 14+ (falls back to DeviceCheck for older versions)
+      appleProvider: kDebugMode 
+        ? AppleProvider.debug 
+        : AppleProvider.appAttest,
+      // Web: ReCaptcha v3 (placeholder - replace with actual site key)
+      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+    );
+  }
 
   // Initialize Firebase Performance Monitoring
   final performance = FirebasePerformance.instance;

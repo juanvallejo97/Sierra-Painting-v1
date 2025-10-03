@@ -189,10 +189,10 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=ENABLE_APP_CHECK=true
 
       - name: Build AAB (release)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --dart-define=ENABLE_APP_CHECK=true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
