@@ -247,69 +247,90 @@ if (isLoading) {
 ```dart
 // lib/core/services/haptic_service.dart
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// Haptic enabled state provider
+final hapticEnabledProvider = StateProvider<bool>((ref) => true);
 
 class HapticService {
-  static bool _isEnabled = true;
+  HapticService(this.ref);
   
-  static void setEnabled(bool enabled) {
-    _isEnabled = enabled;
+  final Ref ref;
+  
+  bool get isEnabled => ref.read(hapticEnabledProvider);
+  
+  void setEnabled(bool enabled) {
+    ref.read(hapticEnabledProvider.notifier).state = enabled;
   }
   
-  static Future<void> light() async {
-    if (_isEnabled) {
+  Future<void> light() async {
+    if (isEnabled) {
       await HapticFeedback.lightImpact();
     }
   }
   
-  static Future<void> medium() async {
-    if (_isEnabled) {
+  Future<void> medium() async {
+    if (isEnabled) {
       await HapticFeedback.mediumImpact();
     }
   }
   
-  static Future<void> heavy() async {
-    if (_isEnabled) {
+  Future<void> heavy() async {
+    if (isEnabled) {
       await HapticFeedback.heavyImpact();
     }
   }
   
-  static Future<void> selection() async {
-    if (_isEnabled) {
+  Future<void> selection() async {
+    if (isEnabled) {
       await HapticFeedback.selectionClick();
     }
   }
 }
 
-// Usage:
-ElevatedButton(
-  onPressed: () async {
-    await HapticService.light();
-    // Handle action
-  },
-  child: Text('Clock In'),
-)
+/// Haptic service provider
+final hapticServiceProvider = Provider<HapticService>((ref) {
+  return HapticService(ref);
+});
+
+// Usage with Riverpod:
+class MyWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      onPressed: () async {
+        await ref.read(hapticServiceProvider).light();
+        // Handle action
+      },
+      child: Text('Clock In'),
+    );
+  }
+}
 ```
 
-**Files to Modify:**
-- New: `lib/core/services/haptic_service.dart`
-- `lib/features/timeclock/presentation/timeclock_screen.dart` - Clock in/out buttons
-- `lib/features/invoices/presentation/invoices_screen.dart` - Mark paid button
-- `lib/features/auth/presentation/login_screen.dart` - Sign in button
-- All form submissions across the app
+**Files Modified:**
+- ✅ `lib/core/services/haptic_service.dart` - Implemented with Riverpod
+- ✅ `lib/features/auth/presentation/login_screen.dart` - Sign in button
+- ✅ `lib/features/settings/presentation/settings_screen.dart` - Settings toggle
+- ✅ `lib/core/widgets/app_navigation.dart` - Navigation
+- Additional files may need haptic feedback added
 
 **Priority Events for Haptics:**
-- Clock in/out (medium)
-- Invoice marked paid (medium)
-- Estimate sent (medium)
-- Form submission (light)
-- Navigation drawer toggle (light)
-- Tab bar selection (selection)
-- Error toast/snackbar (heavy)
+- ✅ Sign in (light on press, medium on success, heavy on error)
+- Navigation drawer toggle (implemented)
+- Tab bar selection (needs selection haptic)
+- Error toast/snackbar (needs heavy haptic)
+- Clock in/out (needs medium haptic)
+- Invoice marked paid (needs medium haptic)
+- Estimate sent (needs medium haptic)
 
 **Acceptance Criteria:**
+- [x] Haptic service implemented with Riverpod
+- [x] Can be disabled in accessibility settings
+- [x] State persists across app via provider
+- [x] Login screen has haptic feedback
 - [ ] All critical actions provide haptic feedback
 - [ ] Different intensities match action importance
-- [ ] Can be disabled in accessibility settings
 - [ ] No haptic feedback if device doesn't support it
 - [ ] Haptics work on both iOS and Android
 
