@@ -1,3 +1,18 @@
+/// Error Screen Widget
+///
+/// PURPOSE:
+/// Displays user-friendly error messages for navigation errors and exceptions.
+/// Handles both 404 Not Found errors and general application errors.
+///
+/// FEATURES:
+/// - Distinctive UI for 404 vs general errors
+/// - Shows error path or error message
+/// - Provides navigation options (Go Home, Go Back)
+/// - Material Design 3 compliant with proper accessibility
+///
+/// USAGE:
+/// Automatically displayed by GoRouter when navigation errors occur.
+/// Can also be shown programmatically for error states.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sierra_painting/design/design.dart';

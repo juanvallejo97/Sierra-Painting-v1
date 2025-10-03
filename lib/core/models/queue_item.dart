@@ -1,3 +1,21 @@
+/// Queue Item Model
+///
+/// PURPOSE:
+/// Represents an operation queued for offline execution and synchronization.
+/// Used by QueueService to persist pending operations when device is offline.
+///
+/// ARCHITECTURE:
+/// - Uses Hive for efficient local storage and type-safe serialization
+/// - Includes error tracking for failed sync attempts
+/// - Supports both JSON and Hive serialization
+///
+/// FIELDS:
+/// - id: Unique identifier for the queue item (UUID)
+/// - type: Operation type (e.g., 'clockIn', 'clockOut', 'createInvoice')
+/// - data: Operation-specific payload as JSON
+/// - createdAt: Timestamp when item was queued
+/// - processed: Whether item has been successfully synced
+/// - error: Error message from last failed sync attempt (if any)
 import 'package:hive/hive.dart';
 
 part 'queue_item.g.dart';

@@ -1,3 +1,17 @@
+/// Admin Screen
+///
+/// PURPOSE:
+/// Administrative interface for organization management and user administration.
+/// Requires admin role for access (enforced via router guard).
+///
+/// FEATURES:
+/// - User management
+/// - Organization settings
+/// - Role assignment
+/// - System configuration
+///
+/// RBAC:
+/// Access restricted to users with admin role via router redirect.
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
