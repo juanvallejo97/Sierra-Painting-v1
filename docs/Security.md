@@ -283,17 +283,35 @@ npm run test:rules
 
 ### App Check Enforcement
 
+**Status:** ✅ **ENFORCED** - All callable functions now enforce App Check with replay protection
+
 ```typescript
-// Enforce App Check on all callable functions
+// All callable functions enforce App Check with replay protection
 export const createLead = functions
   .runWith({
     enforceAppCheck: true,
+    consumeAppCheckToken: true, // Prevents replay attacks
   })
   .https.onCall(async (data, context) => {
-    // App Check token automatically validated
+    // Defense in depth: runtime validation
+    if (!context.app) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'App Check validation failed'
+      );
+    }
+    
+    // App Check token is now consumed and cannot be reused
     // Proceed with function logic
   });
 ```
+
+**Protected Functions:**
+- ✅ `createLead` - Lead form submission
+- ✅ `markPaidManual` - Manual payment processing
+- ✅ `markPaymentPaid` - Legacy payment processing (backward compat)
+- ✅ `clockIn` - Time clock entry
+- ✅ `initializeFlags` - Feature flag initialization
 
 **Setup App Check:**
 1. Enable in Firebase Console → App Check
@@ -307,6 +325,11 @@ export const createLead = functions
    - Android: SafetyNet or Play Integrity API
    - iOS: DeviceCheck or App Attest
    - Web: reCAPTCHA
+
+**Security Benefits:**
+- **Anti-abuse**: Only legitimate app instances can call functions
+- **Replay protection**: Tokens are single-use (consumeAppCheckToken)
+- **Defense in depth**: App Check + authentication + authorization
 
 ### Input Validation (Zod)
 

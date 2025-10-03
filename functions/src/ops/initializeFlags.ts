@@ -15,14 +15,36 @@
 import * as functions from 'firebase-functions';
 import { initializeFlags } from '../lib/ops';
 
-export const initializeFlagsFunction = functions.https.onCall(async (data, context) => {
+export const initializeFlagsFunction = functions
+  .runWith({
+    enforceAppCheck: true,
+    consumeAppCheckToken: true, // Prevent replay attacks
+  })
+  .https.onCall(async (data, context) => {
   // Verify authentication
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
 
-  // This function should ideally be admin-only, but for initial setup
-  // we'll allow any authenticated user. Add admin check if needed.
+  // App Check validation (defense in depth)
+  if (!context.app) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'App Check validation failed'
+    );
+  }
+
+  // Admin-only operation for security
+  const admin = await import('firebase-admin');
+  const db = admin.firestore();
+  const userDoc = await db.collection('users').doc(context.auth.uid).get();
+  
+  if (!userDoc.exists || userDoc.data()?.role !== 'admin') {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Only admins can initialize feature flags'
+    );
+  }
   
   try {
     await initializeFlags();

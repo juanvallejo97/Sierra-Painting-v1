@@ -118,7 +118,12 @@ async function isAdmin(uid: string): Promise<boolean> {
 // MAIN FUNCTION
 // ============================================================
 
-export const markPaidManual = functions.https.onCall(async (data: unknown, context) => {
+export const markPaidManual = functions
+  .runWith({
+    enforceAppCheck: true,
+    consumeAppCheckToken: true, // Prevent replay attacks
+  })
+  .https.onCall(async (data: unknown, context) => {
   // ========================================
   // 1. AUTHENTICATION CHECK
   // ========================================
@@ -149,13 +154,14 @@ export const markPaidManual = functions.https.onCall(async (data: unknown, conte
   // 3. APP CHECK VALIDATION
   // ========================================
 
-  // Uncomment when App Check is configured
-  // if (!context.app) {
-  //   throw new functions.https.HttpsError(
-  //     'failed-precondition',
-  //     'App Check validation failed'
-  //   );
-  // }
+  // App Check is enforced at the function level via runWith config
+  // Additional runtime check for defense in depth
+  if (!context.app) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'App Check validation failed'
+    );
+  }
 
   // ========================================
   // 4. INPUT VALIDATION (Zod)
