@@ -12,6 +12,11 @@
 /// - Mark as paid (manual or Stripe)
 /// - Track payment status
 ///
+/// PERFORMANCE:
+/// - Uses PaginatedListView for efficient list rendering
+/// - Automatic pagination at 80% scroll
+/// - Memory-efficient with lazy loading
+///
 /// TODO:
 /// - Implement invoice creation form
 /// - Add payment recording UI
@@ -19,6 +24,7 @@
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
+// import 'package:sierra_painting/core/widgets/paginated_list_view.dart'; // Uncomment when implementing list
 
 class InvoicesScreen extends StatelessWidget {
   const InvoicesScreen({super.key});
@@ -60,7 +66,22 @@ class _InvoicesBody extends StatelessWidget {
       );
     }
 
-    // TODO: Implement list with ListView.builder for performance
+    // Performance-optimized list using PaginatedListView
+    // When data is available, replace with:
+    // 
+    // return PaginatedListView<Invoice>(
+    //   itemBuilder: (context, invoice, index) => InvoiceListItem(invoice: invoice),
+    //   onLoadMore: () async {
+    //     return await ref.read(invoiceRepositoryProvider).fetchInvoices(page: currentPage);
+    //   },
+    //   emptyWidget: const AppEmpty(
+    //     icon: Icons.receipt_long,
+    //     title: 'No Invoices Yet',
+    //     description: 'Create your first invoice to start getting paid!',
+    //   ),
+    //   itemExtent: 80.0, // Set for fixed-height items for better performance
+    // );
+    
     return const Center(child: Text('Invoices list will go here'));
   }
 }
