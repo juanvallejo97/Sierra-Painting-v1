@@ -12,52 +12,22 @@
  * POST https://us-central1-<project-id>.cloudfunctions.net/initializeFlags
  */
 
-import * as functions from 'firebase-functions';
+import { z } from 'zod';
+import { withValidation, adminEndpoint } from '../middleware/withValidation';
 import { initializeFlags } from '../lib/ops';
 
-export const initializeFlagsFunction = functions
-  .runWith({
-    enforceAppCheck: true,
-    consumeAppCheckToken: true, // Prevent replay attacks
-  })
-  .https.onCall(async (data, context) => {
-  // Verify authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-  }
+// Empty schema - no input required
+const InitializeFlagsSchema = z.object({}).strict();
 
-  // App Check validation (defense in depth)
-  if (!context.app) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'App Check validation failed'
-    );
-  }
-
-  // Admin-only operation for security
-  const admin = await import('firebase-admin');
-  const db = admin.firestore();
-  const userDoc = await db.collection('users').doc(context.auth.uid).get();
+export const initializeFlagsFunction = withValidation(
+  InitializeFlagsSchema,
+  adminEndpoint()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+)(async (_data, _context) => {
+  await initializeFlags();
   
-  if (!userDoc.exists || userDoc.data()?.role !== 'admin') {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Only admins can initialize feature flags'
-    );
-  }
-  
-  try {
-    await initializeFlags();
-    
-    return {
-      success: true,
-      message: 'Feature flags initialized successfully',
-    };
-  } catch (error) {
-    throw new functions.https.HttpsError(
-      'internal',
-      'Failed to initialize feature flags',
-      error
-    );
-  }
+  return {
+    success: true,
+    message: 'Feature flags initialized successfully',
+  };
 });

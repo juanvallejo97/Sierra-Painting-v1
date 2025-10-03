@@ -3,6 +3,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/require-await */
+
 import { z } from 'zod';
 import { withValidation, publicEndpoint, authenticatedEndpoint, adminEndpoint } from '../withValidation';
 
@@ -10,6 +17,7 @@ import { withValidation, publicEndpoint, authenticatedEndpoint, adminEndpoint } 
 jest.mock('firebase-functions', () => {
   const mockRunWith = jest.fn(() => ({
     https: {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       onCall: jest.fn((handler: any) => handler),
     },
   }));
@@ -22,6 +30,7 @@ jest.mock('firebase-functions', () => {
           this.name = 'HttpsError';
         }
       },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       onCall: jest.fn((handler: any) => handler),
     },
     logger: {

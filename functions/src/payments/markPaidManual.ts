@@ -69,7 +69,7 @@
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import {ManualPaymentSchema, ManualPayment} from '../lib/zodSchemas';
+import {ManualPaymentSchema} from '../lib/zodSchemas';
 import {logAudit, createAuditEntry, extractCallableMetadata} from '../lib/audit';
 import {
   checkIdempotency,
@@ -77,6 +77,7 @@ import {
   generateIdempotencyKey,
   isValidIdempotencyKey,
 } from '../lib/idempotency';
+import { withValidation, adminEndpoint } from '../middleware/withValidation';
 
 // ============================================================
 // CONSTANTS
@@ -84,105 +85,16 @@ import {
 
 const INVOICES_COLLECTION = 'invoices';
 const PAYMENTS_COLLECTION = 'payments';
-const USERS_COLLECTION = 'users';
-
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-
-/**
- * Check if user is an admin
- * 
- * @param uid - Firebase user ID
- * @returns true if admin, false otherwise
- */
-async function isAdmin(uid: string): Promise<boolean> {
-  try {
-    const db = admin.firestore();
-    const userDoc = await db.collection(USERS_COLLECTION).doc(uid).get();
-
-    if (!userDoc.exists) {
-      return false;
-    }
-
-    const userData = userDoc.data();
-    return userData?.role === 'admin';
-  } catch (error) {
-    functions.logger.error('Error checking admin role', {uid, error});
-    return false;
-  }
-}
 
 // ============================================================
 // MAIN FUNCTION
 // ============================================================
 
-export const markPaidManual = functions
-  .runWith({
-    enforceAppCheck: true,
-    consumeAppCheckToken: true, // Prevent replay attacks
-  })
-  .https.onCall(async (data: unknown, context) => {
-  // ========================================
-  // 1. AUTHENTICATION CHECK
-  // ========================================
-
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'User must be authenticated'
-    );
-  }
-
-  const userId = context.auth.uid;
-
-  // ========================================
-  // 2. AUTHORIZATION CHECK (Admin Only)
-  // ========================================
-
-  const userIsAdmin = await isAdmin(userId);
-  if (!userIsAdmin) {
-    functions.logger.warn('Non-admin attempted to mark payment paid', {userId});
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'User must be an admin'
-    );
-  }
-
-  // ========================================
-  // 3. APP CHECK VALIDATION
-  // ========================================
-
-  // App Check is enforced at the function level via runWith config
-  // Additional runtime check for defense in depth
-  if (!context.app) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'App Check validation failed'
-    );
-  }
-
-  // ========================================
-  // 4. INPUT VALIDATION (Zod)
-  // ========================================
-
-  let validatedPayment: ManualPayment;
-  try {
-    validatedPayment = ManualPaymentSchema.parse(data);
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    functions.logger.warn('Invalid payment data', {
-      error: errorMessage,
-      data,
-    });
-    throw new functions.https.HttpsError(
-      'invalid-argument',
-      `Invalid payment data: ${errorMessage}`
-    );
-  }
-
-  // ========================================
-  // 5. IDEMPOTENCY CHECK
+export const markPaidManual = withValidation(
+  ManualPaymentSchema,
+  adminEndpoint()
+)(async (validatedPayment, context) => {  // ========================================
+  // IDEMPOTENCY CHECK
   // ========================================
 
   const idempotencyKey =
@@ -211,7 +123,7 @@ export const markPaidManual = functions
   }
 
   // ========================================
-  // 6. TRANSACTION: UPDATE INVOICE + CREATE PAYMENT
+  // TRANSACTION: UPDATE INVOICE + CREATE PAYMENT
   // ========================================
 
   const db = admin.firestore();
@@ -229,128 +141,112 @@ export const markPaidManual = functions
   const paymentId = paymentRef.id; // Initialize here
   let paidAt = ''; // Initialize to empty string
 
-  try {
-    await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
-      // Read invoice
-      const invoiceDoc = await transaction.get(invoiceRef);
+  await db.runTransaction(async (transaction: admin.firestore.Transaction) => {
+    // Read invoice
+    const invoiceDoc = await transaction.get(invoiceRef);
 
-      if (!invoiceDoc.exists) {
-        throw new functions.https.HttpsError(
-          'not-found',
-          `Invoice ${validatedPayment.invoiceId} not found`
-        );
-      }
-
-      invoiceData = invoiceDoc.data() as InvoiceData;
-
-      // Check if already paid
-      if (invoiceData.paid) {
-        throw new functions.https.HttpsError(
-          'failed-precondition',
-          'Invoice is already marked as paid'
-        );
-      }
-
-      // Validate payment amount matches invoice total
-      const invoiceTotal = invoiceData.total || invoiceData.amount || 0;
-      if (validatedPayment.amount !== invoiceTotal) {
-        functions.logger.warn('Payment amount mismatch', {
-          invoiceId: validatedPayment.invoiceId,
-          paymentAmount: validatedPayment.amount,
-          invoiceTotal,
-        });
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          `Payment amount (${validatedPayment.amount}) does not match invoice total (${invoiceTotal})`
-        );
-      }
-
-      // Update invoice
-      paidAt = new Date().toISOString();
-      transaction.update(invoiceRef, {
-        paid: true,
-        paidAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: 'paid',
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      // Create payment record (already have paymentId from paymentRef.id)
-      transaction.set(paymentRef, {
-        invoiceId: validatedPayment.invoiceId,
-        amount: validatedPayment.amount,
-        paymentMethod: validatedPayment.paymentMethod,
-        checkNumber: validatedPayment.checkNumber,
-        notes: validatedPayment.notes,
-        processedBy: userId,
-        orgId: invoiceData.orgId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    });
-
-    // ========================================
-    // 7. AUDIT LOG (Outside Transaction)
-    // ========================================
-
-    const metadata = extractCallableMetadata(context);
-    await logAudit(createAuditEntry({
-      entity: 'invoice',
-      entityId: validatedPayment.invoiceId,
-      action: 'paid',
-      actor: userId,
-      actorRole: 'admin',
-      orgId: invoiceData.orgId || 'unknown',
-      ...metadata,
-      metadata: {
-        paymentId,
-        amount: validatedPayment.amount,
-        paymentMethod: validatedPayment.paymentMethod,
-        checkNumber: validatedPayment.checkNumber,
-      },
-    }));
-
-    // ========================================
-    // 8. RECORD IDEMPOTENCY
-    // ========================================
-
-    await recordIdempotency(idempotencyKey, {invoiceId: validatedPayment.invoiceId, paymentId});
-
-    // ========================================
-    // 9. NOTIFICATIONS
-    // ========================================
-
-    // TODO: Send email notification to customer
-    // TODO: Log Analytics event (payment_received)
-
-    functions.logger.info('Invoice marked as paid', {
-      invoiceId: validatedPayment.invoiceId,
-      paymentId,
-      amount: validatedPayment.amount,
-      method: validatedPayment.paymentMethod,
-    });
-
-    // ========================================
-    // 10. RETURN RESULT
-    // ========================================
-
-    return {
-      success: true,
-      invoiceId: validatedPayment.invoiceId,
-      paymentId,
-      paidAt,
-    };
-  } catch (error) {
-    // If error is HttpsError, rethrow
-    if (error instanceof functions.https.HttpsError) {
-      throw error;
+    if (!invoiceDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        `Invoice ${validatedPayment.invoiceId} not found`
+      );
     }
 
-    functions.logger.error('Failed to mark invoice paid', {
-      error,
-      data: validatedPayment,
+    invoiceData = invoiceDoc.data() as InvoiceData;
+
+    // Check if already paid
+    if (invoiceData.paid) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Invoice is already marked as paid'
+      );
+    }
+
+    // Validate payment amount matches invoice total
+    const invoiceTotal = invoiceData.total || invoiceData.amount || 0;
+    if (validatedPayment.amount !== invoiceTotal) {
+      functions.logger.warn('Payment amount mismatch', {
+        invoiceId: validatedPayment.invoiceId,
+        paymentAmount: validatedPayment.amount,
+        invoiceTotal,
+      });
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        `Payment amount (${validatedPayment.amount}) does not match invoice total (${invoiceTotal})`
+      );
+    }
+
+    // Update invoice
+    paidAt = new Date().toISOString();
+    transaction.update(invoiceRef, {
+      paid: true,
+      paidAt: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'paid',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
-    throw new functions.https.HttpsError(
-      'internal',
-      'Failed to mark invoice as paid'
-    );
-  }
+
+    // Create payment record (already have paymentId from paymentRef.id)
+    transaction.set(paymentRef, {
+      invoiceId: validatedPayment.invoiceId,
+      amount: validatedPayment.amount,
+      paymentMethod: validatedPayment.paymentMethod,
+      checkNumber: validatedPayment.checkNumber,
+      notes: validatedPayment.notes,
+      processedBy: context.auth.uid,
+      orgId: invoiceData.orgId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  // ========================================
+  // AUDIT LOG (Outside Transaction)
+  // ========================================
+
+  const metadata = extractCallableMetadata(context);
+  await logAudit(createAuditEntry({
+    entity: 'invoice',
+    entityId: validatedPayment.invoiceId,
+    action: 'paid',
+    actor: context.auth.uid,
+    actorRole: 'admin',
+    orgId: invoiceData.orgId || 'unknown',
+    ...metadata,
+    metadata: {
+      paymentId,
+      amount: validatedPayment.amount,
+      paymentMethod: validatedPayment.paymentMethod,
+      checkNumber: validatedPayment.checkNumber,
+    },
+  }));
+
+  // ========================================
+  // RECORD IDEMPOTENCY
+  // ========================================
+
+  await recordIdempotency(idempotencyKey, {invoiceId: validatedPayment.invoiceId, paymentId});
+
+  // ========================================
+  // NOTIFICATIONS
+  // ========================================
+
+  // TODO: Send email notification to customer
+  // TODO: Log Analytics event (payment_received)
+
+  functions.logger.info('Invoice marked as paid', {
+    invoiceId: validatedPayment.invoiceId,
+    paymentId,
+    amount: validatedPayment.amount,
+    method: validatedPayment.paymentMethod,
+  });
+
+  // ========================================
+  // RETURN RESULT
+  // ========================================
+
+  return {
+    success: true,
+    invoiceId: validatedPayment.invoiceId,
+    paymentId,
+    paidAt,
+  };
 });
