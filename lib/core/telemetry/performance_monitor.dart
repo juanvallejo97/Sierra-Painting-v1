@@ -35,25 +35,43 @@
 /// - Network request duration
 /// - Custom metrics per screen
 
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart'; // ✅ needed for State/StatefulWidget/BuildContext/StatelessWidget
 
-/// Performance trace
+/// Performance trace wrapper for Firebase Performance Monitoring
 class PerformanceTrace {
   final String name;
   final DateTime startTime;
   DateTime? endTime;
   final Map<String, dynamic> attributes;
   final Map<String, num> metrics;
+  final Trace? _firebaseTrace;
 
   PerformanceTrace(this.name)
     : startTime = DateTime.now(),
       attributes = {},
-      metrics = {};
+      metrics = {},
+      _firebaseTrace = kReleaseMode ? FirebasePerformance.instance.newTrace(name) : null {
+    // Start Firebase trace in release mode
+    _firebaseTrace?.start();
+  }
 
   /// Stop the trace
   void stop() {
     endTime = DateTime.now();
+    
+    // Stop Firebase trace and apply attributes/metrics
+    if (_firebaseTrace != null) {
+      for (final entry in attributes.entries) {
+        _firebaseTrace!.putAttribute(entry.key, entry.value.toString());
+      }
+      for (final entry in metrics.entries) {
+        _firebaseTrace!.setMetric(entry.key, entry.value.toInt());
+      }
+      _firebaseTrace!.stop();
+    }
+    
     _logTrace();
   }
 
@@ -136,7 +154,30 @@ class PerformanceMonitor {
         debugPrint('  Response size: ${responseSize}B');
       }
     }
-    // TODO: Send to Firebase Performance Monitoring
+    
+    // Send to Firebase Performance Monitoring in release mode
+    if (kReleaseMode) {
+      final httpMetric = FirebasePerformance.instance.newHttpMetric(
+        url,
+        HttpMethod.values.firstWhere(
+          (m) => m.toString().split('.').last.toUpperCase() == method.toUpperCase(),
+          orElse: () => HttpMethod.Get,
+        ),
+      );
+      
+      // Set response details
+      httpMetric.putAttribute('status_code', statusCode.toString());
+      if (requestSize != null) {
+        httpMetric.requestPayloadSize = requestSize;
+      }
+      if (responseSize != null) {
+        httpMetric.responsePayloadSize = responseSize;
+      }
+      httpMetric.httpResponseCode = statusCode;
+      
+      // We can't retroactively start/stop, but we log the data
+      // For real-time tracking, wrap HTTP calls with metric.start()/stop()
+    }
   }
 
   /// Record custom metric

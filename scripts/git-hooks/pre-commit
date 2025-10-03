@@ -1,0 +1,51 @@
+#!/bin/bash
+# Pre-commit hook for Sierra Painting
+# Runs linting and formatting checks before commit
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if Flutter is available
+if ! command -v flutter &> /dev/null; then
+    echo "⚠️  Flutter not found, skipping Flutter checks"
+else
+    # Check for Dart formatting
+    echo "📝 Checking Dart formatting..."
+    if ! dart format --output=none --set-exit-if-changed lib/ test/ 2>/dev/null; then
+        echo "❌ Dart formatting issues found. Run: dart format ."
+        exit 1
+    fi
+    
+    # Run Flutter analyzer
+    echo "🔬 Running Flutter analyzer..."
+    if ! flutter analyze --no-fatal-infos 2>/dev/null; then
+        echo "❌ Flutter analyzer found issues"
+        exit 1
+    fi
+fi
+
+# Check if Node.js is available for Functions
+if [ -d "functions" ] && command -v npm &> /dev/null; then
+    echo "🔍 Checking Cloud Functions..."
+    cd functions
+    
+    # Check if node_modules exists
+    if [ ! -d "node_modules" ]; then
+        echo "⚠️  Node modules not installed, skipping ESLint"
+    else
+        # Run TypeScript linter
+        if [ -f "package.json" ] && grep -q "lint" package.json; then
+            echo "📝 Running ESLint..."
+            if ! npm run lint -- --quiet 2>/dev/null; then
+                echo "❌ ESLint found issues. Run: cd functions && npm run lint"
+                cd ..
+                exit 1
+            fi
+        fi
+    fi
+    
+    cd ..
+fi
+
+echo "✅ All pre-commit checks passed!"

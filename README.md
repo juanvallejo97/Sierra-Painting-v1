@@ -6,7 +6,7 @@
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
-**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)**
+**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)** · **[Performance](docs/PERFORMANCE_IMPLEMENTATION.md)**
 
 ---
 
@@ -398,6 +398,46 @@ npm ci
 npm run build
 firebase deploy --only functions
 More help: docs/EMULATORS.md · docs/APP_CHECK.md
+
+---
+
+## ⚡ Performance & Optimization
+
+Sierra Painting follows strict performance budgets and best practices:
+
+**📊 Key Metrics:**
+- Cold Start P90: < 2.0s
+- APK Size: < 50MB (enforced in CI)
+- Frame Rate: 60fps sustained
+- Crash-free Rate: ≥ 99.5%
+
+**🛠️ Tools & Infrastructure:**
+- Firebase Performance Monitoring (automatic tracking)
+- Firebase Crashlytics (error tracking)
+- CI performance budgets (APK size checks)
+- Pre-commit hooks (code quality)
+
+**📚 Documentation:**
+- [Performance Implementation Guide](docs/PERFORMANCE_IMPLEMENTATION.md) - Central guide
+- [Performance Budgets](docs/PERFORMANCE_BUDGETS.md) - Metrics and targets
+- [Backend Performance](docs/BACKEND_PERFORMANCE.md) - Cloud Functions optimization
+- [Firebase Setup](docs/FIREBASE_SETUP.md) - Monitoring setup
+- [Frontend Playbook](docs/perf-playbook-fe.md) - Best practices
+
+**🚀 Quick Start:**
+```bash
+# Install pre-commit hooks
+./scripts/install-hooks.sh
+
+# Measure app startup
+./scripts/measure_startup.sh
+
+# Use optimized widgets
+import 'package:sierra_painting/core/widgets/cached_image.dart';
+import 'package:sierra_painting/core/widgets/paginated_list_view.dart';
+```
+
+---
 
 📄 License
 Copyright © 2024 Sierra Painting
