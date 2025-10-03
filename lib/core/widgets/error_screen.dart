@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sierra_painting/design/design.dart';
 
 /// Error screen displayed when navigation errors occur
 ///
@@ -18,10 +19,10 @@ class ErrorScreen extends StatelessWidget {
   final String? path;
 
   const ErrorScreen({
-    Key? key,
+    super.key,
     this.error,
     this.path,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,49 +33,44 @@ class ErrorScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(isNotFound ? 'Page Not Found' : 'Error'),
-        backgroundColor: theme.colorScheme.errorContainer,
-        foregroundColor: theme.colorScheme.onErrorContainer,
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(DesignTokens.spaceLG),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 isNotFound ? Icons.search_off : Icons.error_outline,
-                size: 80,
-                color: theme.colorScheme.error,
+                size: 120,
+                color: theme.colorScheme.error.withOpacity(0.7),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: DesignTokens.spaceLG),
               Text(
-                isNotFound
-                    ? 'Page Not Found'
-                    : 'Something Went Wrong',
+                isNotFound ? 'Page Not Found' : 'Oops! Something Went Wrong',
                 style: theme.textTheme.headlineMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: DesignTokens.spaceMD),
               if (path != null) ...[
                 Text(
-                  'The requested path was not found:',
+                  'The page you're looking for doesn't exist.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: DesignTokens.spaceSM),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: DesignTokens.spaceMD,
+                    vertical: DesignTokens.spaceSM,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
                   ),
                   child: Text(
                     path!,
@@ -85,35 +81,48 @@ class ErrorScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 24),
               ] else if (error != null) ...[
                 Text(
-                  error.toString(),
+                  'We encountered an unexpected error. Please try again.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 24),
-              ],
-              ElevatedButton.icon(
-                onPressed: () => context.go('/timeclock'),
-                icon: const Icon(Icons.home),
-                label: const Text('Go to Home'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
+                const SizedBox(height: DesignTokens.spaceSM),
+                if (error != null)
+                  Text(
+                    error.toString(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
+              ] else ...[
+                Text(
+                  'Something unexpected happened. Please try again.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
+              ],
+              const SizedBox(height: DesignTokens.spaceXL),
+              AppButton(
+                label: 'Go to Home',
+                icon: Icons.home,
+                onPressed: () => context.go('/timeclock'),
               ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Go Back'),
+              const SizedBox(height: DesignTokens.spaceSM),
+              AppButton(
+                label: 'Go Back',
+                icon: Icons.arrow_back,
+                variant: ButtonVariant.text,
+                onPressed: () => context.canPop() 
+                    ? context.pop() 
+                    : context.go('/timeclock'),
               ),
             ],
           ),
