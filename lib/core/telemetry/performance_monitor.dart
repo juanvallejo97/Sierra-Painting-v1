@@ -36,6 +36,7 @@
 /// - Custom metrics per screen
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart'; // ✅ needed for State/StatefulWidget/BuildContext/StatelessWidget
 
 /// Performance trace
 class PerformanceTrace {
@@ -209,27 +210,27 @@ class PerformanceTrackedWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stopwatch = Stopwatch()..start();
-    final widget = builder(context);
+    final built = builder(context);
     stopwatch.stop();
 
     if (kDebugMode && stopwatch.elapsedMilliseconds > 16) {
       debugPrint('[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms');
     }
 
-    return widget;
+    return built;
   }
 }
 
 /// Extension for performance tracking on async operations
-extension PerformanceTracking on Future {
+extension PerformanceTracking<T> on Future<T> {
   /// Track duration of async operation
-  Future<T> tracked<T>(String name) async {
+  Future<T> tracked(String name) async {
     final monitor = PerformanceMonitor();
     final trace = monitor.startTrace(name);
     try {
       final result = await this;
       trace.stop();
-      return result as T;
+      return result;
     } catch (e) {
       trace.setAttribute('error', e.toString());
       trace.stop();
