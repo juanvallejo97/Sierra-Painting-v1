@@ -28,7 +28,9 @@
 /// - Non-fatal error reporting
 /// - Fatal error reporting with crash
 
+import 'dart:ui' show PlatformDispatcher;                  // ✅ needed for PlatformDispatcher
 import 'package:flutter/foundation.dart';
+import 'package:sierra_painting/core/utils/result.dart';
 
 /// Error severity levels
 enum ErrorSeverity {
@@ -91,7 +93,7 @@ class ErrorTracker {
         if (email != null) 'email': email,
       },
     );
-    
+
     if (kDebugMode) {
       debugPrint('[ErrorTracker] User context set: userId=$userId, orgId=$orgId');
     }
@@ -101,7 +103,7 @@ class ErrorTracker {
   /// Clear user context (on logout)
   void clearUserContext() {
     _globalContext = ErrorContext();
-    
+
     if (kDebugMode) {
       debugPrint('[ErrorTracker] User context cleared');
     }
@@ -177,100 +179,4 @@ class ErrorTracker {
       action: local.action ?? global.action,
       extra: {
         ...global.extra,
-        ...local.extra,
-      },
-    );
-  }
-
-  /// Initialize error tracking
-  static Future<void> initialize() async {
-    if (kDebugMode) {
-      debugPrint('[ErrorTracker] Initializing...');
-    }
-    
-    // TODO: Initialize Firebase Crashlytics
-    // await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-    
-    // Set up Flutter error handler
-    FlutterError.onError = (FlutterErrorDetails details) {
-      recordError(
-        error: details.exception,
-        stackTrace: details.stack,
-        context: ErrorContext(
-          extra: {
-            'library': details.library ?? 'unknown',
-            'context': details.context?.toString(),
-          },
-        ),
-        fatal: false,
-      );
-    };
-
-    // Set up platform error handler
-    PlatformDispatcher.instance.onError = (error, stack) {
-      recordError(
-        error: error,
-        stackTrace: stack,
-        fatal: true,
-      );
-      return true;
-    };
-
-    if (kDebugMode) {
-      debugPrint('[ErrorTracker] Initialized successfully');
-    }
-  }
-}
-
-/// Extension for error tracking on Results
-import 'package:sierra_painting/core/utils/result.dart';
-
-extension ErrorTrackingResult<T, E> on Result<T, E> {
-  /// Track error if Result is failure
-  Result<T, E> trackError({
-    String? screen,
-    String? action,
-    ErrorSeverity severity = ErrorSeverity.error,
-  }) {
-    if (isFailure) {
-      ErrorTracker.recordError(
-        error: errorOrNull,
-        context: ErrorContext(
-          screen: screen,
-          action: action,
-        ),
-        severity: severity,
-      );
-    }
-    return this;
-  }
-}
-
-/// Extension for error tracking on Futures
-extension ErrorTrackingFuture<T> on Future<T> {
-  /// Catch and track errors
-  Future<T> catchError({
-    String? screen,
-    String? action,
-    ErrorSeverity severity = ErrorSeverity.error,
-    bool rethrow = true,
-  }) async {
-    try {
-      return await this;
-    } catch (error, stackTrace) {
-      ErrorTracker.recordError(
-        error: error,
-        stackTrace: stackTrace,
-        context: ErrorContext(
-          screen: screen,
-          action: action,
-        ),
-        severity: severity,
-      );
-      if (rethrow) {
-        rethrow;
-      }
-      throw error;
-    }
-  }
-}
+        .
