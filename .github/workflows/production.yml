@@ -203,10 +203,15 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           retention-days: 90
 
+  smoke_tests:
+    name: Run Smoke Tests
+    uses: ./.github/workflows/smoke.yml
+    needs: [build_flutter_release, lint_and_test_functions]
+
   deploy_indexes_production:
     name: Deploy Firestore Indexes (Production)
     runs-on: ubuntu-latest
-    needs: [build_flutter_release, lint_and_test_functions]
+    needs: [smoke_tests]
     environment:
       name: production
       url: https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/overview
