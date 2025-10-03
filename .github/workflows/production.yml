@@ -210,6 +210,9 @@ jobs:
     environment:
       name: production
       url: https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/overview
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -225,7 +228,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Deploy Firestore indexes
         run: |
@@ -238,6 +242,9 @@ jobs:
     environment:
       name: production
       url: https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/functions
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -263,7 +270,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Firebase login guard check
         run: |

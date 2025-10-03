@@ -41,13 +41,15 @@ Sierra Painting uses GitHub Environments to manage deployment secrets and requir
 - ✅ Selected branches only
 - Add rule: `main`
 
-**Environment secrets:**
-- `FIREBASE_SERVICE_ACCOUNT`
-  - Value: Staging Firebase service account JSON credentials
-  - Get from: Firebase Console → Project Settings → Service Accounts → Generate new private key
-
-**Environment variables (optional):**
-- `FIREBASE_PROJECT_ID`: `sierra-painting-staging`
+**Environment variables (not secrets!):**
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+  - Value: `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider`
+  - Get from: GCP Workload Identity setup (see [gcp-workload-identity-setup.md](./gcp-workload-identity-setup.md))
+- `GCP_SERVICE_ACCOUNT`
+  - Value: `ci-deployer@sierra-painting-staging.iam.gserviceaccount.com`
+  - Get from: GCP service account created in Workload Identity setup
+- `FIREBASE_PROJECT_ID` (optional)
+  - Value: `sierra-painting-staging`
 
 **Protection rules:**
 - ⬜ Required reviewers (not needed for staging)
@@ -61,14 +63,16 @@ Sierra Painting uses GitHub Environments to manage deployment secrets and requir
 **Deployment branches:**
 - ✅ All branches (to allow tag-based deployments)
 
-**Environment secrets:**
-- `FIREBASE_SERVICE_ACCOUNT`
-  - Value: Production Firebase service account JSON credentials
-  - Get from: Firebase Console → Project Settings → Service Accounts → Generate new private key
-  - ⚠️ **IMPORTANT**: Use production project credentials
-
-**Environment variables (optional):**
-- `FIREBASE_PROJECT_ID`: `sierra-painting-prod`
+**Environment variables (not secrets!):**
+- `GCP_WORKLOAD_IDENTITY_PROVIDER`
+  - Value: `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider`
+  - Get from: GCP Workload Identity setup (see [gcp-workload-identity-setup.md](./gcp-workload-identity-setup.md))
+  - ⚠️ **IMPORTANT**: Use production project's Workload Identity Provider
+- `GCP_SERVICE_ACCOUNT`
+  - Value: `ci-deployer@sierra-painting-prod.iam.gserviceaccount.com`
+  - Get from: GCP service account created in Workload Identity setup
+- `FIREBASE_PROJECT_ID` (optional)
+  - Value: `sierra-painting-prod`
 
 **Protection rules:**
 - ✅ **Required reviewers**: 1 reviewer
@@ -78,29 +82,38 @@ Sierra Painting uses GitHub Environments to manage deployment secrets and requir
 
 ---
 
-## Getting Firebase Service Account Credentials
+## Getting GCP Workload Identity Configuration
 
 ### For Staging
 
-1. Open Firebase Console: https://console.firebase.google.com/project/sierra-painting-staging/settings/serviceaccounts/adminsdk
-2. Click "Generate new private key"
-3. Save the JSON file securely
-4. Copy entire JSON content
-5. Paste into GitHub Environment secret: `FIREBASE_SERVICE_ACCOUNT`
+Follow the [GCP Workload Identity Setup Guide](./gcp-workload-identity-setup.md) to:
+
+1. Create Workload Identity Pool in `sierra-painting-staging`
+2. Create Workload Identity Provider bound to GitHub
+3. Create `ci-deployer` service account with minimum required roles
+4. Bind service account to Workload Identity Pool
+5. Get configuration values:
+   - `GCP_WORKLOAD_IDENTITY_PROVIDER`: Full provider path
+   - `GCP_SERVICE_ACCOUNT`: Service account email
 
 ### For Production
 
-1. Open Firebase Console: https://console.firebase.google.com/project/sierra-painting-prod/settings/serviceaccounts/adminsdk
-2. Click "Generate new private key"
-3. Save the JSON file securely
-4. Copy entire JSON content
-5. Paste into GitHub Environment secret: `FIREBASE_SERVICE_ACCOUNT`
+Follow the same steps for `sierra-painting-prod`:
+
+1. Create Workload Identity Pool in `sierra-painting-prod`
+2. Create Workload Identity Provider bound to GitHub
+3. Create `ci-deployer` service account with minimum required roles
+4. Bind service account to Workload Identity Pool
+5. Get configuration values:
+   - `GCP_WORKLOAD_IDENTITY_PROVIDER`: Full provider path
+   - `GCP_SERVICE_ACCOUNT`: Service account email
 
 **⚠️ Security Notes:**
-- Never commit service account JSON to git
-- Store backup copy in secure password manager
-- Rotate credentials periodically (every 90 days)
-- Use different credentials for staging and production
+- Each environment has its own Workload Identity Pool and service account
+- No long-lived credentials are stored in GitHub
+- Authentication tokens are short-lived and automatically rotated
+- Access is restricted to specific GitHub repository via attribute conditions
+- IAM roles follow principle of least privilege
 
 ---
 
@@ -168,7 +181,11 @@ environment: staging
 ```
 
 **Secrets Available:**
-- `FIREBASE_SERVICE_ACCOUNT` - Service account JSON for staging project
+- None (uses Workload Identity Federation)
+
+**Variables Available:**
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` - Workload Identity Provider path
+- `GCP_SERVICE_ACCOUNT` - Service account email for staging
 
 ### Production Environment
 
@@ -188,7 +205,11 @@ environment:
 ```
 
 **Secrets Available:**
-- `FIREBASE_SERVICE_ACCOUNT` - Service account JSON for production project
+- None (uses Workload Identity Federation)
+
+**Variables Available:**
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` - Workload Identity Provider path
+- `GCP_SERVICE_ACCOUNT` - Service account email for production
 
 ---
 
@@ -240,12 +261,14 @@ environment:
 ### Service Account Management
 
 - ✅ Use separate service accounts for staging and production
-- ✅ Grant minimum required permissions (Cloud Functions Admin, Firestore Admin)
-- ✅ Rotate credentials every 90 days
-- ✅ Store backup credentials in secure vault (1Password, HashiCorp Vault)
+- ✅ Grant minimum required permissions (via IAM roles, not direct keys)
+- ✅ Use Workload Identity Federation (no JSON keys)
 - ✅ Monitor service account usage in Cloud Console
+- ✅ Review IAM roles quarterly and remove unused permissions
+- ✅ Enable audit logging for all service account activities
 - ❌ Never commit service account JSON to git
-- ❌ Never share credentials via Slack/email
+- ❌ Never create long-lived service account keys
+- ❌ Never share Workload Identity configuration outside team
 - ❌ Don't use production credentials in staging
 
 ### Access Control
@@ -258,11 +281,14 @@ environment:
 
 ### Workflow Security
 
-- ✅ Use `google-github-actions/auth@v2` for authentication
+- ✅ Use `google-github-actions/auth@v2` with Workload Identity Federation
+- ✅ Add `permissions: { id-token: write, contents: read }` to jobs
 - ✅ Pin workflow action versions (e.g., `@v4` not `@latest`)
 - ✅ Use `--non-interactive` flag for Firebase CLI commands
 - ✅ Set `continue-on-error: false` for critical steps
 - ✅ Review workflow logs after each deployment
+- ❌ Never use `credentials_json` parameter (use `workload_identity_provider`)
+- ❌ Never set `GOOGLE_APPLICATION_CREDENTIALS` environment variable
 
 ---
 
@@ -276,12 +302,14 @@ environment:
 - [ ] Verify workflow runs are succeeding
 
 **Quarterly:**
-- [ ] Rotate Firebase service account credentials
+- [ ] Review IAM roles for CI/CD service accounts
+- [ ] Audit Workload Identity Federation logs for suspicious activity
 - [ ] Review and update deployment procedures
 - [ ] Audit security settings
+- [ ] Verify attribute conditions on Workload Identity Providers
 
 **After Major Changes:**
-- [ ] Update environment secrets if needed
+- [ ] Update environment variables if needed
 - [ ] Test both staging and production workflows
 - [ ] Document any configuration changes
 
@@ -289,10 +317,13 @@ environment:
 
 ## Related Documentation
 
+- [GCP Workload Identity Setup](./gcp-workload-identity-setup.md) ⭐ **Required Reading**
 - [Staging Workflow](../../.github/workflows/staging.yml)
 - [Production Workflow](../../.github/workflows/production.yml)
+- [Prevent JSON Credentials Policy](../../.github/workflows/prevent-json-credentials.yml)
 - [Deployment Checklist](../deployment_checklist.md)
 - [Rollout & Rollback Strategy](../rollout-rollback.md)
+- [Security Guide](../Security.md)
 
 ---
 
@@ -301,6 +332,41 @@ environment:
 **Issues with GitHub Environments:**
 - GitHub Docs: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
 - Repository maintainers
+
+**Issues with GCP Workload Identity:**
+- [GCP Workload Identity Setup Guide](./gcp-workload-identity-setup.md)
+- Google Cloud IAM: https://console.cloud.google.com/iam-admin
+- Workload Identity Federation: https://cloud.google.com/iam/docs/workload-identity-federation
+
+**Issues with Firebase Authentication:**
+- Firebase Docs: https://firebase.google.com/docs/admin/setup
+- Google Cloud IAM: https://console.cloud.google.com/iam-admin
+- [ ] Document any configuration changes
+
+---
+
+## Related Documentation
+
+- [GCP Workload Identity Setup](./gcp-workload-identity-setup.md) ⭐ **Required Reading**
+- [Staging Workflow](../../.github/workflows/staging.yml)
+- [Production Workflow](../../.github/workflows/production.yml)
+- [Prevent JSON Credentials Policy](../../.github/workflows/prevent-json-credentials.yml)
+- [Deployment Checklist](../deployment_checklist.md)
+- [Rollout & Rollback Strategy](../rollout-rollback.md)
+- [Security Guide](../Security.md)
+
+---
+
+## Support
+
+**Issues with GitHub Environments:**
+- GitHub Docs: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
+- Repository maintainers
+
+**Issues with GCP Workload Identity:**
+- [GCP Workload Identity Setup Guide](./gcp-workload-identity-setup.md)
+- Google Cloud IAM: https://console.cloud.google.com/iam-admin
+- Workload Identity Federation: https://cloud.google.com/iam/docs/workload-identity-federation
 
 **Issues with Firebase Authentication:**
 - Firebase Docs: https://firebase.google.com/docs/admin/setup
