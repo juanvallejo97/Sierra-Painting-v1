@@ -14,10 +14,68 @@ scripts/
 │   └── manage-flags.sh          # Feature flag management
 ├── rollback/                    # Rollback procedures
 │   └── rollback-functions.sh    # Function rollback helper
+├── quality.sh                   # Code quality checks
+├── generate-docs.sh             # Generate API documentation
 └── build-and-deploy.sh          # Legacy web app build script
 ```
 
 ## Scripts Overview
+
+### Code Quality Scripts
+
+#### `quality.sh`
+
+**Purpose:** Run comprehensive code quality checks including linting, analysis, and dead code detection
+
+**Usage:**
+```bash
+# Run all quality checks
+./scripts/quality.sh
+
+# Apply auto-fixes before checking
+./scripts/quality.sh --fix
+
+# Run with fatal-infos (fail on info-level issues)
+./scripts/quality.sh --fatal-infos
+
+# Skip metrics checks
+./scripts/quality.sh --no-metrics
+
+# Skip unused code detection
+./scripts/quality.sh --no-unused
+```
+
+**Checks performed:**
+1. Dart auto-fixes (optional, with `--fix`)
+2. Dart analysis with strict linting rules
+3. dart_code_metrics analysis (complexity, maintainability)
+4. Unused code detection
+
+**When to use:**
+- Before committing code
+- During CI/CD workflows
+- Before creating pull requests
+- Regular code health audits
+
+---
+
+#### `generate-docs.sh`
+
+**Purpose:** Generate API documentation using dart doc
+
+**Usage:**
+```bash
+./scripts/generate-docs.sh
+```
+
+**Output:** Documentation is generated in `docs/api/`
+
+**When to use:**
+- After adding new public APIs
+- Before releases
+- To update project documentation
+
+---
 
 ### CI/CD Scripts
 
