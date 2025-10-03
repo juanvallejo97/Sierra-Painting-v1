@@ -72,9 +72,16 @@ dev_dependencies:
   # Fix analyzer <> SDK mismatch seen in your logs
   analyzer: ^6.4.1
 
-# Ensure nothing upgrades material_color_utilities beyond what integration_test expects
+# Dependency overrides to resolve version conflicts
+# These are necessary to align with Flutter SDK's transitive dependencies
 dependency_overrides:
+  # Keep material_color_utilities at 0.5.0 to match Flutter SDK's integration_test package
+  # This prevents version conflicts when running integration tests in CI
+  # Reference: Flutter SDK includes integration_test with material_color_utilities 0.5.0
   material_color_utilities: 0.5.0
+  
+  # Pin analyzer to match the version required by build_runner and dart_code_metrics
+  # This ensures consistent analysis results across development and CI environments
   analyzer: ^6.4.1
 
 
