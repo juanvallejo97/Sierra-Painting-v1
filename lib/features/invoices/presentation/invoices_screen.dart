@@ -1,3 +1,21 @@
+/// Invoices Screen
+///
+/// PURPOSE:
+/// Manage customer invoices and payment tracking.
+/// Create invoices from estimates and track payment status.
+///
+/// FEATURES:
+/// - List all invoices
+/// - Create new invoices
+/// - View invoice details
+/// - Generate invoice PDFs
+/// - Mark as paid (manual or Stripe)
+/// - Track payment status
+///
+/// TODO:
+/// - Implement invoice creation form
+/// - Add payment recording UI
+/// - Add invoice filtering by status
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
