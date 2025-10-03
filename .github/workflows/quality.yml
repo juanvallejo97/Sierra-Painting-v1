@@ -1,0 +1,102 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [ main, release/** ]
+  pull_request:
+    branches: [ main, release/** ]
+
+jobs:
+  quality-checks:
+    name: Code Quality & Lint Enforcement
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.5'
+          channel: 'stable'
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+      
+      - name: Run quality checks
+        run: |
+          # Make script executable
+          chmod +x scripts/quality.sh
+          
+          # Run quality checks with fatal-infos on release branches
+          if [[ "${{ github.ref }}" == refs/heads/main ]] || [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
+            echo "Running with --fatal-infos on release branch"
+            ./scripts/quality.sh --fatal-infos
+          else
+            echo "Running standard quality checks"
+            ./scripts/quality.sh
+          fi
+      
+      - name: Run dart_code_metrics detailed analysis
+        run: |
+          # Install dart_code_metrics globally if needed
+          if ! dart pub global list | grep -q dart_code_metrics; then
+            dart pub global activate dart_code_metrics
+          fi
+          
+          # Run detailed metrics analysis
+          dart run dart_code_metrics:metrics analyze lib --reporter=console
+        continue-on-error: true
+      
+      - name: Generate unused code report
+        run: |
+          # Install dart_code_metrics globally if needed
+          if ! dart pub global list | grep -q dart_code_metrics; then
+            dart pub global activate dart_code_metrics
+          fi
+          
+          # Generate unused code report
+          dart run dart_code_metrics:metrics check-unused-code lib --reporter=console > unused-code-report.txt 2>&1 || true
+          
+          # Display report
+          if [ -f unused-code-report.txt ]; then
+            echo "📊 Unused Code Report:"
+            cat unused-code-report.txt
+          fi
+        continue-on-error: true
+      
+      - name: Upload unused code report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unused-code-report
+          path: unused-code-report.txt
+          retention-days: 30
+      
+      - name: Comment PR with quality report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '## 📊 Code Quality Report\n\n';
+            report += '✅ All quality checks passed!\n\n';
+            
+            // Check if unused code report exists
+            if (fs.existsSync('unused-code-report.txt')) {
+              const unusedReport = fs.readFileSync('unused-code-report.txt', 'utf8');
+              if (unusedReport.length > 0 && unusedReport.length < 2000) {
+                report += '### Unused Code Detection\n\n';
+                report += '```\n' + unusedReport + '\n```\n';
+              }
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

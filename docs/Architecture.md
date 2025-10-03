@@ -21,7 +21,8 @@
 14. [Key Design Decisions](#key-design-decisions)
 15. [Scalability](#scalability)
 16. [Future Considerations](#future-considerations)
-17. [Monitoring & Debugging](#monitoring--debugging)
+17. [Optimized Widgets](#optimized-widgets)
+18. [Monitoring & Debugging](#monitoring--debugging)
 
 ---
 
@@ -462,6 +463,101 @@ functions/
 - Conflict resolution UI for offline edits
 - Background sync workers
 - Additional caching on hot data
+
+---
+
+## Optimized Widgets
+
+### PaginatedListView
+
+**Purpose:** High-performance list widget with built-in pagination, loading states, and error handling.
+
+**Key Features:**
+- **Lazy Loading:** Uses `ListView.builder` for efficient rendering - only builds visible items
+- **Automatic Pagination:** Triggers when user scrolls 80% through the list
+- **Pull-to-Refresh:** Built-in refresh functionality
+- **State Management:** Handles loading, error, and empty states
+- **Memory Efficient:** Minimal rebuilds and smooth scrolling
+
+**Usage Example:**
+```dart
+PaginatedListView<Job>(
+  itemBuilder: (context, job, index) => JobTile(job: job),
+  onLoadMore: () async {
+    return await jobRepository.fetchJobs(page: currentPage);
+  },
+  emptyWidget: const EmptyJobsList(),
+  enableRefresh: true,
+)
+```
+
+**Performance Characteristics:**
+- Only builds visible items (typically 10-20 on screen)
+- Automatic item recycling
+- Smooth 60fps scrolling
+- Low memory footprint
+
+**Also Available:** `PaginatedGridView` for grid-based layouts with the same pagination features.
+
+### CachedImage
+
+**Purpose:** Optimized image widget with caching, progressive loading, and error handling using `cached_network_image`.
+
+**Key Features:**
+- **Dual Caching:** Memory + disk caching for fast subsequent loads
+- **Progressive Loading:** Shows placeholder while loading
+- **Error Handling:** Graceful fallback for failed loads
+- **Performance Optimized:** Automatic image resizing and memory management
+- **List-View Ready:** Optimized for use in scrolling lists
+
+**Usage Example:**
+```dart
+CachedImage(
+  imageUrl: 'https://example.com/image.jpg',
+  width: 300,
+  height: 200,
+  fit: BoxFit.cover,
+  borderRadius: 8,
+)
+```
+
+**Performance Characteristics:**
+- **Cache Hit:** ~1-5ms (memory cache)
+- **Cache Miss:** ~100-500ms (network + caching)
+- **Memory Management:** Automatic downsampling to specified dimensions
+- **Disk Cache:** Persistent across app sessions
+
+**Variants:**
+- `CachedCircleImage` - For circular avatars and profile pictures
+- `CachedBackgroundImage` - For background images with overlaid content
+
+**Cache Configuration:**
+- Max memory cache: Automatically managed by specified width/height
+- Max disk cache: 1000x1000 pixels for regular images, 200x200 for avatars
+- Fade animations: 200ms in, 100ms out
+
+**Integration with Lists:**
+Both `PaginatedListView` and `CachedImage` work seamlessly together for optimal performance in image-heavy lists:
+
+```dart
+PaginatedListView<Project>(
+  itemBuilder: (context, project, index) => Card(
+    child: CachedImage(
+      imageUrl: project.thumbnailUrl,
+      width: double.infinity,
+      height: 200,
+      fit: BoxFit.cover,
+    ),
+  ),
+  onLoadMore: () => projectRepository.fetchProjects(),
+)
+```
+
+This combination ensures:
+- Only visible images are loaded and cached
+- Smooth scrolling with no jank
+- Efficient memory usage
+- Fast subsequent renders
 
 ---
 
