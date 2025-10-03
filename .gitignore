@@ -55,7 +55,7 @@ test_driver/
 # --- Environment files ---
 .env
 .env.*
-.env.example
+!.env.example
 .env.*.local
 
 # --- Firebase Functions (Node, TS) ---
