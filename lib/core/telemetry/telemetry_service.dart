@@ -37,6 +37,17 @@ class TelemetryService {
   factory TelemetryService() => _instance;
   TelemetryService._internal();
 
+  /// Current requestId for correlation
+  String? _currentRequestId;
+
+  /// Set the current requestId for log correlation
+  void setRequestId(String? requestId) {
+    _currentRequestId = requestId;
+  }
+
+  /// Get the current requestId
+  String? get currentRequestId => _currentRequestId;
+
   /// Initialize telemetry services
   /// Sets up Crashlytics, Analytics, and Performance Monitoring
   static Future<void> initialize() async {
@@ -50,9 +61,17 @@ class TelemetryService {
   ///
   /// [action] - The action being performed (e.g., 'CLOCK_IN', 'INVOICE_CREATED')
   /// [data] - Additional structured data (should include entity, actorUid, orgId, etc.)
-  void logEvent(String action, Map<String, dynamic> data) {
+  /// [requestId] - Optional requestId for correlation (defaults to current requestId)
+  void logEvent(String action, Map<String, dynamic> data, {String? requestId}) {
+    final effectiveRequestId = requestId ?? _currentRequestId;
+    final enrichedData = {
+      ...data,
+      if (effectiveRequestId != null) 'requestId': effectiveRequestId,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
     if (kDebugMode) {
-      debugPrint('[Telemetry] Event: $action, Data: $data');
+      debugPrint('[Telemetry] Event: $action, Data: $enrichedData');
     }
     // TODO: Send to Firebase Analytics
     // TODO: Add to structured log buffer
@@ -63,21 +82,30 @@ class TelemetryService {
   /// [error] - The error that occurred
   /// [stackTrace] - Optional stack trace
   /// [context] - Additional context about where/when the error occurred
+  /// [requestId] - Optional requestId for correlation (defaults to current requestId)
   void logError(
     dynamic error, {
     StackTrace? stackTrace,
     Map<String, dynamic>? context,
+    String? requestId,
   }) {
+    final effectiveRequestId = requestId ?? _currentRequestId;
+    final enrichedContext = {
+      ...?context,
+      if (effectiveRequestId != null) 'requestId': effectiveRequestId,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
     if (kDebugMode) {
       debugPrint('[Telemetry] Error: $error');
       if (stackTrace != null) {
         debugPrint('[Telemetry] Stack: $stackTrace');
       }
-      if (context != null) {
-        debugPrint('[Telemetry] Context: $context');
+      if (enrichedContext.isNotEmpty) {
+        debugPrint('[Telemetry] Context: $enrichedContext');
       }
     }
-    // TODO: Send to Firebase Crashlytics
+    // TODO: Send to Firebase Crashlytics with enriched context
   }
 
   /// Track screen view
@@ -129,3 +157,10 @@ class TelemetryService {
     // TODO: Send custom metric to Firebase
   }
 }
+
+/// Riverpod Provider for TelemetryService
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final telemetryServiceProvider = Provider<TelemetryService>((ref) {
+  return TelemetryService();
+});
