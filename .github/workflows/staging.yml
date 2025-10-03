@@ -180,7 +180,7 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (debug, no signing)
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define=ENABLE_APP_CHECK=true
 
   emulator_smoke:
     name: Emulator Smoke Tests
