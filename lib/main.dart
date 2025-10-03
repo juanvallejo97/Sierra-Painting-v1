@@ -1,4 +1,9 @@
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/app/app.dart';
@@ -18,7 +23,7 @@ import 'package:sierra_painting/core/services/offline_service.dart';
 /// - Follows Material Design 3 guidelines
 ///
 /// INITIALIZATION ORDER:
-/// 1. Firebase (auth, firestore, functions)
+/// 1. Firebase (auth, firestore, functions, performance, crashlytics)
 /// 2. Offline storage (Hive)
 /// 3. Feature flags
 /// 4. App widget tree
@@ -30,15 +35,41 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Initialize Firebase Performance Monitoring
+  final performance = FirebasePerformance.instance;
+  
+  // Enable performance monitoring in release mode only
+  if (kReleaseMode) {
+    await performance.setPerformanceCollectionEnabled(true);
+  }
+
+  // Initialize Firebase Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  
+  // Pass all uncaught asynchronous errors to Crashlytics
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
   // Initialize offline storage
   await OfflineService.initialize();
 
   // Initialize feature flags
   await FeatureFlagService.initialize();
 
+  // Track app startup
+  final trace = performance.newTrace('app_startup');
+  await trace.start();
+
   runApp(
     const ProviderScope(
       child: SierraPaintingApp(),
     ),
   );
+
+  // Stop startup trace after first frame
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    trace.stop();
+  });
 }
