@@ -1,0 +1,42 @@
+name: Security - Firestore Rules
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'firestore.rules'
+      - 'firestore-tests/**'
+      - '.github/workflows/firestore_rules.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'firestore.rules'
+      - 'firestore-tests/**'
+
+jobs:
+  rules:
+    name: rules
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install test dependencies
+        working-directory: firestore-tests
+        run: npm ci --prefer-offline --no-audit || npm install --no-audit --no-fund
+        shell: bash
+      
+      - name: Run rules tests (emulator)
+        working-directory: firestore-tests
+        run: npm test
+        shell: bash
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
