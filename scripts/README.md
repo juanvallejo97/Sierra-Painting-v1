@@ -25,7 +25,7 @@ scripts/
 
 #### `quality.sh`
 
-**Purpose:** Run comprehensive code quality checks including linting, analysis, and dead code detection
+**Purpose:** Run comprehensive code quality checks including formatting, linting, and analysis
 
 **Usage:**
 ```bash
@@ -37,19 +37,12 @@ scripts/
 
 # Run with fatal-infos (fail on info-level issues)
 ./scripts/quality.sh --fatal-infos
-
-# Skip metrics checks
-./scripts/quality.sh --no-metrics
-
-# Skip unused code detection
-./scripts/quality.sh --no-unused
 ```
 
 **Checks performed:**
 1. Dart auto-fixes (optional, with `--fix`)
-2. Dart analysis with strict linting rules
-3. dart_code_metrics analysis (complexity, maintainability)
-4. Unused code detection
+2. Dart format verification
+3. Dart analysis with strict linting rules
 
 **When to use:**
 - Before committing code
