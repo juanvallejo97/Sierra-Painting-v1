@@ -19,10 +19,14 @@
  * ```
  */
 
-export const requireAppCheck = (handler: any) => {
-  return async (req: any, res: any) => {
+import type {Request, Response} from 'firebase-functions/v1';
+
+type HttpHandler = (req: Request, res: Response) => void | Promise<void>;
+
+export const requireAppCheck = (handler: HttpHandler): HttpHandler => {
+  return (req: Request, res: Response) => {
     // Check for X-Firebase-AppCheck header
-    const token = req.header && req.header('X-Firebase-AppCheck');
+    const token = req.header('X-Firebase-AppCheck');
     
     if (!token) {
       res.status(401).send('App Check required');
