@@ -18,12 +18,6 @@ jobs:
     name: rules
     runs-on: ubuntu-latest
     
-    services:
-      firestore:
-        image: google/cloud-sdk:emulators
-        ports:
-          - 8080:8080
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,32 +27,16 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Start Firestore Emulator in background
-        run: |
-          # Start emulator in the background
-          gcloud emulators firestore start --host-port=0.0.0.0:8080 &
-          EMULATOR_PID=$!
-          echo "EMULATOR_PID=$EMULATOR_PID" >> $GITHUB_ENV
-          
-          # Wait for emulator to be ready (max 30 seconds)
-          echo "Waiting for Firestore emulator to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080 > /dev/null 2>&1; then
-              echo "✅ Firestore emulator is ready!"
-              break
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 1
-          done
-          
-          # Verify emulator is running
-          if ! curl -s http://localhost:8080 > /dev/null 2>&1; then
-            echo "❌ ERROR: Firestore emulator failed to start"
-            exit 1
-          fi
-        timeout-minutes: 2
+      - name: Install Java for Firebase emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
       
-      - name: Install dependencies
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Install test dependencies
         working-directory: firestore-tests
         run: |
           if [ -f package-lock.json ]; then
@@ -66,6 +44,32 @@ jobs:
           else
             npm install --no-audit --no-fund
           fi
+      
+      - name: Start Firestore Emulator
+        run: |
+          # Create a minimal firebase.json if needed
+          if [ ! -f firebase.json ]; then
+            echo '{"emulators": {"firestore": {"port": 8080}}}' > firebase.json
+          fi
+          
+          # Start emulator in the background
+          firebase emulators:start --only firestore --project demo-test &
+          EMULATOR_PID=$!
+          echo "EMULATOR_PID=$EMULATOR_PID" >> $GITHUB_ENV
+          
+          # Wait for emulator to be ready (max 60 seconds)
+          echo "Waiting for Firestore emulator to start..."
+          for i in {1..60}; do
+            if curl -s http://localhost:8080 > /dev/null 2>&1; then
+              echo "✅ Firestore emulator is ready!"
+              exit 0
+            fi
+            sleep 1
+          done
+          
+          echo "❌ ERROR: Firestore emulator failed to start"
+          exit 1
+        timeout-minutes: 2
       
       - name: Run Firestore Rules tests
         working-directory: firestore-tests
@@ -79,6 +83,5 @@ jobs:
           if [ ! -z "$EMULATOR_PID" ]; then
             kill $EMULATOR_PID || true
           fi
-          # Kill any remaining emulator processes
+          pkill -f "firebase.*emulator" || true
           pkill -f "firestore.*emulator" || true
-          pkill -f "gcloud.*emulator" || true
