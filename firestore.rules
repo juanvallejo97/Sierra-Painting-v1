@@ -34,6 +34,40 @@ service cloud.firestore {
            orgId in request.auth.token.orgs && 
            request.auth.token.orgs[orgId] == true; 
   }
+  
+  // Schema validation helpers
+  function hasRequiredField(data, field) {
+    return field in data && data[field] != null;
+  }
+  
+  function isString(value) {
+    return value is string;
+  }
+  
+  function isNumber(value) {
+    return value is number;
+  }
+  
+  function isTimestamp(value) {
+    return value is timestamp;
+  }
+  
+  // Server timestamp validation - ensure updatedAt is set by server only
+  function hasValidTimestamps(data) {
+    return (!('updatedAt' in data) || data.updatedAt == request.time);
+  }
+  
+  // Jobs schema validation
+  function isValidJobSchema(data) {
+    return hasRequiredField(data, 'orgId') && isString(data.orgId) &&
+           hasRequiredField(data, 'status') && isString(data.status) &&
+           hasRequiredField(data, 'ownerId') && isString(data.ownerId) &&
+           hasValidTimestamps(data);
+  }
+  
+  function isJobOwner(data) {
+    return isAuthed() && data.ownerId == request.auth.uid;
+  }
 
   match /databases/{db}/documents {
     // Example multi-tenant pattern - adjust as needed for actual schema
@@ -53,12 +87,28 @@ service cloud.firestore {
       allow delete: if hasRole('admin');
     }
     
-    // Jobs collection
+    // Jobs collection with schema validation
     match /jobs/{jobId} {
       allow read: if isAuthed() && 
                      (hasRole('admin') || 
-                      (resource.data.orgId != null && inOrg(resource.data.orgId)));
-      allow create, update, delete: if hasRole('admin');
+                      (resource.data.orgId != null && inOrg(resource.data.orgId)) ||
+                      isJobOwner(resource.data));
+      
+      // Create: must be owner and pass schema validation
+      allow create: if isAuthed() && 
+                       isValidJobSchema(request.resource.data) &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       inOrg(request.resource.data.orgId);
+      
+      // Update: owner or admin, preserve ownerId, pass schema validation
+      allow update: if (isAuthed() && 
+                        isJobOwner(resource.data) && 
+                        request.resource.data.ownerId == resource.data.ownerId &&
+                        isValidJobSchema(request.resource.data)) ||
+                       hasRole('admin');
+      
+      // Delete: owner or admin only
+      allow delete: if (isAuthed() && isJobOwner(resource.data)) || hasRole('admin');
       
       match /timeEntries/{entryId} {
         allow create: if isAuthed() && 
