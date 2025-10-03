@@ -30,13 +30,18 @@ if [ -d "functions" ] && command -v npm &> /dev/null; then
     echo "🔍 Checking Cloud Functions..."
     cd functions
     
-    # Run TypeScript linter
-    if [ -f "package.json" ] && grep -q "lint" package.json; then
-        echo "📝 Running ESLint..."
-        if ! npm run lint -- --quiet 2>/dev/null; then
-            echo "❌ ESLint found issues. Run: cd functions && npm run lint"
-            cd ..
-            exit 1
+    # Check if node_modules exists
+    if [ ! -d "node_modules" ]; then
+        echo "⚠️  Node modules not installed, skipping ESLint"
+    else
+        # Run TypeScript linter
+        if [ -f "package.json" ] && grep -q "lint" package.json; then
+            echo "📝 Running ESLint..."
+            if ! npm run lint -- --quiet 2>/dev/null; then
+                echo "❌ ESLint found issues. Run: cd functions && npm run lint"
+                cd ..
+                exit 1
+            fi
         fi
     fi
     
