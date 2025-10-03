@@ -180,7 +180,7 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (debug, no signing)
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define=ENABLE_APP_CHECK=true
 
   emulator_smoke:
     name: Emulator Smoke Tests
@@ -223,10 +223,15 @@ jobs:
         run: |
           pkill -f firebase || true
 
+  smoke_tests:
+    name: Run Smoke Tests
+    uses: ./.github/workflows/smoke.yml
+    needs: [build_check_flutter, lint_and_test_functions]
+
   deploy_indexes:
     name: Deploy Firestore Indexes
     runs-on: ubuntu-latest
-    needs: [build_check_flutter, emulator_smoke]
+    needs: [smoke_tests, emulator_smoke]
     environment: staging
     steps:
       - name: Checkout code

@@ -189,10 +189,10 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define=ENABLE_APP_CHECK=true
 
       - name: Build AAB (release)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --dart-define=ENABLE_APP_CHECK=true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -203,10 +203,15 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           retention-days: 90
 
+  smoke_tests:
+    name: Run Smoke Tests
+    uses: ./.github/workflows/smoke.yml
+    needs: [build_flutter_release, lint_and_test_functions]
+
   deploy_indexes_production:
     name: Deploy Firestore Indexes (Production)
     runs-on: ubuntu-latest
-    needs: [build_flutter_release, lint_and_test_functions]
+    needs: [smoke_tests]
     environment:
       name: production
       url: https://console.firebase.google.com/project/${{ env.FIREBASE_PROJECT_PROD }}/overview

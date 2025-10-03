@@ -1,0 +1,61 @@
+# Dart Code Metrics Configuration
+# Used for dead code detection and complexity analysis
+
+dart_code_metrics:
+  metrics:
+    cyclomatic-complexity: 20
+    number-of-parameters: 5
+    maximum-nesting-level: 5
+    source-lines-of-code: 100
+    maintainability-index: 50
+    number-of-methods: 10
+
+  metrics-exclude:
+    - test/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+  rules:
+    # Code complexity
+    - avoid-nested-conditional-expressions:
+        severity: warning
+    - avoid-unnecessary-conditionals:
+        severity: warning
+    - no-boolean-literal-compare:
+        severity: warning
+    - no-equal-then-else:
+        severity: warning
+    
+    # Error handling
+    - avoid-throw-in-catch-block:
+        severity: warning
+    - avoid-unrelated-type-assertions:
+        severity: warning
+    
+    # Naming
+    - prefer-match-file-name:
+        severity: warning
+    
+    # Performance
+    - avoid-unnecessary-type-assertions:
+        severity: warning
+    - avoid-unnecessary-type-casts:
+        severity: warning
+    - prefer-const-border-radius:
+        severity: warning
+    
+    # Style
+    - prefer-trailing-comma:
+        severity: warning
+    - prefer-first:
+        severity: warning
+    - prefer-last:
+        severity: warning
+    - prefer-immediate-return:
+        severity: warning
+    
+    # Dead code detection
+    - no-empty-block:
+        severity: warning
+    - prefer-moving-to-variable:
+        severity: warning
