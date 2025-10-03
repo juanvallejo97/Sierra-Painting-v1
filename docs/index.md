@@ -10,11 +10,15 @@ Welcome to the Sierra Painting documentation! This directory contains all the do
 - **[README.md](../README.md)** - Project overview and features
 
 ### Understanding the Project
-- **[ARCHITECTURE.md](../ARCHITECTURE.md)** - System architecture and design
-- **[CHANGELOG.md](../CHANGELOG.md)** - Version history and changes
+- **[Architecture.md](./Architecture.md)** - System architecture and design
+- **[Testing.md](./Testing.md)** - Testing strategy and guidelines
+- **[EnhancementsAndAdvice.md](./EnhancementsAndAdvice.md)** - Performance and enhancement recommendations
+
+### UI/UX Documentation
+- **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)** - Comprehensive UI/UX overhaul specification
 
 ### Contributing
-- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - How to contribute to the project
+- **[DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md)** - Development workflow and best practices
 
 ## Documentation Structure
 

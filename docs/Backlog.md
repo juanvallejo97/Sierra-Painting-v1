@@ -166,6 +166,8 @@ total = subtotal + tax
 
 ## Enhancement Story Details (from EnhancementsAndAdvice.md)
 
+> **Note**: For a comprehensive UI/UX overhaul specification covering all the enhancements below, see **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)**.
+
 ### UX-004: Motion-Reduced Animations (P0, V1)
 **Current State**: Standard Flutter animations  
 **Enhancement**:
