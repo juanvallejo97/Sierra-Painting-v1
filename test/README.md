@@ -139,7 +139,36 @@ flutter test integration_test/
 
 ---
 
-### 4. Contract Tests
+### 4. Smoke Tests
+
+**Purpose**: Fast, deterministic health checks to block bad releases
+
+**Location**: `integration_test/app_smoke_test.dart`, `functions/test/smoke/`
+
+**What's Included**:
+- ✅ `integration_test/app_smoke_test.dart` - Mobile app startup and navigation
+- ✅ `functions/test/smoke/health_test.ts` - Backend health endpoint
+- ✅ `.github/workflows/smoke.yml` - CI/CD integration
+
+**Run Locally**:
+```bash
+# Mobile smoke tests
+flutter test integration_test/app_smoke_test.dart
+
+# Backend smoke tests
+cd functions && npm test -- test/smoke/
+```
+
+**When They Run**:
+- On every PR (provides fast feedback)
+- Before staging deployment (blocks bad code)
+- Before production deployment (final safety check)
+
+📖 **See [SMOKE_TESTS.md](../docs/SMOKE_TESTS.md) for complete documentation**
+
+---
+
+### 5. Contract Tests
 
 **Purpose**: Verify API contracts match backend
 
@@ -508,12 +537,13 @@ test('throws error on invalid input', () {
 - [ ] Integration tests for critical flows
 
 ### Phase 4
+- [x] Smoke tests for mobile and backend ✅ **DONE**
+- [x] CI integration for smoke tests ✅ **DONE**
 - [ ] Performance benchmarks
 - [ ] Contract tests for all APIs
-- [ ] E2E smoke tests
 
 ### Phase 5
-- [ ] CI integration
+- [x] Smoke tests in CI pipeline ✅ **DONE**
 - [ ] Coverage reporting
 - [ ] Automated performance regression tests
 
