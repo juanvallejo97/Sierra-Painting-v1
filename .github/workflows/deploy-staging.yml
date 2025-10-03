@@ -1,50 +1,51 @@
 name: Deploy to Staging
-
 on:
   push:
     branches: [ main ]
 
 jobs:
   deploy-staging:
-    name: Deploy to Staging
     runs-on: ubuntu-latest
-    # Skip if required secrets are not available
-    if: ${{ secrets.FIREBASE_TOKEN != '' && (secrets.GCP_SA_KEY != '' || secrets.FIREBASE_PROJECT_STAGING != '') }}
-    
+    # Proceed if either token-based or OIDC-based auth inputs are present
+    if: ${{ (secrets.FIREBASE_TOKEN && secrets.FIREBASE_PROJECT_STAGING) || (secrets.GCP_WIP && secrets.GCP_SA_EMAIL && secrets.FIREBASE_PROJECT_STAGING) }}
+    permissions:
+      id-token: write   # required for OIDC
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Node.js with cache
-        if: hashFiles('functions/package-lock.json') != ''
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
-      
-      - name: Set up Node.js without cache
-        if: hashFiles('functions/package-lock.json') == ''
-        uses: actions/setup-node@v4
+
+      - name: (OIDC) Auth to Google Cloud
+        if: ${{ secrets.GCP_WIP && secrets.GCP_SA_EMAIL }}
+        uses: google-github-actions/auth@v2
         with:
-          node-version: '18'
-      
+          workload_identity_provider: ${{ secrets.GCP_WIP }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-      
-      - name: Install Functions dependencies
-        working-directory: ./functions
+        run: npm i -g firebase-tools
+
+      - name: Build Cloud Functions
+        if: ${{ hashFiles('functions/**') != '' }}
+        working-directory: functions
         run: |
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install --no-audit --no-fund
-          fi
-      
-      - name: Build Functions
-        working-directory: ./functions
-        run: npm run build
-      
-      - name: Deploy to Firebase Staging
-        run: firebase deploy --only functions,firestore:rules,storage:rules --project staging
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then npm ci; else npm i --no-audit --no-fund; fi
+          if npm run | grep -qE '^\s*build\s'; then npm run build; else echo "No build script, skipping"; fi
+
+      - name: Dry-run deploy (preview)
+        if: ${{ env.PREVIEW_ONLY == 'true' }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase deploy --only functions,firestore:rules,storage:rules --project ${{ secrets.FIREBASE_PROJECT_STAGING }} --non-interactive --debug --config firebase.json --force --except hosting
+
+      - name: Deploy rules + functions (staging)
+        if: ${{ env.PREVIEW_ONLY != 'true' }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase deploy --only functions,firestore:rules,storage:rules --project ${{ secrets.FIREBASE_PROJECT_STAGING }} --non-interactive --force
