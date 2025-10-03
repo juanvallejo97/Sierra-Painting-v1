@@ -13,7 +13,7 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
-  mobile_smoke:
+  mobile-app-smoke-tests:
     name: Mobile App Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -159,10 +159,10 @@ jobs:
           path: backend_health.txt
           retention-days: 30
 
-  smoke_summary:
+  smoke-test-summary:
     name: Smoke Test Summary
     runs-on: ubuntu-latest
-    needs: [mobile_smoke, backend_smoke]
+    needs: [mobile-app-smoke-tests, backend_smoke]
     if: always()
     
     steps:
@@ -179,7 +179,7 @@ jobs:
           echo ""
           
           # Check job results
-          MOBILE_STATUS="${{ needs.mobile_smoke.result }}"
+          MOBILE_STATUS="${{ needs.mobile-app-smoke-tests.result }}"
           BACKEND_STATUS="${{ needs.backend_smoke.result }}"
           
           echo "Mobile Smoke Tests: $MOBILE_STATUS"
@@ -211,7 +211,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const mobileStatus = '${{ needs.mobile_smoke.result }}';
+            const mobileStatus = '${{ needs.mobile-app-smoke-tests.result }}';
             const backendStatus = '${{ needs.backend_smoke.result }}';
             
             const mobileIcon = mobileStatus === 'success' ? '✅' : '❌';
