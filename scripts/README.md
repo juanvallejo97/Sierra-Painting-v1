@@ -205,6 +205,100 @@ firebase emulators:start &
 
 ---
 
+### Canary Deployment Scripts
+
+#### `deploy_canary.sh`
+
+**Purpose:** Deploy Cloud Functions with 10% traffic split for canary testing
+
+**Usage:**
+```bash
+# Deploy canary with 10% traffic
+./scripts/deploy_canary.sh --project sierra-painting-prod --tag v1.2.0
+
+# Deploy specific function only
+./scripts/deploy_canary.sh --project sierra-painting-prod --function clockIn
+
+# Dry run (preview without executing)
+./scripts/deploy_canary.sh --project sierra-painting-prod --dry-run
+```
+
+**When to use:**
+- Initial deployment of new features
+- Testing changes with small user subset
+- Progressive rollout strategy
+
+**Features:**
+- Builds and deploys Cloud Functions
+- Configures 10% traffic split (Gen 2/Cloud Run)
+- Records deployment metadata
+- Provides monitoring links
+
+---
+
+#### `promote_canary.sh`
+
+**Purpose:** Progressively promote canary deployment (10% → 50% → 100%)
+
+**Usage:**
+```bash
+# Promote to 50%
+./scripts/promote_canary.sh --project sierra-painting-prod --stage 50
+
+# Promote to 100% (full rollout)
+./scripts/promote_canary.sh --project sierra-painting-prod --stage 100
+
+# Promote specific function only
+./scripts/promote_canary.sh --project sierra-painting-prod --stage 50 --function clockIn
+
+# Skip smoke tests (not recommended)
+./scripts/promote_canary.sh --project sierra-painting-prod --stage 50 --skip-checks
+```
+
+**When to use:**
+- After monitoring canary deployment (6-24 hours)
+- When metrics show healthy status
+- Progressive rollout to larger audience
+
+**Gates (checks before proceeding):**
+- ✅ Smoke tests pass
+- ✅ Error rate < 2%
+- ✅ P95 latency < 1s
+- ✅ No critical errors
+
+---
+
+#### `rollback.sh`
+
+**Purpose:** One-command rollback to restore previous Cloud Functions revision
+
+**Usage:**
+```bash
+# Quick rollback via traffic split (< 5 min)
+./scripts/rollback.sh --project sierra-painting-prod
+
+# Rollback specific function only
+./scripts/rollback.sh --project sierra-painting-prod --function clockIn
+
+# Rollback via redeploy from git tag (~10 min)
+./scripts/rollback.sh --project sierra-painting-prod --method redeploy --version v1.1.0
+
+# Dry run
+./scripts/rollback.sh --project sierra-painting-prod --dry-run
+```
+
+**When to use:**
+- High error rates detected
+- Critical bugs in production
+- Performance degradation
+- Emergency situations
+
+**Rollback Methods:**
+- **traffic** - Route 100% traffic to PREVIOUS revision (fast, < 5 min)
+- **redeploy** - Redeploy from previous git tag (slower, ~10 min)
+
+---
+
 ### Legacy Scripts
 
 #### `build-and-deploy.sh`
