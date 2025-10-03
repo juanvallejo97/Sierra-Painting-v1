@@ -414,10 +414,25 @@ export const markPaymentPaid = functions
     const invoiceData = invoiceDoc.data() as {
       paid?: boolean;
       total?: number;
+      amount?: number;
       orgId?: string;
     } | undefined;
     if (invoiceData?.paid) {
       throw new functions.https.HttpsError("failed-precondition", "Invoice already paid");
+    }
+
+    // Validate payment amount if provided in the request
+    const invoiceTotal = invoiceData?.total ?? invoiceData?.amount ?? 0;
+    if (validatedData.amount && validatedData.amount !== invoiceTotal) {
+      logger.warn('payment_amount_mismatch', {
+        invoiceId: validatedData.invoiceId,
+        providedAmount: validatedData.amount,
+        invoiceTotal,
+      });
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Payment amount (${validatedData.amount}) does not match invoice total (${invoiceTotal})`
+      );
     }
 
     // Create payment record

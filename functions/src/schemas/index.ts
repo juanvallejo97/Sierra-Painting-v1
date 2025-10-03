@@ -82,6 +82,7 @@ export const EstimateSchema = z.object({
  */
 export const ManualPaymentSchema = z.object({
   invoiceId: z.string().min(1),
+  amount: z.number().int().positive().optional(),  // Amount in cents (optional for backward compat)
   method: z.enum(['check', 'cash']),
   reference: z.string().max(64).optional(),  // Check number, etc.
   note: z.string().min(3),                   // Required note

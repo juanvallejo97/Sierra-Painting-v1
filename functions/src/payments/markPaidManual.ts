@@ -60,8 +60,7 @@
  * });
  * ```
  * 
- * TODO:
- * - Validate payment amount matches invoice total
+ * TODO (Future Enhancements):
  * - Send email notification to customer
  * - Log Analytics event (payment_received)
  * - Add support for partial payments
@@ -252,13 +251,19 @@ export const markPaidManual = functions
         );
       }
 
-      // TODO: Validate payment amount matches invoice total
-      // if (validatedPayment.amount !== invoiceData.total) {
-      //   throw new functions.https.HttpsError(
-      //     'invalid-argument',
-      //     'Payment amount does not match invoice total'
-      //   );
-      // }
+      // Validate payment amount matches invoice total
+      const invoiceTotal = invoiceData.total || invoiceData.amount || 0;
+      if (validatedPayment.amount !== invoiceTotal) {
+        functions.logger.warn('Payment amount mismatch', {
+          invoiceId: validatedPayment.invoiceId,
+          paymentAmount: validatedPayment.amount,
+          invoiceTotal,
+        });
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          `Payment amount (${validatedPayment.amount}) does not match invoice total (${invoiceTotal})`
+        );
+      }
 
       // Update invoice
       paidAt = new Date().toISOString();
