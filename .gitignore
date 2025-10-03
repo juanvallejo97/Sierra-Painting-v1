@@ -52,6 +52,10 @@ coverage/
 *.lcov
 test_driver/
 
+# --- Documentation (generated) ---
+docs/api/
+unused-code-report.txt
+
 # --- Environment files ---
 .env
 .env.*
@@ -76,3 +80,8 @@ webapp/.env*.local
 webapp/.env.staging
 webapp/.env.production
 *.bak
+
+# --- Deployment History (tracked in git) ---
+# Keep deployment history tracked for audit purposes
+# .deployment-history/
+

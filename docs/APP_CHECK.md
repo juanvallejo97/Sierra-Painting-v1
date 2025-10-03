@@ -387,6 +387,171 @@ Before going to production:
 6. **Test with production builds** before releasing
 7. **Document the process** for new team members
 
+## Rollout Plan
+
+### Environment Configuration
+
+The app uses a `--dart-define` flag to control App Check:
+
+```bash
+# Debug build (App Check disabled or using debug provider)
+flutter run
+
+# Release build with App Check enabled
+flutter build apk --release --dart-define=ENABLE_APP_CHECK=true
+flutter build ios --release --dart-define=ENABLE_APP_CHECK=true
+
+# Staging/Canary with App Check enabled
+flutter build apk --dart-define=ENABLE_APP_CHECK=true
+```
+
+By default:
+- **Debug builds**: Use debug provider (or disabled)
+- **Release builds**: Always enabled with production providers (Play Integrity/App Attest)
+
+### Phased Rollout Strategy
+
+**Phase 1: Staging Environment**
+1. Deploy app with `ENABLE_APP_CHECK=true` to staging
+2. Deploy Cloud Functions with `enforceAppCheck: true`
+3. Update Firestore and Storage rules with App Check validation
+4. Test with debug tokens
+5. Monitor metrics for 24-48 hours
+6. Verify crash-free rate remains stable
+
+**Phase 2: Canary Environment**
+1. Deploy to canary with 5-10% of users
+2. Monitor Firebase DebugView for App Check tokens
+3. Check invalid request rates
+4. Verify no increase in authentication errors
+5. Monitor for 48-72 hours
+
+**Phase 3: Production Environment**
+1. Deploy to production with gradual rollout (10% → 50% → 100%)
+2. Monitor key metrics:
+   - Crash-free rate
+   - Invalid request rate
+   - User authentication success rate
+   - API latency (should be ≤50ms overhead)
+3. Keep rollback plan ready
+
+### Enforcement Script
+
+Use the provided script to manage App Check enforcement across environments:
+
+```bash
+# Dry-run to preview changes
+./scripts/app_check_enforce.sh --dry-run staging
+
+# Enable App Check in staging
+./scripts/app_check_enforce.sh staging
+
+# Enable in production
+./scripts/app_check_enforce.sh prod
+
+# Disable if needed (rollback)
+./scripts/app_check_enforce.sh --disable staging
+```
+
+## Break-Glass Rollback Procedure
+
+If App Check causes issues in production, follow these steps immediately:
+
+### Step 1: Disable Enforcement in Backend (Immediate - 5 minutes)
+
+**Option A: Cloud Functions (Fastest)**
+```typescript
+// Comment out enforceAppCheck in affected functions
+export const myFunction = functions
+  .runWith({
+    // enforceAppCheck: true,  // TEMPORARILY DISABLED
+  })
+  .https.onCall(async (data, context) => {
+    // Your logic
+  });
+```
+
+Deploy functions only:
+```bash
+firebase deploy --only functions
+```
+
+**Option B: Security Rules (Firestore/Storage)**
+```javascript
+// Comment out App Check validation temporarily
+// function hasValidAppCheck() {
+//   return request.app.appCheck.token.aud[0] == request.app.projectId;
+// }
+
+match /collection/{doc} {
+  // allow read, write: if hasValidAppCheck() && otherConditions;
+  allow read, write: if otherConditions;  // TEMPORARILY: App Check disabled
+}
+```
+
+Deploy rules:
+```bash
+firebase deploy --only firestore:rules,storage
+```
+
+### Step 2: Disable in Mobile App (Next Release - Hours)
+
+Update `lib/main.dart`:
+```dart
+// Temporarily disable App Check
+const enableAppCheck = String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
+// Force disable: const shouldEnableAppCheck = false;
+```
+
+Or deploy with flag:
+```bash
+flutter build apk --release --dart-define=ENABLE_APP_CHECK=false
+```
+
+### Step 3: Use Enforcement Script
+
+```bash
+# Disable App Check enforcement
+./scripts/app_check_enforce.sh --disable prod
+
+# Redeploy affected services
+firebase deploy --only functions,firestore:rules,storage
+```
+
+### Step 4: Investigate and Fix
+
+1. Check Firebase Console → App Check → Metrics
+2. Review error logs for App Check failures
+3. Verify provider configuration (Play Integrity, App Attest)
+4. Check for known issues:
+   - Android devices below API level 19
+   - iOS devices below iOS 14 without DeviceCheck
+   - Network issues preventing token generation
+5. Test fix in staging before re-enabling
+
+### Step 5: Re-enable with Fix
+
+1. Deploy fix to staging
+2. Test thoroughly
+3. Enable in canary (5-10% traffic)
+4. Monitor for 48 hours
+5. Gradual rollout to production
+
+## Monitoring & Alerts
+
+Set up these alerts in Firebase Console:
+
+1. **Invalid Request Rate** > 5% → Critical
+2. **App Check Token Failures** > 1% → Warning
+3. **API Latency** increase > 100ms → Warning
+4. **Crash-free Rate** drop > 0.5% → Critical
+
+Monitor these metrics during rollout:
+- App Check verification success rate
+- Token generation latency
+- Backend request success rate
+- User-reported authentication issues
+
 ## Resources
 
 - [Firebase App Check Documentation](https://firebase.google.com/docs/app-check)

@@ -105,6 +105,26 @@ echo "  - [ ] Call markInvoicePaid function"
 echo "  - [ ] Verify function response times"
 echo ""
 
+# Canary Deployment Validation
+echo -e "${YELLOW}Canary Deployment Validation${NC}"
+echo "  - [ ] Check Cloud Run traffic split (if applicable)"
+echo "  - [ ] Verify function cold start times < 5s"
+echo "  - [ ] Verify function error rate < 1%"
+echo "  - [ ] Verify P95 latency < 2s"
+echo "  - [ ] Check deployment history records"
+echo ""
+
+# Check if deployment history exists
+if [ -d ".deployment-history" ] && [ "$(ls -A .deployment-history)" ]; then
+  echo -e "${GREEN}✓ Deployment history found${NC}"
+  echo "Recent deployments:"
+  ls -lt .deployment-history/ | head -5
+  echo ""
+else
+  echo -e "${YELLOW}ℹ️  No deployment history found${NC}"
+  echo ""
+fi
+
 echo "================================================"
 echo -e "${GREEN}✅ Smoke test suite completed${NC}"
 echo "================================================"
