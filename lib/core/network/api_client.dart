@@ -123,7 +123,7 @@ class ApiClient {
           ),
         );
       } on FirebaseFunctionsException catch (e) {
-        // Don't retry client errors (4xx)
+        // Do not retry client errors (4xx)
         if (!_shouldRetry(e)) {
           return Result.failure(_mapFirebaseError(e, requestId, functionName));
         }
