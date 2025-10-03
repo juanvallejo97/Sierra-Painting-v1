@@ -81,6 +81,17 @@ webapp/.env.staging
 webapp/.env.production
 *.bak
 
+# --- Firestore Rules Tests ---
+firestore-tests/node_modules/
+
+# --- Secrets (NEVER COMMIT) ---
+# Firebase/GCP service account keys
+**/*service-account*.json
+**/*-service-account*.json
+**/firebase-adminsdk-*.json
+**/*credentials.json
+**/.runtimeconfig.json
+
 # --- Deployment History (tracked in git) ---
 # Keep deployment history tracked for audit purposes
 # .deployment-history/

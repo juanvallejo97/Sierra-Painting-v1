@@ -7,7 +7,7 @@ on:
     branches: [ main, release/** ]
 
 jobs:
-  quality-checks:
+  code-quality-and-lint-enforcement:
     name: Code Quality & Lint Enforcement
     runs-on: ubuntu-latest
     

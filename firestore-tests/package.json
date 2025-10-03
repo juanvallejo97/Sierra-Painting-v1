@@ -1,0 +1,12 @@
+{
+  "name": "firestore-rules-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-reporter=spec ./rules.spec.mjs"
+  },
+  "dependencies": {
+    "@firebase/rules-unit-testing": "^3.0.0",
+    "firebase": "^10.0.0"
+  }
+}
