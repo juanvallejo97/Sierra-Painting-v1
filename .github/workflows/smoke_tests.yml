@@ -1,0 +1,65 @@
+name: Smoke Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FIREBASE_PROJECT_PROD: to-do-app-ac602
+  HOSTING_SITE_PROD: sierra-prod
+
+jobs:
+  mobile-app-smoke-tests:
+    name: Mobile App Smoke Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      
+      - name: Install dependencies
+        run: flutter pub get
+        shell: bash
+      
+      - name: Run minimal integration smoke
+        run: flutter test integration_test/app_boot_smoke_test.dart
+        shell: bash
+      
+      - name: Produce smoke summary
+        run: dart run tool/smoke/smoke.dart
+        shell: bash
+      
+      - name: Upload smoke results
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-results
+          path: build/smoke/smoke_results.json
+          if-no-files-found: warn
+  
+  smoke-test-summary:
+    name: Smoke Test Summary
+    runs-on: ubuntu-latest
+    needs: [mobile-app-smoke-tests]
+    if: always()
+    
+    steps:
+      - name: Download smoke results
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-results
+          path: smoke
+      
+      - name: Display summary
+        run: cat smoke/smoke_results.json
+        shell: bash

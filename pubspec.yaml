@@ -59,13 +59,13 @@ dev_dependencies:
     sdk: flutter
 
   # Lints & Codegen
-  very_good_analysis: ^6.0.0
-  dart_code_metrics: ^5.7.6
+  flutter_lints: ^5.0.0
   build_runner: ^2.4.7
   hive_generator: ^2.0.1
 
   # Testing
   mockito: ^5.4.4
+  mocktail: ^1.0.0
   integration_test:
     sdk: flutter
 
@@ -80,7 +80,7 @@ dependency_overrides:
   # Reference: Flutter SDK includes integration_test with material_color_utilities 0.5.0
   material_color_utilities: 0.5.0
   
-  # Pin analyzer to match the version required by build_runner and dart_code_metrics
+  # Pin analyzer to match the version required by build_runner
   # This ensures consistent analysis results across development and CI environments
   analyzer: ^6.4.1
 
