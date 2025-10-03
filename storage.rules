@@ -9,6 +9,12 @@ rules_version = '2';
  * - Role-based access: Admins have broader permissions
  * - File type validation: Only allowed types (images, PDFs)
  * - Size limits: Max 10MB per file
+ * - App Check: Enforced at Cloud Functions level for uploads via functions
+ * 
+ * APP CHECK NOTE:
+ * - Cloud Functions that upload files (e.g., createEstimatePdf) enforce App Check
+ * - Direct client uploads go through these rules (auth + role checks)
+ * - App Check can be added to Storage rules if needed for additional protection
  * 
  * PERFORMANCE NOTES:
  * - Firestore lookups in rules count toward read quota
