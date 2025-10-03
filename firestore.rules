@@ -137,12 +137,14 @@ service cloud.firestore {
       // Only admins can create invoices
       allow create: if isAdmin();
       
-      // Block client writes that include the 'paid' or 'paidAt' fields
+      // Block client writes that include sensitive payment fields
       // These fields can only be set server-side via markPaymentPaid function
+      // RISK-SEC-002 mitigation: Prevent client tampering with invoice amounts
       allow update: if isAdmin() && 
-                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['paid', 'paidAt']);
+                       !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['paid', 'paidAt', 'total', 'amount']);
       
-      // Invoices cannot be deleted
+      // Invoices cannot be deleted (audit trail preservation)
       allow delete: if false;
     }
     
