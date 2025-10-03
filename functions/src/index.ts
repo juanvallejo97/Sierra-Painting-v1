@@ -347,7 +347,12 @@ export const clockIn = functions
  * Legacy callable maintained temporarily for backward compatibility.
  * Prefer using payments/markPaidManual.
  */
-export const markPaymentPaid = functions.https.onCall(async (data, context) => {
+export const markPaymentPaid = functions
+  .runWith({
+    enforceAppCheck: true,
+    consumeAppCheckToken: true, // Prevent replay attacks
+  })
+  .https.onCall(async (data, context) => {
   // Verify authentication
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
@@ -361,6 +366,14 @@ export const markPaymentPaid = functions.https.onCall(async (data, context) => {
     const logger = log.child({ requestId, userId });
     
     span.setAttribute('userId', userId);
+
+    // App Check validation (defense in depth)
+    if (!context.app) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "App Check validation failed"
+      );
+    }
 
     // Verify admin role
     const userDoc = await db.collection("users").doc(userId).get();
