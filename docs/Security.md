@@ -752,5 +752,8 @@ export const onUserDelete = functions.auth.user().onDelete(async (user) => {
 - ✅ Stripe webhook signature verification
 - ✅ Server-only critical state (invoice.paid)
 - ✅ PII handling and data deletion
+- ✅ Workload Identity Federation for CI/CD (no long-lived keys)
 
 For questions, see [Architecture.md](./Architecture.md) or [DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md).
+
+For CI/CD security setup, see [GCP Workload Identity Setup](./ops/gcp-workload-identity-setup.md).

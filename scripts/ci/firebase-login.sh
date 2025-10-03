@@ -21,8 +21,20 @@ fi
 
 # Verify Google Cloud credentials are set
 if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ] && [ -z "$GCLOUD_SERVICE_KEY" ]; then
-  echo -e "${YELLOW}⚠️  Warning: Google Cloud credentials not found in standard env vars${NC}"
-  echo "This is expected when using google-github-actions/auth"
+  echo -e "${GREEN}✓ Using Workload Identity Federation (OIDC)${NC}"
+  echo "No GOOGLE_APPLICATION_CREDENTIALS found - this is expected with OIDC"
+else
+  echo -e "${RED}❌ Error: GOOGLE_APPLICATION_CREDENTIALS or GCLOUD_SERVICE_KEY detected!${NC}"
+  echo ""
+  echo "POLICY VIOLATION: Long-lived service account keys are prohibited."
+  echo "This repository uses Workload Identity Federation (OIDC) for authentication."
+  echo ""
+  echo "Please remove any JSON key-based authentication and use:"
+  echo "  - workload_identity_provider in google-github-actions/auth@v2"
+  echo "  - service_account parameter instead of credentials_json"
+  echo ""
+  echo "See: docs/ops/gcp-workload-identity-setup.md"
+  exit 1
 fi
 
 # Check Firebase CLI is installed

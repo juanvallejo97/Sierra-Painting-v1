@@ -63,3 +63,84 @@ jobs:
           echo "Checking npm dependencies for vulnerabilities"
           npm audit --audit-level=moderate || true
         fi
+
+  secret-scanning-reminder:
+    name: Secret Scanning Reminder
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check GitHub Secret Scanning status
+      run: |
+        echo "=========================================="
+        echo "🔐 Secret Scanning Status"
+        echo "=========================================="
+        echo ""
+        echo "⚠️  REMINDER: Ensure GitHub Secret Scanning is enabled"
+        echo ""
+        echo "Repository settings: https://github.com/${{ github.repository }}/settings/security_analysis"
+        echo ""
+        echo "Required security features:"
+        echo "  - ✅ Secret scanning (detects committed secrets)"
+        echo "  - ✅ Push protection (blocks secret commits)"
+        echo "  - ✅ Dependency graph"
+        echo "  - ✅ Dependabot alerts"
+        echo "  - ✅ Dependabot security updates"
+        echo ""
+        echo "Secret types to monitor:"
+        echo "  - Google API keys"
+        echo "  - Google Cloud Platform service account keys"
+        echo "  - Firebase service account keys"
+        echo "  - Private keys"
+        echo "  - OAuth tokens"
+        echo ""
+        echo "For more info: https://docs.github.com/en/code-security/secret-scanning"
+        echo ""
+    
+    - name: Verify no secrets in environment files
+      run: |
+        echo "🔍 Checking for committed .env files..."
+        
+        # Check for .env files (should be in .gitignore)
+        if find . -name ".env" -o -name ".env.*" | grep -v ".env.example" | grep -v "node_modules" | grep -v ".git"; then
+          echo "❌ WARNING: Found .env files in repository!"
+          echo "These files may contain secrets and should not be committed."
+          echo ""
+          echo "Add to .gitignore:"
+          echo "  .env"
+          echo "  .env.*"
+          echo "  !.env.example"
+          exit 1
+        else
+          echo "✅ No .env files found (good!)"
+        fi
+    
+    - name: Check for API keys in code
+      run: |
+        echo "🔍 Checking for hardcoded API keys..."
+        
+        # Basic pattern matching for common API key formats
+        FOUND=0
+        
+        # Check for Firebase API keys in unexpected places
+        if grep -r "AIza[0-9A-Za-z_-]{35}" --include="*.dart" --include="*.ts" --include="*.js" --include="*.sh" . 2>/dev/null | grep -v "NEXT_PUBLIC" | grep -v "// Example:" | grep -v ".git"; then
+          echo "⚠️  Found Firebase API key pattern in code!"
+          FOUND=1
+        fi
+        
+        if [ $FOUND -eq 1 ]; then
+          echo ""
+          echo "⚠️  WARNING: Potential hardcoded API keys detected."
+          echo "Review the findings above to ensure they are not sensitive."
+          echo ""
+          echo "Best practices:"
+          echo "  - Use environment variables for API keys"
+          echo "  - Use GCP Secret Manager for sensitive values"
+          echo "  - Never commit .env files with real values"
+          echo ""
+          # Don't fail, just warn
+        else
+          echo "✅ No hardcoded API keys detected"
+        fi
+
