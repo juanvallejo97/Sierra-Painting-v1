@@ -1,0 +1,43 @@
+# Dart Documentation Configuration
+# Used by `dart doc` to generate API documentation
+
+# Include/Exclude patterns
+include:
+  - lib/**
+
+exclude:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - test/**
+  - integration_test/**
+
+# Output directory (relative to project root)
+output: docs/api
+
+# Show warnings for undocumented public APIs
+show-warnings: true
+
+# Generate documentation for private members
+document-private: false
+
+# Link to source code
+link-to-source-root: https://github.com/juanvallejo97/Sierra-Painting-v1/blob/main
+
+# Categories for the sidebar
+categories:
+  "Features":
+    - "features.auth"
+    - "features.timeclock"
+    - "features.estimates"
+    - "features.invoices"
+    - "features.payments"
+    - "features.admin"
+  "Core":
+    - "core.services"
+    - "core.providers"
+    - "core.models"
+    - "core.utils"
+    - "core.widgets"
+  "Shared":
+    - "design.tokens"
+    - "design.theme"
