@@ -1,3 +1,18 @@
+/// Timeclock Screen
+///
+/// PURPOSE:
+/// Primary screen for time clock operations (clock in/out).
+/// Displays current clock status and provides quick access to time tracking.
+///
+/// FEATURES:
+/// - Clock in/out functionality
+/// - Current job selection
+/// - Time entry history
+/// - Offline queue status
+/// - GPS location tracking (when enabled)
+///
+/// OFFLINE BEHAVIOR:
+/// Operations are queued when offline and synced when connection restores.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';

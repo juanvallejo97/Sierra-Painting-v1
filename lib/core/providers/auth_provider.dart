@@ -1,3 +1,25 @@
+/// Authentication Providers
+///
+/// PURPOSE:
+/// Riverpod providers for Firebase Authentication integration.
+/// Provides reactive access to auth state throughout the application.
+///
+/// PROVIDERS:
+/// - firebaseAuthProvider: Firebase Auth instance
+/// - authStateProvider: Stream of auth state changes (User? or null)
+/// - currentUserProvider: Current authenticated user snapshot
+///
+/// USAGE:
+/// ```dart
+/// final user = ref.watch(currentUserProvider);
+/// if (user != null) {
+///   // User is logged in
+/// }
+/// ```
+///
+/// ARCHITECTURE:
+/// All auth state is managed through Riverpod for reactive updates.
+/// Components watch these providers to rebuild on auth changes.
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
