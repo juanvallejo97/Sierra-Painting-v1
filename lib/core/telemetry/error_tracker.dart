@@ -179,4 +179,8 @@ class ErrorTracker {
       action: local.action ?? global.action,
       extra: {
         ...global.extra,
-        .
+        ...local.extra,
+      },
+    );
+  }
+}
