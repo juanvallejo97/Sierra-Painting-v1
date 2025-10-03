@@ -59,6 +59,12 @@ export const db = admin.firestore();
 export const auth = admin.auth();
 
 // ============================================================
+// OPS FUNCTIONS
+// ============================================================
+
+export { initializeFlagsFunction as initializeFlags } from "./ops/initializeFlags";
+
+// ============================================================
 // LEAD FUNCTIONS
 // ============================================================
 
