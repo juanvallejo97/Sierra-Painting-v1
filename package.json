@@ -1,0 +1,13 @@
+{
+  "name": "sierra-painting-ci",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root package for CI testing infrastructure including Firestore rules tests",
+  "scripts": {
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\""
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.9.1",
+    "vitest": "^2.1.3"
+  }
+}

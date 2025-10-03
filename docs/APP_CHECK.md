@@ -150,6 +150,27 @@ The token is now valid for 7 days.
 
 ## Enforce App Check
 
+### In HTTP Functions (Using Middleware)
+
+For HTTP functions (onRequest), use the `requireAppCheck` middleware:
+
+```typescript
+import { requireAppCheck } from './middleware/appCheck';
+import * as functions from 'firebase-functions';
+
+export const myHttpEndpoint = functions.https.onRequest(
+  requireAppCheck(async (req, res) => {
+    // Your handler logic here
+    // App Check is already verified by middleware
+    res.status(200).send({ success: true });
+  })
+);
+```
+
+The middleware is located at `functions/src/middleware/appCheck.ts`.
+
+**Note**: For callable functions, use `enforceAppCheck: true` in runWith config (see below) instead of middleware.
+
 ### In Firestore Rules
 
 Add App Check validation to your rules:
