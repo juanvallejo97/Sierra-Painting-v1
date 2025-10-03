@@ -38,9 +38,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 hapticService.light();
               }
 
-              // Update state
+              // Update state (service automatically syncs via provider)
               ref.read(hapticEnabledProvider.notifier).state = value;
-              hapticService.setEnabled(value);
 
               // Show confirmation
               ScaffoldMessenger.of(context).showSnackBar(

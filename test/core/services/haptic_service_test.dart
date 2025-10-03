@@ -9,14 +9,21 @@
 /// - State persistence
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/services/haptic_service.dart';
 
 void main() {
   group('HapticService', () {
+    late ProviderContainer container;
     late HapticService service;
 
     setUp(() {
-      service = HapticService();
+      container = ProviderContainer();
+      service = container.read(hapticServiceProvider);
+    });
+
+    tearDown(() {
+      container.dispose();
     });
 
     test('Initial state is enabled', () {
