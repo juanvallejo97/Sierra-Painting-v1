@@ -1,3 +1,25 @@
+/// Firestore Providers
+///
+/// PURPOSE:
+/// Riverpod providers for Cloud Firestore access with offline persistence.
+/// Provides reactive access to Firestore collections throughout the app.
+///
+/// PROVIDERS:
+/// - firestoreProvider: Firestore instance configured with offline persistence
+/// - leadsCollectionProvider: Access to leads collection
+/// - estimatesCollectionProvider: Access to estimates collection
+/// - invoicesCollectionProvider: Access to invoices collection
+/// - timeclocksCollectionProvider: Access to timeclocks collection
+///
+/// CONFIGURATION:
+/// - Offline persistence enabled
+/// - Unlimited cache size for better offline experience
+///
+/// USAGE:
+/// ```dart
+/// final db = ref.watch(firestoreProvider);
+/// final invoices = ref.watch(invoicesCollectionProvider);
+/// ```
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
