@@ -16,7 +16,13 @@ Workflow: **Updates Governance** → jobs: validate-updates, dependency-audit, v
 
 ## Rollback
 
-**For Hosting:** redeploy previous version via Firebase Console → Hosting → Releases
+**For Hosting:** use Firebase Hosting clone command to promote a previous version to live:
+
+```bash
+firebase hosting:clone --project $FIREBASE_PROJECT_ID --source "$FIREBASE_HOSTING_SITE:versions/<versionId>" --target "$FIREBASE_HOSTING_SITE:live"
+```
+
+You can find the version ID in Firebase Console → Hosting → Releases.
 
 **For code:** revert the update PR commit (squash) and re-run workflows
 
