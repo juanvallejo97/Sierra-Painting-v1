@@ -164,7 +164,7 @@ total = subtotal + tax
 
 ---
 
-## Enhancement Story Details (from EnhancementsAndAdvice.md)
+## Enhancement Story Details
 
 > **Note**: For a comprehensive UI/UX overhaul specification covering all the enhancements below, see **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)**.
 
@@ -488,7 +488,7 @@ All stories must meet:
 
 ---
 
-## Risk Register (from EnhancementsAndAdvice.md)
+## Risk Register
 
 ### Security Risks
 
