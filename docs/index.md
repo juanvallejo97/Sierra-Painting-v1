@@ -15,6 +15,7 @@ This documentation follows the [Diátaxis](https://diataxis.fr/) framework for c
 - **[Testing](./Testing.md)** - Testing strategy and guidelines
 
 ### 🔧 How-To Guides (Operational)
+- **[DEPLOYMENT_INSTRUCTIONS](../DEPLOYMENT_INSTRUCTIONS.md)** - Comprehensive deployment guide with environment setup scripts
 - **[OPERATIONS](../OPERATIONS.md)** - Deploy, rollback, monitoring, and SLOs
 - **[DEVELOPER](../DEVELOPER.md)** - Development workflow, code style, and contribution guidelines
 - **[EMULATORS](./EMULATORS.md)** - Local development with Firebase Emulators
