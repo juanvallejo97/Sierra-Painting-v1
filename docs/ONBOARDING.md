@@ -39,8 +39,10 @@ cd functions && npm run typecheck && npm run lint && npm test
 ```
 
 ## Contributing
-- Follow Conventional Commits
-- Open PRs from feature branches
-- See CONTRIBUTING.md for details
+- Follow Conventional Commits (e.g., `feat:`, `fix:`, `docs:`)
+- Create feature branches from `main`
+- Use issue templates in `.github/ISSUE_TEMPLATE/`
+- Run tests and lint before submitting PRs
+- Ensure CI passes before requesting review
 
 ---

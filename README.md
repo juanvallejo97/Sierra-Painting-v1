@@ -373,10 +373,14 @@ Create a branch: git checkout -b feature/my-feature
 
 Use issue templates in .github/ISSUE_TEMPLATE/
 
-Follow CONTRIBUTING.md
-
-Run tests & lint before PR:
-flutter test && flutter analyze && (cd functions && npm test && npm run lint)
+Follow these guidelines:
+- Use conventional commit messages (feat:, fix:, docs:, etc.)
+- Run tests & lint before PR:
+  ```bash
+  flutter test && flutter analyze && (cd functions && npm test && npm run lint)
+  ```
+- Do not include secrets in code or PRs
+- Ensure CI passes before requesting review
 
 Open a PR using the template
 
