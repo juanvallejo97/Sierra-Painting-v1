@@ -15,7 +15,7 @@ on:
 
 jobs:
   rules:
-    name: Firestore Rules Tests
+    name: rules
     runs-on: ubuntu-latest
     permissions:
       contents: read
