@@ -1,0 +1,200 @@
+name: Nightly Maintenance
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Job 1: Documentation Link Checker
+  docs-link-check:
+    name: Check Documentation Links
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check
+
+      - name: Check links in markdown files
+        run: |
+          find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.dart_tool/*" -not -path "*/build/*" | \
+          xargs -I {} markdown-link-check {} --config .github/markdown-link-check.json || echo "Some links are broken"
+        continue-on-error: true
+
+      - name: Generate link check report
+        if: always()
+        run: |
+          echo "# Documentation Link Check Report" > link-report.md
+          echo "" >> link-report.md
+          echo "Run Date: $(date)" >> link-report.md
+          echo "" >> link-report.md
+          echo "Check the logs above for broken links." >> link-report.md
+
+      - name: Upload link check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-check-report
+          path: link-report.md
+          retention-days: 14
+
+  # Job 2: Dependency Audit
+  dependency-audit:
+    name: Security Dependency Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      matrix:
+        target: [root, functions, webapp]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Audit root dependencies
+        if: matrix.target == 'root'
+        run: |
+          npm audit --json > audit-root.json || true
+          npm audit
+
+      - name: Audit functions dependencies
+        if: matrix.target == 'functions'
+        working-directory: ./functions
+        run: |
+          npm audit --json > ../audit-functions.json || true
+          npm audit
+
+      - name: Audit webapp dependencies
+        if: matrix.target == 'webapp'
+        working-directory: ./webapp
+        run: |
+          npm audit --json > ../audit-webapp.json || true
+          npm audit
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ matrix.target }}
+          path: audit-*.json
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # Job 3: Flutter/Dart Package Audit
+  flutter-package-audit:
+    name: Flutter Package Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check for outdated packages
+        run: flutter pub outdated --json > pub-outdated.json || true
+
+      - name: Display outdated packages
+        run: flutter pub outdated
+
+      - name: Upload Flutter package report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-package-audit
+          path: pub-outdated.json
+          retention-days: 14
+
+  # Job 4: License Check
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install license-checker
+        run: npm install -g license-checker
+
+      - name: Check Functions licenses
+        working-directory: ./functions
+        run: |
+          npm ci
+          license-checker --json --out ../functions-licenses.json || true
+          license-checker --summary
+
+      - name: Check WebApp licenses
+        working-directory: ./webapp
+        run: |
+          npm ci
+          license-checker --json --out ../webapp-licenses.json || true
+          license-checker --summary
+
+      - name: Upload license reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            functions-licenses.json
+            webapp-licenses.json
+          retention-days: 14
+
+  # Summary
+  nightly-summary:
+    name: Nightly Summary
+    runs-on: ubuntu-latest
+    needs: [docs-link-check, dependency-audit, flutter-package-audit, license-check]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Nightly Maintenance Summary"
+          echo "=============================="
+          echo ""
+          echo "Docs Link Check: ${{ needs.docs-link-check.result }}"
+          echo "Dependency Audit: ${{ needs.dependency-audit.result }}"
+          echo "Flutter Package Audit: ${{ needs.flutter-package-audit.result }}"
+          echo "License Check: ${{ needs.license-check.result }}"
+          echo ""
+          if [[ "${{ needs.docs-link-check.result }}" == "failure" || \
+                "${{ needs.dependency-audit.result }}" == "failure" ]]; then
+            echo "⚠️ Some checks failed - review artifacts"
+          else
+            echo "✅ All checks completed"
+          fi
