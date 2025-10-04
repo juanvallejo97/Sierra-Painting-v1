@@ -8,12 +8,11 @@ This guide provides quick references for common CI/CD tasks and workflows in the
 
 | Workflow | Trigger | Purpose | Duration |
 |----------|---------|---------|----------|
-| `ci.yml` | PR, Push to main | Full CI pipeline | ~8-10 min |
+| `ci.yml` | PR, Push to main | Full CI pipeline (Flutter, Functions, Rules, Build) | ~8-10 min |
 | `staging.yml` | Push to main | Auto-deploy to staging | ~12-15 min |
 | `production.yml` | Version tag (v*) | Deploy to production | ~15-20 min |
 | `nightly.yml` | Daily at 2 AM UTC | Maintenance checks | ~10-15 min |
 | `code_quality.yml` | PR, Push | Code quality checks | ~3-5 min |
-| `flutter_ci.yml` | PR, Push | Flutter specific CI | ~5-7 min |
 | `firestore_rules.yml` | PR, Push | Rules validation | ~2-3 min |
 | `smoke_tests.yml` | PR, Push | Smoke tests | ~3-5 min |
 
