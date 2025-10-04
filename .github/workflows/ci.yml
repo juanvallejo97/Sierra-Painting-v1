@@ -436,7 +436,7 @@ jobs:
   ci-summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [analyze, test, rules-test, functions-test, build, build-web-budget, size-report]
+    needs: [analyze, test, rules-test, functions-test, build, build-web-budget]
     if: always()
     steps:
       - name: Check all jobs
@@ -449,7 +449,6 @@ jobs:
           echo "Functions Test: ${{ needs.functions-test.result }}"
           echo "Build: ${{ needs.build.result }}"
           echo "Web Budget: ${{ needs.build-web-budget.result }}"
-          echo "Size Report: ${{ needs.size-report.result }}"
           
           if [[ "${{ needs.analyze.result }}" != "success" || \
                 "${{ needs.test.result }}" != "success" || \
