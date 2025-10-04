@@ -1,0 +1,930 @@
+version: "1.0"
+name: "stabilize_sierra_painting"
+classification:
+  level: "INTERNAL"
+  owner: "D'Sierra – Engineering"
+  handling: ["Internal Only"]
+
+description: |
+  Comprehensive stabilization configuration for Sierra Painting v1 project.
+  Defines CI/CD stability requirements, dependency management strategy,
+  workflow standardization, and operational reliability guidelines.
+
+  This configuration focuses on:
+  - CI/CD workflow reliability and consistency
+  - Dependency version management and pinning
+  - Build reproducibility and caching
+  - Testing infrastructure stability
+  - Deployment safety and rollback procedures
+  - Monitoring and alerting setup
+
+stabilization_goals:
+  primary_objectives:
+    - "Achieve 99% CI/CD success rate (excluding legitimate test failures)"
+    - "Zero dependency resolution failures across all workflows"
+    - "Consistent build times (P95 < 10 minutes for full CI pipeline)"
+    - "100% deterministic builds (same code = same artifacts)"
+    - "Sub-60-second rollback capability for all deployments"
+  
+  success_metrics:
+    ci_reliability:
+      - metric: "CI success rate"
+        target: ">= 99%"
+        measurement: "Successful runs / Total runs (30-day rolling)"
+      - metric: "Average build time"
+        target: "< 8 minutes"
+        measurement: "P95 duration for full CI pipeline"
+      - metric: "Cache hit rate"
+        target: ">= 85%"
+        measurement: "Flutter pub-cache and Gradle cache effectiveness"
+    
+    dependency_stability:
+      - metric: "Dependency resolution failures"
+        target: "0 failures"
+        measurement: "flutter pub get and npm ci success rate"
+      - metric: "Security vulnerabilities"
+        target: "0 high/critical"
+        measurement: "Dependabot and npm audit findings"
+      - metric: "Version drift"
+        target: "< 5% monthly"
+        measurement: "Dependencies more than 2 minor versions behind"
+    
+    deployment_safety:
+      - metric: "Failed deployments"
+        target: "< 1% of total deployments"
+        measurement: "Staging and production deployment success rate"
+      - metric: "Rollback time"
+        target: "< 60 seconds"
+        measurement: "Time from detection to previous version active"
+      - metric: "Post-deployment errors"
+        target: "< 0.5% error rate increase"
+        measurement: "First 15 minutes after deployment"
+
+ci_cd_stabilization:
+  workflow_standards:
+    naming_conventions:
+      - "All workflow files use lowercase with underscores (e.g., ci.yml, smoke_tests.yml)"
+      - "Job names use kebab-case (e.g., analyze-and-test-flutter)"
+      - "Step names use Title Case (e.g., Setup Flutter)"
+    
+    required_workflows:
+      - name: "CI Pipeline"
+        file: ".github/workflows/ci.yml"
+        triggers: ["pull_request", "push to main"]
+        jobs:
+          - "analyze"
+          - "test"
+          - "rules-test"
+          - "functions-test"
+          - "build"
+        gates: "All jobs must pass before merge"
+      
+      - name: "Code Quality Checks"
+        file: ".github/workflows/code_quality.yml"
+        triggers: ["pull_request", "push to main"]
+        jobs:
+          - "code-quality-and-lint-enforcement"
+        gates: "Required for merge"
+      
+      - name: "Smoke Tests"
+        file: ".github/workflows/smoke_tests.yml"
+        triggers: ["pull_request", "push to main", "workflow_dispatch"]
+        jobs:
+          - "mobile-app-smoke-tests"
+          - "smoke-test-summary"
+        gates: "Must pass before deployment"
+      
+      - name: "Staging Deployment"
+        file: ".github/workflows/staging.yml"
+        triggers: ["push to main"]
+        environment: "staging"
+        gates: "All CI checks must pass first"
+      
+      - name: "Production Deployment"
+        file: ".github/workflows/production.yml"
+        triggers: ["push tag v*"]
+        environment: "production"
+        approvers: "Requires 1 reviewer approval"
+        gates: "Staging must be validated first"
+    
+    action_versions:
+      pinned_versions:
+        - "actions/checkout@v4"
+        - "actions/cache@v4"
+        - "actions/upload-artifact@v4"
+        - "actions/download-artifact@v4"
+        - "subosito/flutter-action@v2"
+        - "actions/setup-node@v4"
+        - "actions/setup-java@v4"
+        - "google-github-actions/auth@v2"
+      
+      update_policy: "Monthly review of action versions, update during maintenance windows"
+      security_patches: "Apply immediately if vulnerabilities discovered"
+    
+    caching_strategy:
+      flutter_cache:
+        paths:
+          - "~/.pub-cache"
+          - ".dart_tool"
+        key_pattern: "pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}"
+        restore_keys:
+          - "pub-${{ runner.os }}-"
+      
+      gradle_cache:
+        paths:
+          - "~/.gradle/caches"
+          - "~/.gradle/wrapper"
+        key_pattern: "gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}"
+        restore_keys:
+          - "gradle-${{ runner.os }}-"
+      
+      npm_cache:
+        paths:
+          - "~/.npm"
+        key_pattern: "npm-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}"
+        restore_keys:
+          - "npm-${{ runner.os }}-"
+      
+      optimization_targets:
+        - "85% or higher cache hit rate"
+        - "Reduce cold build time by 50%"
+        - "Average cache restore time < 30 seconds"
+    
+    timeout_policies:
+      job_timeouts:
+        - job: "code-quality-and-lint-enforcement"
+          timeout: "10 minutes"
+        - job: "analyze-and-test-flutter"
+          timeout: "15 minutes"
+        - job: "mobile-app-smoke-tests"
+          timeout: "10 minutes"
+        - job: "build (all platforms)"
+          timeout: "20 minutes"
+        - job: "deployment (staging/production)"
+          timeout: "30 minutes"
+      
+      rationale: "Prevent hung jobs from blocking CI; detect performance regressions early"
+
+dependency_management:
+  version_pinning_strategy:
+    dart_packages:
+      policy: "Pin exact versions in pubspec.yaml for production dependencies"
+      constraints:
+        - "Use caret constraints (^) for dev dependencies only"
+        - "Use exact versions (x.y.z) for firebase packages"
+        - "Document all version overrides with rationale comments"
+      
+      critical_packages:
+        firebase_core: "4.1.1"
+        firebase_auth: "6.1.0"
+        firebase_storage: "13.0.2"
+        cloud_firestore: "6.0.2"
+        cloud_functions: "6.0.2"
+        flutter_riverpod: "3.0.1"
+        go_router: "16.2.4"
+      
+      update_cadence:
+        security: "Immediate (within 24 hours of advisory)"
+        patch: "Weekly review, apply if safe"
+        minor: "Monthly review, apply during maintenance window"
+        major: "Quarterly review, requires full regression testing"
+    
+    npm_packages:
+      policy: "Use package-lock.json for deterministic builds"
+      commands:
+        install: "npm ci --prefer-offline --no-audit"
+        update: "npm update (only during maintenance windows)"
+      
+      critical_packages:
+        firebase_functions: "^5.0.0"
+        firebase_admin: "^12.0.0"
+        typescript: "^5.3.0"
+      
+      security:
+        - "Run npm audit after every package-lock.json change"
+        - "Auto-merge Dependabot security patches after CI passes"
+        - "Block merges if high/critical vulnerabilities present"
+    
+    gradle_dependencies:
+      policy: "Pin versions in android/build.gradle"
+      update_strategy: "Follow Flutter stable channel recommendations"
+      compatibility: "Test on Android API levels 21 (min) to 34 (target)"
+  
+  dependency_overrides:
+    current_overrides:
+      - package: "material_color_utilities"
+        version: "0.5.0"
+        rationale: "Required for integration_test compatibility"
+        review_date: "2024-Q4"
+        removal_plan: "Remove when integration_test updates"
+      
+      - package: "analyzer"
+        version: "^6.4.1"
+        rationale: "Required by build_runner and dart_code_metrics"
+        review_date: "2024-Q4"
+        removal_plan: "Monitor upstream compatibility fixes"
+    
+    override_policy:
+      - "Document every override with inline comment in pubspec.yaml"
+      - "Set quarterly review dates for all overrides"
+      - "Create removal plan for each override"
+      - "Limit overrides to < 5 total packages"
+  
+  lock_file_management:
+    pubspec_lock:
+      - "Commit pubspec.lock to repository"
+      - "Update only via flutter pub upgrade (never manual edits)"
+      - "Review all dependency changes in PR diffs"
+      - "Verify CI passes after any lock file change"
+    
+    package_lock_json:
+      - "Commit all package-lock.json files (root, functions/, webapp/)"
+      - "Use npm ci in CI/CD (never npm install)"
+      - "Update via npm update during maintenance windows"
+      - "Run security audit after every update"
+
+build_stability:
+  reproducible_builds:
+    requirements:
+      - "Same source code produces identical artifacts"
+      - "Build output depends only on inputs (code, dependencies)"
+      - "No random or time-based values in builds"
+      - "Deterministic file ordering in archives"
+    
+    verification:
+      - "Run build twice, compare SHA256 checksums"
+      - "Verify artifact names include version and commit SHA"
+      - "Document all build flags and environment variables"
+    
+    tools_and_versions:
+      flutter:
+        channel: "stable"
+        version_pinning: "Use subosito/flutter-action@v2 with channel:stable"
+        updates: "Follow Flutter stable releases, test in staging first"
+      
+      node:
+        version: "20.x"
+        pinning: "Specify in .nvmrc and workflow env vars"
+        updates: "Update to LTS versions only"
+      
+      java:
+        version: "17"
+        distribution: "temurin"
+        usage: "Required for Firebase emulators and Android builds"
+  
+  build_artifacts:
+    naming_convention:
+      android: "sierra-painting-v{version}-{sha}.apk"
+      ios: "sierra-painting-v{version}-{sha}.ipa"
+      web: "sierra-painting-v{version}-{sha}.tar.gz"
+    
+    retention_policy:
+      pull_requests: "14 days"
+      main_branch: "90 days"
+      releases: "Indefinite (permanent storage)"
+    
+    storage_locations:
+      - "GitHub Actions artifacts (short-term)"
+      - "Google Cloud Storage (long-term)"
+      - "Firebase Hosting (web builds)"
+  
+  failure_triage:
+    automated_diagnostics:
+      - "Capture build logs on failure"
+      - "Upload failure artifacts (14-day retention)"
+      - "Run failure-triage.sh script automatically"
+      - "Collect environment information (Flutter/Node/Java versions)"
+    
+    common_failure_patterns:
+      - pattern: "Gradle daemon failed"
+        fix: "Clear Gradle cache, retry build"
+        prevention: "Use Gradle cache action correctly"
+      
+      - pattern: "Pub get failed (version conflict)"
+        fix: "Review pubspec.yaml constraints, run pub upgrade"
+        prevention: "Pin critical dependency versions"
+      
+      - pattern: "Firebase emulator timeout"
+        fix: "Increase timeout to 60 seconds, check Java version"
+        prevention: "Pre-start emulator in background"
+      
+      - pattern: "OOM during build"
+        fix: "Increase JVM heap size, reduce parallel tasks"
+        prevention: "Monitor memory usage patterns"
+
+testing_infrastructure:
+  test_categories:
+    unit_tests:
+      location: "test/"
+      command: "flutter test --coverage"
+      coverage_target: ">= 70% for core business logic"
+      runtime_target: "< 5 minutes for full suite"
+    
+    widget_tests:
+      location: "test/"
+      command: "flutter test"
+      coverage: "All critical UI components"
+      runtime_target: "< 3 minutes"
+    
+    integration_tests:
+      location: "integration_test/"
+      command: "flutter test integration_test/app_boot_smoke_test.dart"
+      purpose: "End-to-end user flows"
+      runtime_target: "< 5 minutes per test"
+    
+    firestore_rules_tests:
+      location: "firestore-tests/"
+      command: "npm test"
+      purpose: "Security rules validation"
+      runtime_target: "< 2 minutes"
+    
+    functions_tests:
+      location: "functions/test/"
+      command: "npm test"
+      purpose: "Cloud Functions unit and integration"
+      runtime_target: "< 5 minutes"
+    
+    smoke_tests:
+      location: "integration_test/app_boot_smoke_test.dart"
+      command: "flutter test integration_test/app_boot_smoke_test.dart"
+      purpose: "Fast health checks to block bad releases"
+      runtime_target: "< 2 minutes"
+      frequency: "Every PR, before deployment"
+  
+  test_stability:
+    flaky_test_policy:
+      - "Zero tolerance for flaky tests in main branch"
+      - "Mark flaky tests with @Skip annotation + issue link"
+      - "Fix or remove flaky tests within 1 sprint"
+      - "Track flakiness rate: < 0.5% of test runs"
+    
+    test_data_management:
+      - "Use synthetic test data only (no production data)"
+      - "Reset test data between test runs"
+      - "Seed data deterministically (no random values)"
+      - "Clean up test resources in tearDown/afterAll"
+    
+    emulator_stability:
+      - "Start Firebase emulators with explicit ports"
+      - "Wait for emulator ready (HTTP health check)"
+      - "Set appropriate timeouts (60 seconds)"
+      - "Kill emulators in cleanup (always() condition)"
+  
+  test_execution:
+    ci_execution:
+      - "Run all tests on every PR"
+      - "Run in parallel where possible (separate jobs)"
+      - "Fail fast on first test failure"
+      - "Upload test results as artifacts"
+    
+    local_execution:
+      - "Developers must run tests before pushing"
+      - "Use Makefile targets for convenience"
+      - "Run emulator tests locally before CI"
+      - "Verify test coverage meets threshold"
+
+deployment_stability:
+  environments:
+    development:
+      purpose: "Local development and testing"
+      infrastructure: "Firebase emulators, local Flutter debug"
+      data: "Synthetic test data"
+      access: "All developers"
+    
+    staging:
+      purpose: "Integration testing and QA validation"
+      infrastructure: "Firebase project: sierra-painting-staging"
+      deployment_trigger: "Automatic on push to main"
+      data: "Synthetic test data, anonymized production samples"
+      access: "Development team, QA team"
+      validation: "All CI checks must pass"
+    
+    production:
+      purpose: "Live customer-facing environment"
+      infrastructure: "Firebase project: sierra-painting-prod"
+      deployment_trigger: "Manual via version tag (v*)"
+      approval: "Requires 1 reviewer approval"
+      validation: "Staging verified + smoke tests passed"
+      monitoring: "Real-time error tracking, performance monitoring"
+  
+  deployment_gates:
+    pre_deployment:
+      - "All CI/CD checks passing (green build)"
+      - "No high/critical security vulnerabilities"
+      - "Code review approval (2 approvers for production)"
+      - "Smoke tests passed in target environment"
+      - "No critical TODOs in changed files"
+    
+    deployment_process:
+      staging:
+        steps:
+          - "Deploy Firestore indexes first"
+          - "Deploy Cloud Functions with firestore:rules and storage:rules"
+          - "Run post-deployment smoke tests"
+          - "Monitor error rate for 15 minutes"
+        rollback_trigger: "Error rate > 2% or critical failure detected"
+      
+      production:
+        steps:
+          - "Verify staging deployment successful"
+          - "Create version tag (v{major}.{minor}.{patch})"
+          - "Deploy with canary strategy (10% → 50% → 100%)"
+          - "Monitor each stage for 30 minutes"
+          - "Promote or rollback based on SLO thresholds"
+        rollback_trigger: "Error rate > 0.5% or SLO breach"
+    
+    post_deployment:
+      immediate_checks:
+        - "Function availability: > 99%"
+        - "Error rate: < threshold (staging: 2%, prod: 0.5%)"
+        - "P95 latency: < 3s (staging), < 1.5s (prod)"
+        - "Cold start time: < 5s"
+      
+      monitoring_duration:
+        - "15 minutes: High alert (watch closely)"
+        - "1 hour: Medium alert (check periodically)"
+        - "24 hours: Low alert (normal monitoring)"
+      
+      validation_steps:
+        - "Check Cloud Functions logs for errors"
+        - "Verify Firestore rules deployed correctly"
+        - "Test critical user flows (smoke tests)"
+        - "Confirm no permission denied errors"
+  
+  rollback_procedures:
+    instant_rollback:
+      method: "Traffic routing (Firebase Hosting, Cloud Functions versions)"
+      timeframe: "< 60 seconds"
+      command: "./scripts/rollback.sh --project sierra-painting-prod"
+      validation: "Smoke tests pass on previous version"
+    
+    feature_flag_killswitch:
+      method: "Disable problematic feature via Remote Config"
+      timeframe: "< 2 minutes"
+      command: "./scripts/remote-config/manage-flags.sh --set feature_x=false"
+      validation: "Feature disabled, app remains functional"
+    
+    full_rollback:
+      method: "Redeploy previous version from git tag"
+      timeframe: "< 5 minutes"
+      steps:
+        - "Identify last known good version (git tag)"
+        - "Checkout tag: git checkout v{version}"
+        - "Deploy: firebase deploy --project sierra-painting-prod"
+        - "Verify: Run smoke tests"
+      validation: "All smoke tests pass, error rate normalized"
+    
+    rollback_decision_matrix:
+      - condition: "Error rate > 5%"
+        action: "Instant rollback (no questions asked)"
+      - condition: "Error rate 2-5%"
+        action: "Feature flag killswitch, investigate"
+      - condition: "Error rate 0.5-2%"
+        action: "Monitor closely, prepare rollback"
+      - condition: "P95 latency > 2x baseline"
+        action: "Instant rollback if sustained > 5 minutes"
+      - condition: "Payment processing failure"
+        action: "Instant rollback (critical business function)"
+
+monitoring_and_alerting:
+  observability_stack:
+    logging:
+      - tool: "Google Cloud Logging"
+        scope: "Cloud Functions, Firebase emulators"
+        retention: "30 days (staging), 90 days (production)"
+      
+      - tool: "Structured logs with context"
+        format: '{"timestamp", "level", "message", "context": {...}}'
+        levels: ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"]
+    
+    error_tracking:
+      - tool: "Firebase Crashlytics"
+        scope: "Mobile app (iOS, Android)"
+        alerts: "Crash rate > 1% of sessions"
+      
+      - tool: "Cloud Error Reporting"
+        scope: "Cloud Functions, Firebase services"
+        alerts: "New error types, error rate spikes"
+    
+    performance_monitoring:
+      - tool: "Firebase Performance Monitoring"
+        metrics:
+          - "App startup time: P95 < 1200ms"
+          - "Screen rendering: P95 < 16ms (60fps)"
+          - "Network request duration: P95 < 2s"
+        alerts: "P95 degrades > 20% from baseline"
+      
+      - tool: "Cloud Functions Performance"
+        metrics:
+          - "Execution time: P95 < 600ms"
+          - "Cold start time: P95 < 5s"
+          - "Memory usage: P95 < 80% of limit"
+        alerts: "P95 latency > 3s or cold start > 10s"
+    
+    analytics:
+      - tool: "Firebase Analytics"
+        purpose: "User behavior tracking, feature usage"
+        privacy: "No PII logging, anonymized user IDs"
+      
+      - tool: "Google Analytics"
+        purpose: "Web app usage, conversion funnels"
+        privacy: "GDPR compliant, cookie consent"
+  
+  slo_monitoring:
+    availability:
+      - service: "Cloud Functions"
+        target: "> 99.9% uptime"
+        measurement: "Successful invocations / Total invocations"
+        alert_threshold: "< 99.5% for 5 minutes"
+      
+      - service: "Firestore"
+        target: "> 99.99% uptime"
+        measurement: "Google Cloud uptime monitoring"
+        alert_threshold: "Any downtime detected"
+    
+    latency:
+      - service: "Cloud Functions (P95)"
+        target: "< 600ms (warm start)"
+        measurement: "Cloud Functions metrics"
+        alert_threshold: "> 1000ms for 5 minutes"
+      
+      - service: "Firestore queries (P95)"
+        target: "< 100ms"
+        measurement: "Performance monitoring"
+        alert_threshold: "> 500ms for 5 minutes"
+    
+    error_rate:
+      - service: "Cloud Functions"
+        target: "< 0.5% error rate"
+        measurement: "Errors / Total invocations"
+        alert_threshold: "> 1% for 5 minutes"
+      
+      - service: "Mobile app crashes"
+        target: "< 1% crash rate"
+        measurement: "Crashlytics metrics"
+        alert_threshold: "> 2% for any release"
+  
+  alert_channels:
+    immediate_alerts:
+      - channel: "Slack #sierra-alerts"
+        conditions: ["Production error rate > 2%", "Payment processing down"]
+      
+      - channel: "Email to on-call engineer"
+        conditions: ["Production down", "Security breach detected"]
+    
+    warning_alerts:
+      - channel: "Slack #sierra-monitoring"
+        conditions: ["Staging errors", "Performance degradation"]
+      
+      - channel: "Daily digest email"
+        conditions: ["Dependency updates available", "Weekly SLO summary"]
+
+quality_gates:
+  code_quality:
+    linting:
+      - "Zero Flutter analyze errors/warnings"
+      - "Zero TypeScript lint errors"
+      - "Code formatted with dart format and prettier"
+      - "No hardcoded secrets (detected by secrets_check workflow)"
+    
+    analysis:
+      - "No 'any' types without justification (TypeScript)"
+      - "Type annotations required on public APIs (Dart)"
+      - "Strict analyzer settings enabled"
+      - "Custom lint rules enforced (trailing commas, const constructors)"
+    
+    testing:
+      - "All tests passing (zero failures)"
+      - "Code coverage: >= 70% for core modules"
+      - "Smoke tests green before deployment"
+      - "Firestore rules tests comprehensive (all CRUD operations)"
+  
+  security:
+    authentication:
+      - "All Cloud Functions enforce App Check"
+      - "Firestore rules deny-by-default posture"
+      - "RBAC via custom claims (no email-based checks)"
+      - "Auth token validation on every request"
+    
+    authorization:
+      - "Resource-level permission checks"
+      - "User can only access their own data"
+      - "Admin operations require explicit admin role"
+      - "Audit logs for sensitive operations"
+    
+    data_protection:
+      - "No secrets in code or environment files"
+      - "Service accounts use OIDC (Workload Identity)"
+      - "API keys restricted by HTTP referrer/IP"
+      - "Firestore backups enabled (daily)"
+    
+    vulnerability_management:
+      - "Dependabot enabled for all package managers"
+      - "High/critical vulnerabilities patched within 7 days"
+      - "Security advisories reviewed weekly"
+      - "npm audit and flutter pub outdated run monthly"
+  
+  performance:
+    mobile_app:
+      - "App startup time (cold): P95 < 1200ms"
+      - "Screen transition time: P95 < 300ms"
+      - "Network request time: P95 < 2s"
+      - "APK size: < 50MB"
+    
+    web_app:
+      - "Bundle size: < 10MB"
+      - "First Contentful Paint: P95 < 1.8s"
+      - "Time to Interactive: P95 < 3.5s"
+      - "Lighthouse score: > 90 (Performance)"
+    
+    backend:
+      - "Cloud Functions P95 latency: < 600ms (warm)"
+      - "Cold start time: < 5s"
+      - "Firestore query time: < 100ms"
+      - "Memory usage: < 512MB per function"
+
+operational_procedures:
+  maintenance_windows:
+    scheduled_maintenance:
+      frequency: "Monthly, first Saturday of month"
+      duration: "2-4 hours"
+      activities:
+        - "Dependency updates (patch and minor versions)"
+        - "Security patches application"
+        - "Database maintenance (Firestore exports)"
+        - "Log retention cleanup"
+      
+      communication:
+        - "Announce 48 hours in advance (email, Slack)"
+        - "Post status updates during maintenance"
+        - "Confirm completion and any issues"
+    
+    emergency_maintenance:
+      triggers:
+        - "Critical security vulnerability (CVSS >= 9)"
+        - "Production outage affecting > 50% of users"
+        - "Data corruption or loss detected"
+      
+      approval: "CTO or Engineering Lead"
+      communication: "Immediate notification via all channels"
+  
+  incident_response:
+    severity_levels:
+      - level: "P0 - Critical"
+        definition: "Production down or major data loss"
+        response_time: "< 15 minutes"
+        actions: ["Instant rollback", "All-hands incident response"]
+      
+      - level: "P1 - High"
+        definition: "Core feature broken (e.g., payment processing)"
+        response_time: "< 30 minutes"
+        actions: ["Feature flag disable", "Investigate and fix"]
+      
+      - level: "P2 - Medium"
+        definition: "Non-core feature broken or performance degradation"
+        response_time: "< 2 hours"
+        actions: ["Monitor, schedule fix in next sprint"]
+      
+      - level: "P3 - Low"
+        definition: "Minor bug, cosmetic issue"
+        response_time: "Next business day"
+        actions: ["Create issue, prioritize in backlog"]
+    
+    incident_workflow:
+      - "Detect: Automated alerts or user reports"
+      - "Assess: Determine severity, assign incident commander"
+      - "Mitigate: Rollback, feature flag, or hotfix"
+      - "Communicate: Update stakeholders every 30 minutes"
+      - "Resolve: Verify fix, resume normal operations"
+      - "Post-mortem: Document root cause, action items"
+  
+  disaster_recovery:
+    backup_strategy:
+      firestore:
+        frequency: "Daily automated exports"
+        retention: "30 days (staging), 90 days (production)"
+        storage: "Google Cloud Storage (multi-region)"
+        test_restore: "Quarterly"
+      
+      cloud_storage:
+        frequency: "Real-time replication"
+        retention: "Object versioning enabled (30-day retention)"
+        storage: "Multi-region bucket"
+      
+      code_repository:
+        frequency: "Real-time (Git)"
+        retention: "Indefinite"
+        mirrors: "GitHub (primary), Google Cloud Source Repositories (backup)"
+    
+    recovery_objectives:
+      - "RTO (Recovery Time Objective): < 4 hours"
+      - "RPO (Recovery Point Objective): < 1 hour"
+      - "Data loss tolerance: Zero for payment transactions"
+    
+    disaster_scenarios:
+      - scenario: "Firebase project deleted"
+        recovery: "Restore from Terraform state, import backups"
+        rto: "4 hours"
+      
+      - scenario: "Firestore data corruption"
+        recovery: "Import from most recent backup"
+        rto: "2 hours"
+      
+      - scenario: "GitHub repository deleted"
+        recovery: "Restore from backup mirror, recreate webhooks"
+        rto: "1 hour"
+
+documentation_requirements:
+  runbooks:
+    required_runbooks:
+      - "How to deploy to staging"
+      - "How to deploy to production"
+      - "How to rollback a deployment"
+      - "How to manage feature flags"
+      - "How to investigate Cloud Functions errors"
+      - "How to restore Firestore from backup"
+    
+    runbook_template:
+      sections:
+        - "Purpose and when to use"
+        - "Prerequisites and access requirements"
+        - "Step-by-step instructions"
+        - "Verification steps"
+        - "Troubleshooting common issues"
+        - "Rollback procedure"
+  
+  architecture_documentation:
+    required_diagrams:
+      - "System architecture diagram"
+      - "CI/CD pipeline flow"
+      - "Data flow diagram"
+      - "Security architecture"
+      - "Deployment topology"
+    
+    update_policy: "Update diagrams within 2 weeks of architectural changes"
+  
+  change_management:
+    adr_process:
+      - "Create ADR for all significant technical decisions"
+      - "Use ADR template (Context, Decision, Consequences)"
+      - "Store in docs/adrs/ directory"
+      - "Reference ADR in PR description"
+    
+    changelog_maintenance:
+      - "Update CHANGELOG.md for every release"
+      - "Categorize changes (Added, Changed, Deprecated, Removed, Fixed, Security)"
+      - "Include version, date, and brief description"
+      - "Link to related issues and PRs"
+
+risk_register:
+  infrastructure_risks:
+    - id: "R-INFRA-1"
+      risk: "CI/CD pipeline failure due to action version changes"
+      likelihood: "Medium"
+      impact: "High"
+      mitigation: "Pin action versions, test updates in separate branch"
+      owner: "DevOps Team"
+    
+    - id: "R-INFRA-2"
+      risk: "Dependency resolution failure blocking deployments"
+      likelihood: "Low"
+      impact: "High"
+      mitigation: "Pin critical dependency versions, maintain lock files"
+      owner: "Engineering Team"
+    
+    - id: "R-INFRA-3"
+      risk: "Cache corruption causing build failures"
+      likelihood: "Low"
+      impact: "Medium"
+      mitigation: "Cache key versioning, fallback to clean builds"
+      owner: "DevOps Team"
+  
+  deployment_risks:
+    - id: "R-DEPLOY-1"
+      risk: "Production deployment breaks critical user flows"
+      likelihood: "Low"
+      impact: "Critical"
+      mitigation: "Comprehensive smoke tests, canary deployments, instant rollback"
+      owner: "Engineering Lead"
+    
+    - id: "R-DEPLOY-2"
+      risk: "Firestore rules deployment denies legitimate access"
+      likelihood: "Medium"
+      impact: "High"
+      mitigation: "Emulator tests for all rules, staging validation before production"
+      owner: "Backend Team"
+    
+    - id: "R-DEPLOY-3"
+      risk: "Cloud Functions cold start time exceeds SLO"
+      likelihood: "Medium"
+      impact: "Medium"
+      mitigation: "Min instances for critical functions, cold start monitoring"
+      owner: "Backend Team"
+  
+  security_risks:
+    - id: "R-SEC-1"
+      risk: "Dependency vulnerability exploited in production"
+      likelihood: "Medium"
+      impact: "High"
+      mitigation: "Dependabot auto-merge, weekly security reviews, rapid patching"
+      owner: "Security Team"
+    
+    - id: "R-SEC-2"
+      risk: "Secrets accidentally committed to repository"
+      likelihood: "Low"
+      impact: "Critical"
+      mitigation: "secrets_check workflow, pre-commit hooks, secret scanning"
+      owner: "Security Team"
+    
+    - id: "R-SEC-3"
+      risk: "RBAC bypass allowing unauthorized access"
+      likelihood: "Low"
+      impact: "Critical"
+      mitigation: "Comprehensive rules tests, deny-by-default posture, regular audits"
+      owner: "Security Team"
+
+enforcement:
+  automated_checks:
+    pre_merge:
+      - "All CI/CD checks must pass (no manual bypass)"
+      - "Code review approval required (1 for staging, 2 for production changes)"
+      - "No high/critical security vulnerabilities"
+      - "No TODO comments in production code without issue link"
+    
+    post_merge:
+      - "Automatic deployment to staging on main branch"
+      - "Smoke tests must pass in staging"
+      - "Monitoring for error rate spikes (15-minute window)"
+    
+    scheduled:
+      - "Weekly: Dependency update check"
+      - "Monthly: Security audit (npm audit, pub outdated)"
+      - "Quarterly: Disaster recovery test (backup restore)"
+  
+  manual_reviews:
+    code_review:
+      - "Check for minimal, surgical changes"
+      - "Verify test coverage for new code"
+      - "Ensure documentation updated"
+      - "Confirm no performance regressions"
+    
+    architecture_review:
+      - "Required for major feature additions"
+      - "Review ADR before implementation"
+      - "Consider scalability, security, maintainability"
+      - "Approve migration plan for breaking changes"
+  
+  compliance:
+    regulatory:
+      - "GDPR: No PII in logs or analytics without consent"
+      - "PCI DSS: No credit card data stored (use Stripe)"
+      - "SOC 2: Audit logs for all sensitive operations"
+    
+    internal_policies:
+      - "All production access logged and auditable"
+      - "Separate environments for dev/staging/production"
+      - "No production data in non-production environments"
+      - "Least privilege principle for service accounts"
+
+continuous_improvement:
+  metrics_review:
+    frequency: "Weekly"
+    metrics:
+      - "CI/CD success rate"
+      - "Build time trends"
+      - "Deployment frequency"
+      - "MTTR (Mean Time To Recovery)"
+      - "Test coverage"
+    
+    actions:
+      - "Identify bottlenecks and inefficiencies"
+      - "Prioritize improvements in backlog"
+      - "Track improvement initiatives"
+  
+  retrospectives:
+    post_incident:
+      - "Conduct within 48 hours of incident resolution"
+      - "Focus on learning, not blame"
+      - "Document root cause and action items"
+      - "Follow up on action items in next sprint"
+    
+    monthly:
+      - "Review stability metrics"
+      - "Discuss pain points in dev/deploy workflow"
+      - "Celebrate wins and improvements"
+      - "Plan next month's improvements"
+  
+  innovation_time:
+    allocation: "10% of engineering time for improvements"
+    focus_areas:
+      - "CI/CD optimization"
+      - "Test automation"
+      - "Developer tooling"
+      - "Infrastructure reliability"
+
+notes:
+  - "This configuration is a living document - update as processes evolve"
+  - "Changes to this file require engineering lead approval"
+  - "Review and update quarterly or after major incidents"
+  - "All team members should be familiar with these standards"
+  - "Compliance is measured, not assumed - track metrics rigorously"
