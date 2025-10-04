@@ -92,7 +92,7 @@ const PAYMENTS_COLLECTION = 'payments';
 
 export const markPaidManual = withValidation(
   ManualPaymentSchema,
-  adminEndpoint()
+  adminEndpoint({ functionName: 'markPaidManual' })
 )(async (validatedPayment, context) => {  // ========================================
   // IDEMPOTENCY CHECK
   // ========================================
