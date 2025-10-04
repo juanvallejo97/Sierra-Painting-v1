@@ -551,4 +551,57 @@ describe('withValidation', () => {
       });
     });
   });
+
+  describe('Payload Size Validation', () => {
+    it('should reject payloads larger than 10MB', async () => {
+      const handler = jest.fn(async (data: TestInput) => ({ success: true }));
+      const wrappedFn = withValidation(TestSchema, { 
+        requireAuth: false,
+        requireAppCheck: false,
+      })(handler);
+
+      // Create a large payload (>10MB)
+      const largeString = 'x'.repeat(11 * 1024 * 1024); // 11MB
+      const largePayload = {
+        name: largeString,
+        value: 42,
+      };
+
+      const context = {
+        auth: undefined,
+        app: undefined,
+        rawRequest: { headers: {} },
+      } as any;
+
+      await expect(
+        wrappedFn(largePayload as any, context)
+      ).rejects.toThrow(/Payload size.*exceeds maximum allowed size/);
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('should allow payloads smaller than 10MB', async () => {
+      const handler = jest.fn(async (data: TestInput) => ({ success: true }));
+      const wrappedFn = withValidation(TestSchema, { 
+        requireAuth: false,
+        requireAppCheck: false,
+      })(handler);
+
+      const smallPayload = {
+        name: 'test',
+        value: 42,
+      };
+
+      const context = {
+        auth: undefined,
+        app: undefined,
+        rawRequest: { headers: {} },
+      } as any;
+
+      const result = await wrappedFn(smallPayload as any, context);
+
+      expect(result).toEqual({ success: true });
+      expect(handler).toHaveBeenCalled();
+    });
+  });
 });

@@ -74,6 +74,7 @@ import {
   recordIdempotency,
   generateIdempotencyKey,
 } from '../lib/idempotency';
+import {getDeploymentConfig} from '../config/deployment';
 
 // ============================================================
 // CONSTANTS
@@ -115,6 +116,7 @@ function verifyCaptcha(token: string): boolean {
 
 export const createLead = functions
   .runWith({
+    ...getDeploymentConfig('createLead'),
     enforceAppCheck: true,
     consumeAppCheckToken: true, // Prevent replay attacks
   })
