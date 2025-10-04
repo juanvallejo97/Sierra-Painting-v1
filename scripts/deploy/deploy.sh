@@ -129,14 +129,10 @@ if [ "$SKIP_CHECKS" = false ]; then
   echo ""
 fi
 
-# Switch to target environment
-echo -e "${BLUE}Switching Firebase Project${NC}"
+# Note: Using explicit --project flag instead of firebase use
+echo -e "${BLUE}Using Firebase Project${NC}"
 echo "================================================"
-if [ "$DRY_RUN" = true ]; then
-  echo -e "${YELLOW}[DRY RUN]${NC} Would run: firebase use $ENVIRONMENT"
-else
-  firebase use "$ENVIRONMENT"
-fi
+echo "Project ID: $PROJECT_ID (via --project flag)"
 echo ""
 
 # Build deploy command
