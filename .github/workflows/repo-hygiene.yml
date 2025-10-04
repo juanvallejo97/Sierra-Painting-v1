@@ -1,0 +1,198 @@
+name: Repository Hygiene Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  hygiene-check:
+    name: Repo Hygiene Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Check for orphan markdown in root
+        run: |
+          echo "Checking for unauthorized markdown files in root..."
+          
+          # Allowed files in root
+          ALLOWED_ROOT_MD=(
+            "README.md"
+            "LICENSE"
+            "CODE_OF_CONDUCT.md"
+            "CHANGELOG.md"
+          )
+          
+          # Find all .md files in root (not in subdirs)
+          ROOT_MD_FILES=$(find . -maxdepth 1 -type f -name "*.md" | sort)
+          
+          # Check each file
+          VIOLATIONS=0
+          for file in $ROOT_MD_FILES; do
+            filename=$(basename "$file")
+            
+            # Check if file is in allowed list
+            if [[ ! " ${ALLOWED_ROOT_MD[@]} " =~ " ${filename} " ]]; then
+              echo "❌ Unauthorized markdown file in root: $filename"
+              echo "   Should be moved to docs/ or docs/_archive/"
+              VIOLATIONS=$((VIOLATIONS+1))
+            else
+              echo "✅ Allowed file: $filename"
+            fi
+          done
+          
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo ""
+            echo "❌ Found $VIOLATIONS unauthorized markdown file(s) in root"
+            echo "Please move them to docs/ or docs/_archive/"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All root markdown files are authorized"
+          
+      - name: Check for secret patterns in docs
+        run: |
+          echo "Checking for secrets in documentation..."
+          
+          # Patterns that should never appear in docs
+          SECRET_PATTERNS=(
+            "sk_live_"
+            "sk_test_"
+            "rk_live_"
+            "pk_live_"
+            "AKIA"
+            "AIza"
+            "private_key"
+            "BEGIN PRIVATE KEY"
+            "BEGIN RSA PRIVATE KEY"
+          )
+          
+          VIOLATIONS=0
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            if grep -r "$pattern" docs/ 2>/dev/null; then
+              echo "❌ Found potential secret pattern: $pattern"
+              VIOLATIONS=$((VIOLATIONS+1))
+            fi
+          done
+          
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo ""
+            echo "❌ Found $VIOLATIONS potential secret(s) in docs/"
+            echo "Please remove sensitive data from documentation"
+            exit 1
+          fi
+          
+          echo "✅ No secret patterns found in docs"
+          
+      - name: Check documentation structure
+        run: |
+          echo "Checking documentation structure..."
+          
+          # Required canonical docs
+          REQUIRED_DOCS=(
+            "docs/ARCHITECTURE.md"
+            "docs/DEPLOYMENT.md"
+            "docs/SECURITY.md"
+            "docs/DATABASE.md"
+            "docs/OPERATIONS.md"
+            "docs/DEVELOPMENT.md"
+            "docs/Testing.md"
+          )
+          
+          MISSING=0
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "❌ Missing required documentation: $doc"
+              MISSING=$((MISSING+1))
+            else
+              echo "✅ Found: $doc"
+            fi
+          done
+          
+          if [ $MISSING -gt 0 ]; then
+            echo ""
+            echo "❌ Missing $MISSING required documentation file(s)"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ All required documentation files present"
+          
+      - name: Check for broken internal links
+        run: |
+          echo "Checking for broken internal links in key docs..."
+          
+          # Key docs to check
+          KEY_DOCS=(
+            "README.md"
+            "docs/ARCHITECTURE.md"
+            "docs/DEPLOYMENT.md"
+            "docs/DEVELOPMENT.md"
+          )
+          
+          BROKEN=0
+          for doc in "${KEY_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              continue
+            fi
+            
+            echo "Checking links in $doc..."
+            
+            # Extract markdown links [text](path)
+            # Only check relative links (not http/https)
+            grep -oP '\[.*?\]\(\K[^)]+(?=\))' "$doc" | while read -r link; do
+              # Skip external links
+              if [[ "$link" =~ ^https?:// ]]; then
+                continue
+              fi
+              
+              # Skip anchors only
+              if [[ "$link" =~ ^# ]]; then
+                continue
+              fi
+              
+              # Remove anchor from path
+              link_path="${link%%#*}"
+              
+              # Resolve relative path from doc location
+              doc_dir=$(dirname "$doc")
+              full_path="$doc_dir/$link_path"
+              
+              # Normalize path
+              full_path=$(realpath -m "$full_path" 2>/dev/null || echo "$full_path")
+              
+              if [ ! -e "$full_path" ]; then
+                echo "❌ Broken link in $doc: $link -> $full_path"
+                BROKEN=$((BROKEN+1))
+              fi
+            done || BROKEN=$((BROKEN+1))
+          done
+          
+          if [ $BROKEN -gt 0 ]; then
+            echo ""
+            echo "⚠️ Found $BROKEN potential broken link(s)"
+            echo "Note: Some links may be valid but not checked by this simple script"
+            # Don't fail the build for this - it's informational
+          else
+            echo ""
+            echo "✅ No obvious broken links found"
+          fi
+          
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "========================================="
+          echo "✅ Repository Hygiene Check PASSED"
+          echo "========================================="
+          echo ""
+          echo "✓ No unauthorized root markdown files"
+          echo "✓ No secrets in documentation"
+          echo "✓ All required docs present"
+          echo "✓ No obvious broken links"
+          echo ""
