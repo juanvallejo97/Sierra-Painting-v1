@@ -17,6 +17,26 @@ The baseline configuration file that defines:
 
 **SHA256 Hash**: `1eed8ae6575a7f49039c9d6f5918c6dc2310928dd8f549cc9aea1ce191e5aef1`
 
+### stabilize_sierra_painting.yaml
+Comprehensive stabilization configuration that defines:
+- CI/CD workflow reliability and consistency standards
+- Dependency management and version pinning strategies
+- Build reproducibility and caching optimization
+- Testing infrastructure stability requirements
+- Deployment safety gates and rollback procedures
+- Monitoring, alerting, and SLO tracking
+- Incident response and disaster recovery procedures
+- Operational procedures and maintenance windows
+- Quality gates for code, security, and performance
+- Risk register and mitigation strategies
+
+**Purpose**: This configuration focuses on operational stability and reliability of the Sierra Painting v1 project. It establishes standards for:
+- Achieving 99% CI/CD success rate
+- Zero dependency resolution failures
+- Deterministic builds with consistent performance
+- Sub-60-second rollback capability
+- Comprehensive monitoring and observability
+
 ## Purpose
 
 This governance framework implements the cleanup plan described in `docs/Plan.md` to bring the repository to V1 ship-readiness state. It defines:
