@@ -37,6 +37,14 @@ Comprehensive stabilization configuration that defines:
 - Sub-60-second rollback capability
 - Comprehensive monitoring and observability
 
+**Execution**: Standards are enforced through:
+- **Validation Script**: `scripts/validate_stabilization.sh` - Checks compliance with all standards
+- **CI Workflow**: `.github/workflows/stabilization.yml` - Runs validation on PRs and weekly
+- **Make Target**: `make validate-stabilization` - Run validation locally
+- **Documentation**: `docs/STABILIZATION_EXECUTION.md` - Complete execution guide
+
+See [docs/STABILIZATION_EXECUTION.md](../docs/STABILIZATION_EXECUTION.md) for detailed execution instructions.
+
 ## Purpose
 
 This governance framework implements the cleanup plan described in `docs/Plan.md` to bring the repository to V1 ship-readiness state. It defines:

@@ -46,6 +46,7 @@ For detailed setup instructions, see [Getting started](docs/tutorials/getting-st
 - **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
 - **Security**: [SECURITY.md](SECURITY.md)
 - **Changelog**: [GitHub Releases](https://github.com/juanvallejo97/Sierra-Painting-v1/releases)
+- **Stabilization Standards**: [docs/STABILIZATION_EXECUTION.md](docs/STABILIZATION_EXECUTION.md) - CI/CD reliability, dependency management, and deployment standards
 
 ## Compatibility
 
