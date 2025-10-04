@@ -1,3 +1,4 @@
+---
 name: Code Quality Checks
 
 on:
@@ -15,36 +16,36 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
-      
+
       - name: Flutter version
         run: flutter --version
         shell: bash
-      
+
       - name: Cache pub dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             pub-${{ runner.os }}-
-      
+
       - name: Install dependencies
         run: flutter pub get
         shell: bash
-      
+
       - name: Format check
         run: dart format --output=none --set-exit-if-changed .
         shell: bash
-      
+
       - name: Analyze
         run: flutter analyze
         shell: bash
