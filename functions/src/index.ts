@@ -49,6 +49,7 @@ import { log, withSpan, initializeTracer } from "./lib/ops";
 
 // Middleware
 import { withValidation, authenticatedEndpoint, adminEndpoint } from "./middleware/withValidation";
+import { getDeploymentConfig } from "./config/deployment";
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -99,7 +100,9 @@ export { markPaidManual } from "./payments/markPaidManual";
  * Triggered when a new user signs up via Firebase Auth.
  * Creates a corresponding user document in Firestore with default role.
  */
-export const onUserCreate = functions.auth.user().onCreate(async (user) => {
+export const onUserCreate = functions
+  .runWith(getDeploymentConfig('onUserCreate'))
+  .auth.user().onCreate(async (user) => {
   try {
     await db.collection("users").doc(user.uid).set({
       uid: user.uid,
@@ -127,7 +130,9 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
  *
  * TODO: Implement cascading deletes/anonymization for related data.
  */
-export const onUserDelete = functions.auth.user().onDelete(async (user) => {
+export const onUserDelete = functions
+  .runWith(getDeploymentConfig('onUserDelete'))
+  .auth.user().onDelete(async (user) => {
   try {
     // Delete user profile
     await db.collection("users").doc(user.uid).delete();
@@ -153,7 +158,9 @@ export const onUserDelete = functions.auth.user().onDelete(async (user) => {
  *
  * TODO: Replace with payments/stripeWebhook.ts after migration.
  */
-export const stripeWebhook = functions.https.onRequest(async (req, res) => {
+export const stripeWebhook = functions
+  .runWith(getDeploymentConfig('stripeWebhook'))
+  .https.onRequest(async (req, res) => {
   try {
     // Cast res to expected type for webhook handler
     await handleStripeWebhook(req, res as functions.Response<{received: boolean; note?: string} | {error: string}>);
@@ -166,7 +173,9 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
 /**
  * Health check endpoint
  */
-export const healthCheck = functions.https.onRequest((req, res) => {
+export const healthCheck = functions
+  .runWith(getDeploymentConfig('healthCheck'))
+  .https.onRequest((req, res) => {
   res.status(200).json({
     status: "ok",
     timestamp: new Date().toISOString(),
@@ -187,7 +196,7 @@ export const healthCheck = functions.https.onRequest((req, res) => {
  */
 export const clockIn = withValidation(
   TimeInSchema,
-  authenticatedEndpoint()
+  authenticatedEndpoint({ functionName: 'clockIn' })
 )(async (validated, context) => {
   const userId = context.auth.uid;
   const requestId = context.requestId;
@@ -332,7 +341,7 @@ export const clockIn = withValidation(
  */
 export const markPaymentPaid = withValidation(
   ManualPaymentSchema,
-  adminEndpoint()
+  adminEndpoint({ functionName: 'markPaidManual' })
 )(async (validatedData, context) => {
   const userId = context.auth.uid;
   const requestId = context.requestId;
