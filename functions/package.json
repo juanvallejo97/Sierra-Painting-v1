@@ -20,7 +20,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@google-cloud/opentelemetry-cloud-trace-exporter": "^2.0.0",
+    "@google-cloud/opentelemetry-cloud-trace-exporter": "^3.0.0",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/resources": "^2.1.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
@@ -30,7 +30,7 @@
     "firebase-functions": "^6.4.0",
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.17.2",
-    "stripe": "^16.0.0",
+    "stripe": "^19.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -39,11 +39,11 @@
     "@types/node": "^24.6.2",
     "@types/node-fetch": "^2.6.9",
     "@types/pdfkit": "^0.13.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^8.45.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^9.37.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.29.1",
     "firebase-functions-test": "^3.1.0",
