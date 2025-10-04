@@ -150,3 +150,13 @@ The Sierra Painting v1 application now has a **production-ready CI/CD pipeline**
 - Has zero technical debt from the audit
 
 All workflows are ready to run on the next PR!
+
+---
+
+## 🔄 Update (Post Phase 2 Consolidation)
+
+As part of Phase 2 cleanup (V1 Ship-Readiness Plan):
+- `flutter_ci.yml` was **consolidated back into** `ci.yml` for better maintainability
+- The new `ci.yml` provides comprehensive coverage with matrix builds for all platforms
+- This reduces workflow duplication and simplifies the CI pipeline
+- See `docs/_archive/Plan.md` for the complete consolidation strategy

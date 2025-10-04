@@ -42,7 +42,7 @@ The following files were removed as they were redundant, historical, or consolid
 | `CONTRIBUTING.md` | Keep minimal guidelines in README.md |
 | `workflows/` directory | Duplicate of `.github/workflows/` |
 | `.github/workflows/.yml` | Empty file |
-| `.github/workflows/flutter-ci.yml` | Consolidated into ci.yml |
+| `.github/workflows/flutter-ci.yml` | ✅ Consolidated into ci.yml |
 | `.github/workflows/functions-ci.yml` | Consolidated into ci.yml |
 | `functions/src/schemas/` → | Kept (used by index.ts); lib/zodSchemas.ts is comprehensive version |
 | `functions/src/services/` | Moved to `functions/src/pdf/` |
