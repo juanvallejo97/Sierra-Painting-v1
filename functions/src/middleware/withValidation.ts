@@ -51,6 +51,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { z } from 'zod';
 import { log, getOrCreateRequestId } from '../lib/ops';
+import { getDeploymentConfig } from '../config/deployment';
 
 // ============================================================
 // TYPES
@@ -85,6 +86,12 @@ export interface ValidationOptions {
    * @default "2.0.0-refactor"
    */
   version?: string;
+
+  /**
+   * Function name for deployment config lookup
+   * If not provided, deployment config will use defaults
+   */
+  functionName?: string;
 }
 
 export type ValidatedHandler<TInput, TOutput> = (
@@ -117,11 +124,16 @@ export function withValidation<TInput, TOutput>(
     requireAdmin = false,
     requireRole,
     version = '2.0.0-refactor',
+    functionName,
   } = options;
 
   return (handler: ValidatedHandler<TInput, TOutput>) => {
+    // Get deployment config if functionName is provided
+    const deploymentConfig = functionName ? getDeploymentConfig(functionName) : {};
+    
     return functions
       .runWith({
+        ...deploymentConfig,
         enforceAppCheck: requireAppCheck,
         consumeAppCheckToken: requireAppCheck, // Prevent replay attacks
       })
