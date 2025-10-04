@@ -17,8 +17,7 @@ lib/
 ├── firebase_options.dart        # Generated Firebase configuration
 ├── app/                         # App-level configuration
 │   ├── app.dart                 # MaterialApp setup with theme
-│   ├── router.dart              # GoRouter configuration with RBAC
-│   └── theme.dart               # Legacy theme (consider consolidating)
+│   └── router.dart              # GoRouter configuration with RBAC
 ├── core/                        # Shared infrastructure
 │   ├── models/                  # Data models (QueueItem, etc.)
 │   ├── network/                 # API client with retry logic
@@ -115,6 +114,28 @@ Following ADR-0004 guidelines:
 
 ## State Management
 
+### ✅ Single Pattern: Riverpod
+
+**Decision:** Sierra Painting uses **Riverpod 3.0+** exclusively for all state management.
+
+**Why Riverpod:**
+- Type-safe dependency injection
+- Testability (easy to mock providers)
+- Compile-time safety (no runtime reflection)
+- Built-in support for async operations
+- Granular rebuilds (better performance)
+
+**Forbidden Patterns:**
+- ❌ Provider package (old, less type-safe)
+- ❌ BLoC pattern (too verbose for this project)
+- ❌ GetX (state + routing coupling, global state issues)
+- ❌ setState for global state (local widget state only)
+
+**Enforcement:**
+- Linter rules enforce package imports
+- Code reviews check for consistent patterns
+- ADR-0004 documents the decision
+
 ### Riverpod Providers
 
 The app uses Riverpod for all state management:
@@ -159,9 +180,73 @@ Located in `lib/core/providers/`:
 - **Crashlytics**: Error tracking and crash reporting
 - **Analytics**: User behavior tracking
 
+## Routing Strategy
+
+**Package:** GoRouter 16.2+
+
+### Route Configuration
+
+All routes are defined in `lib/app/router.dart` with:
+- Declarative route definitions
+- RBAC (Role-Based Access Control) guards
+- Deep linking support
+- Type-safe navigation
+
+### Route Guards
+
+Routes are protected based on user authentication and role:
+- **Public routes**: Login, password reset
+- **Authenticated routes**: Dashboard, timeclock, estimates
+- **Admin routes**: User management, settings (requires admin role)
+
+### Navigation Pattern
+
+```dart
+// Type-safe navigation
+context.go('/timeclock');
+context.push('/invoices/create');
+
+// With parameters
+context.go('/invoices/${invoice.id}');
+```
+
+### Web/Mobile Parity
+
+The same routing configuration works across:
+- Android
+- iOS  
+- Web (Flutter web at `/`)
+
+**Note:** The Next.js app in `webapp/` is deprecated. See `webapp/DEPRECATION_NOTICE.md`.
+
 ## Design System
 
-The design system is centralized in `lib/design/`:
+**Location:** `lib/design/`
+
+### Theming
+
+Sierra Painting uses **Material Design 3** with light and dark themes.
+
+**Theme Configuration:**
+- Source: `lib/design/theme.dart` (canonical)
+- Exported via: `lib/design/design.dart`
+- Applied in: `lib/app/app.dart`
+
+**Key Features:**
+- WCAG 2.2 AA compliance (proper contrast ratios)
+- Minimum touch targets: 48x48dp (accessibility)
+- System theme detection (light/dark mode)
+- Consistent color scheme across platforms
+
+**Usage:**
+```dart
+import 'package:sierra_painting/design/design.dart';
+
+// Themes are automatically applied via MaterialApp
+// Access theme in widgets:
+final theme = Theme.of(context);
+final primaryColor = theme.colorScheme.primary;
+```
 
 ### Design Tokens
 
@@ -188,6 +273,45 @@ import 'package:sierra_painting/design/design.dart';
 // All design tokens and components are available
 const padding = DesignTokens.spaceLG;
 AppButton(label: 'Save', onPressed: () {});
+```
+
+## Accessibility
+
+### Standards
+
+Sierra Painting follows **WCAG 2.2 Level AA** guidelines.
+
+### Implementation
+
+**Minimum Touch Targets:**
+- All interactive elements: 48x48dp minimum
+- Enforced in theme via `MaterialTapTargetSize.padded`
+- Buttons: `minimumSize: Size(88, 48)`
+
+**Text Scaling:**
+- All text uses relative sizes (em/rem equivalent)
+- Supports system font scaling up to 200%
+- TextTheme uses Material 3 type scale
+
+**Contrast Ratios:**
+- Primary text: 7:1 (AAA level)
+- Secondary text: 4.5:1 (AA level)
+- Verified in design tokens
+
+**Semantics:**
+- Critical widgets use `Semantics` wrapper
+- Images have semantic labels
+- Form fields have proper labels and hints
+
+### Testing
+
+```bash
+# Run with large text
+flutter run --dart-define=TEXT_SCALE_FACTOR=2.0
+
+# Check semantics in DevTools
+flutter run --profile
+# Open DevTools → Widget Inspector → Enable "Show Semantics"
 ```
 
 ## Testing Strategy
@@ -217,6 +341,66 @@ Located in `integration_test/`:
 - Repositories: ≥ 80%
 - Widgets: ≥ 60%
 - Overall: ≥ 70%
+
+## Performance Budgets
+
+### Web Bundle Size
+
+**Target:** ≤ 600KB initial bundle (gzipped)
+
+**Monitoring:**
+```bash
+flutter build web --analyze-size
+# Check build/web-report.json
+```
+
+**Strategies:**
+- Tree shaking (automatic in release builds)
+- Code splitting by route
+- Lazy loading of features
+- Minification enabled
+
+### Asset Budget
+
+**Total Assets:** ≤ 5MB
+
+**Per-Image Limits:**
+- Maximum size: 300KB
+- Preferred format: WebP
+- Use `cacheWidth`/`cacheHeight` to decode at display size
+
+**Asset Optimization:**
+```bash
+# Compress images
+imagemagick convert input.png -quality 85 output.webp
+
+# SVG optimization
+svgo --multipass --pretty input.svg
+```
+
+### Build Performance
+
+**Target Times:**
+- `flutter build web`: ≤ 2 minutes
+- `flutter build apk`: ≤ 3 minutes
+- `flutter build ios`: ≤ 4 minutes
+
+**CI Gates:**
+- Must complete in CI timeout (10 minutes)
+- Size regression checks on PR
+- Performance metrics tracked per commit
+
+### Runtime Performance
+
+**Frame Budget:**
+- 60 FPS (16.67ms per frame)
+- No jank on lists with 100+ items
+- Smooth animations (no dropped frames)
+
+**Startup Time:**
+- Cold start: ≤ 2 seconds
+- Warm start: ≤ 1 second
+- Time to interactive: ≤ 3 seconds
 
 ## Security Considerations
 
