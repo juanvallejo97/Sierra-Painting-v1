@@ -5,6 +5,10 @@ on:
       tag:
         description: "Tag to create (e.g., v1.0.0)"
         required: true
+      build_android_aab:
+        description: "Also build Android AAB and attach to GitHub release?"
+        required: false
+        default: "false"
 permissions:
   contents: write
   id-token: write
@@ -15,20 +19,42 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - run: flutter pub get && flutter build web --release
-      - name: Create tag
+      - name: Build Web
+        run: |
+          flutter pub get
+          flutter build web --release
+      - name: Optional Android AAB
+        if: ${{ github.event.inputs.build_android_aab == 'true' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build AAB (conditional)
+        if: ${{ github.event.inputs.build_android_aab == 'true' }}
+        run: |
+          cd android
+          ./gradlew bundleRelease
+      - name: Create Tag
         run: |
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
           git tag "${{ github.event.inputs.tag }}"
           git push origin "${{ github.event.inputs.tag }}"
+      - name: Create GitHub Release (attach AAB if built)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          files: |
+            android/app/build/outputs/**/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install firebase-tools
         run: npm i -g firebase-tools
-      - name: Ensure Hosting site
+      - name: Ensure Hosting site exists
         run: firebase hosting:sites:create "$FIREBASE_HOSTING_SITE" --project "$FIREBASE_PROJECT_ID" || true
-      - name: Deploy (explicit flags)
+      - name: Deploy to Hosting (explicit flags)
         run: firebase deploy --only hosting --project "$FIREBASE_PROJECT_ID" --site "$FIREBASE_HOSTING_SITE" --non-interactive --force

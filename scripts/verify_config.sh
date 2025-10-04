@@ -155,12 +155,12 @@ if [ "$SKIP_FIREBASE" = false ]; then
     echo -e "${GREEN}✓ .firebaserc exists${NC}"
     
     if [ "$VERBOSE" = true ]; then
-      echo -e "${BLUE}  Active Firebase project:${NC}"
-      firebase use --json 2>/dev/null | grep -o '"default":"[^"]*"' || echo "  Not configured"
+      echo -e "${BLUE}  Firebase project configuration:${NC}"
+      grep -o '"default":"[^"]*"' .firebaserc 2>/dev/null || echo "  Not configured"
     fi
   else
     echo -e "${YELLOW}⚠ .firebaserc not found${NC}"
-    echo -e "${YELLOW}  Run: firebase use --add${NC}"
+    echo -e "${YELLOW}  Note: Use --project flag explicitly in all firebase commands${NC}"
     WARNINGS=$((WARNINGS+1))
   fi
   
