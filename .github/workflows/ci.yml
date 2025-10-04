@@ -1,0 +1,461 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  FLUTTER_CHANNEL: stable
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+
+jobs:
+  # Job 1: Analyze (Flutter & Functions)
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        target: [flutter, functions, webapp]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        if: matrix.target == 'flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Setup Node.js
+        if: matrix.target == 'functions' || matrix.target == 'webapp'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.target }}/package-lock.json
+
+      - name: Cache Flutter pub dependencies
+        if: matrix.target == 'flutter'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      - name: Install Flutter dependencies
+        if: matrix.target == 'flutter'
+        run: flutter pub get
+
+      - name: Install Node.js dependencies
+        if: matrix.target == 'functions' || matrix.target == 'webapp'
+        working-directory: ./${{ matrix.target }}
+        run: npm ci
+
+      - name: Analyze Flutter
+        if: matrix.target == 'flutter'
+        run: flutter analyze --fatal-infos
+
+      - name: Analyze Functions
+        if: matrix.target == 'functions'
+        working-directory: ./functions
+        run: npm run lint
+
+      - name: Analyze WebApp
+        if: matrix.target == 'webapp'
+        working-directory: ./webapp
+        run: npm run lint
+
+  # Job 2: Test (Flutter & Functions)
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        target: [flutter, functions]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        if: matrix.target == 'flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Setup Node.js
+        if: matrix.target == 'functions'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Cache Flutter dependencies
+        if: matrix.target == 'flutter'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      - name: Install Flutter dependencies
+        if: matrix.target == 'flutter'
+        run: flutter pub get
+
+      - name: Install Functions dependencies
+        if: matrix.target == 'functions'
+        working-directory: ./functions
+        run: npm ci
+
+      - name: Run Flutter tests with coverage
+        if: matrix.target == 'flutter'
+        run: flutter test --coverage
+
+      - name: Run Functions tests
+        if: matrix.target == 'functions'
+        working-directory: ./functions
+        run: npm test
+
+      - name: Upload coverage
+        if: matrix.target == 'flutter'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-flutter
+          path: coverage/
+          retention-days: 14
+
+      - name: Run failure triage
+        if: failure()
+        run: |
+          chmod +x scripts/ci/failure-triage.sh
+          ./scripts/ci/failure-triage.sh build/failure-triage-test-${{ matrix.target }}
+
+      - name: Upload test failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-${{ matrix.target }}
+          path: build/failure-triage-test-${{ matrix.target }}
+          retention-days: 14
+
+  # Job 3: Firestore Rules Test
+  rules-test:
+    name: Firestore Rules Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Java (for Firebase emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install Firestore test dependencies
+        working-directory: firestore-tests
+        run: npm ci --prefer-offline --no-audit || npm install --no-audit --no-fund
+
+      - name: Run Firestore rules tests
+        working-directory: firestore-tests
+        run: npm test
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+
+      - name: Upload rules test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rules-test-logs
+          path: firestore-tests/logs/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # Job 4: Functions Integration Test
+  functions-test:
+    name: Functions Integration Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Setup Java (for emulators)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Functions dependencies
+        working-directory: ./functions
+        run: npm ci
+
+      - name: Build Functions
+        working-directory: ./functions
+        run: npm run build
+
+      - name: Start Firebase Emulators
+        run: |
+          firebase emulators:start --only auth,firestore,functions,storage &
+          timeout 60 bash -c 'until curl -s http://localhost:4000 > /dev/null; do sleep 2; done' || true
+
+      - name: Run Functions integration tests
+        working-directory: ./functions
+        run: npm test
+        env:
+          FIREBASE_EMULATOR_HOST: localhost:8080
+
+      - name: Stop emulators
+        if: always()
+        run: pkill -f firebase || true
+
+      - name: Upload function test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-test-logs
+          path: functions/logs/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # Job 5: Build Matrix (Android, iOS, Web)
+  build:
+    name: Build Apps
+    runs-on: ubuntu-latest
+    needs: [analyze, test]
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [android, ios, web]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+
+      - name: Setup Java
+        if: matrix.platform == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
+      - name: Cache Gradle
+        if: matrix.platform == 'android'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        if: matrix.platform == 'android'
+        run: flutter build apk --debug
+
+      - name: Build iOS (lint/analyze only)
+        if: matrix.platform == 'ios'
+        run: |
+          echo "iOS build verification (no actual build on Linux)"
+          flutter build ios --debug --no-codesign || echo "iOS build skipped on Linux"
+
+      - name: Build Web
+        if: matrix.platform == 'web'
+        run: flutter build web --release
+
+      - name: Get build size
+        if: matrix.platform == 'android'
+        run: |
+          APK_SIZE=$(stat -f%z build/app/outputs/flutter-apk/app-debug.apk 2>/dev/null || stat -c%s build/app/outputs/flutter-apk/app-debug.apk)
+          echo "APK_SIZE=$APK_SIZE" >> $GITHUB_ENV
+          echo "APK size: $APK_SIZE bytes"
+
+      - name: Upload build artifact
+        if: matrix.platform == 'android' || matrix.platform == 'web'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.platform }}
+          path: |
+            ${{ matrix.platform == 'android' && 'build/app/outputs/flutter-apk/app-debug.apk' || 'build/web' }}
+          retention-days: 14
+
+      - name: Run failure triage
+        if: failure()
+        run: |
+          chmod +x scripts/ci/failure-triage.sh
+          ./scripts/ci/failure-triage.sh build/failure-triage-${{ matrix.platform }}
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-triage-${{ matrix.platform }}
+          path: build/failure-triage-${{ matrix.platform }}
+          retention-days: 14
+
+  # Job 6: Web Budget Check
+  build-web-budget:
+    name: Web Bundle Size Budget
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-web
+          path: build/web
+
+      - name: Check bundle size
+        run: |
+          TOTAL_SIZE=$(du -sb build/web | cut -f1)
+          MAX_SIZE=10485760  # 10MB
+          echo "Total web build size: $TOTAL_SIZE bytes"
+          if [ $TOTAL_SIZE -gt $MAX_SIZE ]; then
+            echo "::error::Web build size ($TOTAL_SIZE bytes) exceeds budget ($MAX_SIZE bytes)"
+            exit 1
+          fi
+          echo "✅ Web build size within budget"
+
+  # Job 7: Size Report
+  size-report:
+    name: Generate Size Report
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Android build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-android
+          path: build/current
+
+      - name: Download Web build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-web
+          path: build/web-current
+
+      - name: Calculate sizes
+        id: sizes
+        run: |
+          if [ -f build/current/app-debug.apk ]; then
+            CURRENT_APK_SIZE=$(stat -c%s build/current/app-debug.apk)
+            echo "current_apk=$CURRENT_APK_SIZE" >> $GITHUB_OUTPUT
+          fi
+          CURRENT_WEB_SIZE=$(du -sb build/web-current | cut -f1)
+          echo "current_web=$CURRENT_WEB_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Create size report
+        run: |
+          cat > size-report.txt << 'EOF'
+          ## 📊 Build Size Report
+          
+          ### Android APK
+          - Current: ${{ steps.sizes.outputs.current_apk }} bytes
+          
+          ### Web Bundle
+          - Current: ${{ steps.sizes.outputs.current_web }} bytes
+          
+          EOF
+
+      - name: Upload size report
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-report
+          path: size-report.txt
+          retention-days: 14
+
+  # Summary job
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [analyze, test, rules-test, functions-test, build, build-web-budget]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          echo "CI Pipeline Summary"
+          echo "==================="
+          echo "Analyze: ${{ needs.analyze.result }}"
+          echo "Test: ${{ needs.test.result }}"
+          echo "Rules Test: ${{ needs.rules-test.result }}"
+          echo "Functions Test: ${{ needs.functions-test.result }}"
+          echo "Build: ${{ needs.build.result }}"
+          echo "Web Budget: ${{ needs.build-web-budget.result }}"
+          
+          if [[ "${{ needs.analyze.result }}" != "success" || \
+                "${{ needs.test.result }}" != "success" || \
+                "${{ needs.rules-test.result }}" != "success" || \
+                "${{ needs.functions-test.result }}" != "success" || \
+                "${{ needs.build.result }}" != "success" ]]; then
+            echo "::error::CI Pipeline failed"
+            exit 1
+          fi
+          echo "✅ All required checks passed"

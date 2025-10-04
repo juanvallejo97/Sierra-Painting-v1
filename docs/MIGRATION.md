@@ -392,7 +392,7 @@ lib/
 | `docs/Architecture.md` | Architecture reference |
 | `docs/EnhancementsAndAdvice.md` | Senior review + risks |
 | `docs/MIGRATION.md` | This migration guide |
-| `docs/ADRs/0001-tech-stack.md` | Tech stack ADR |
+| `docs/adrs/0001-tech-stack.md` | Tech stack ADR |
 | `.github/ISSUE_TEMPLATE/*` | Story, Bug, Tech Task templates |
 | `functions/src/lib/*` | Shared utilities (zod, audit, idempotency, stripe) |
 | `functions/src/{leads,pdf,payments}/*` | Domain function stubs/signatures |

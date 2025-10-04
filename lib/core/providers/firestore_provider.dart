@@ -15,6 +15,23 @@
 /// - Offline persistence enabled
 /// - Unlimited cache size for better offline experience
 ///
+/// CACHE STRATEGY (Stale-While-Revalidate):
+/// 1. Initial Load: Try cache first with GetOptions(source: Source.cache)
+/// 2. Show cached data immediately with indicator
+/// 3. Refresh from server in background
+/// 4. Update UI when fresh data arrives
+/// 
+/// Example:
+/// ```dart
+/// // Show cached data first
+/// final cachedSnapshot = await query.get(GetOptions(source: Source.cache));
+/// setState(() => data = cachedSnapshot.docs);
+/// 
+/// // Refresh from server
+/// final freshSnapshot = await query.get(GetOptions(source: Source.server));
+/// setState(() => data = freshSnapshot.docs);
+/// ```
+///
 /// USAGE:
 /// ```dart
 /// final db = ref.watch(firestoreProvider);
