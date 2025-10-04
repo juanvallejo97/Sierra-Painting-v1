@@ -1,0 +1,45 @@
+name: Release Readiness Gate
+on:
+  pull_request:
+    branches: [ "release/**" ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert firebase.json SPA rewrite
+        run: |
+          test -f firebase.json || (echo "::error::firebase.json missing"; exit 1)
+          node -e "const f=require('./firebase.json'); if(!f.hosting||!f.hosting.rewrites||!f.hosting.rewrites.find(r=>r.destination==='/index.html')){process.exit(2)}"
+      - name: Assert explicit flags in deploy scripts
+        run: |
+          grep -R -- '--project ' scripts || (echo "::error::--project flag missing in scripts"; exit 1)
+          # Check that firebase use is not present (allow 'used' and 'unused' words)
+          if grep -Rn 'firebase use[^du]' scripts . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=build 2>/dev/null | grep -v '.yml:'; then
+            echo "::error::found forbidden 'firebase use' command"
+            exit 1
+          fi
+          echo "✓ Scripts use explicit --project flags and no 'firebase use' commands"
+      - name: Secrets presence (best-effort)
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_HOSTING_SITE: ${{ secrets.FIREBASE_HOSTING_SITE }}
+        run: |
+          [ -n "${FIREBASE_PROJECT_ID}" ] || (echo "::error::FIREBASE_PROJECT_ID secret not set"; exit 1)
+          [ -n "${FIREBASE_HOSTING_SITE}" ] || (echo "::error::FIREBASE_HOSTING_SITE secret not set"; exit 1)
+      - name: Flutter analyze + build web (sanity)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: |
+          flutter pub get
+          flutter analyze
+          flutter build web --release
+      - name: Upload readiness artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: readiness-web
+          path: build/web

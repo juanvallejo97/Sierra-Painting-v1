@@ -1,0 +1,11 @@
+# CI Audit Summary
+- Authoritative workflow: `.github/workflows/ci.yml`
+- Required checks:
+  - CI / Code Quality (format+analyze)
+  - CI / Flutter Tests & Build
+  - CI / Cloud Functions CI
+  - CI / Firestore Rules (Emulator)
+- Concurrency: cancel-in-progress **enabled**
+- Path filters: stack-aware **enabled**
+- Artifacts: build/web, coverage/lcov.info, android *.aab (conditional)
+- Release workflows: `release_readiness.yml`, `release_v1.yml`
