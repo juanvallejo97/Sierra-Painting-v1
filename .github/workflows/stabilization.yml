@@ -1,0 +1,136 @@
+name: Stabilization Compliance Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+
+jobs:
+  validate-stabilization:
+    name: Validate Stabilization Standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run stabilization compliance check
+        id: validate
+        run: |
+          chmod +x scripts/validate_stabilization.sh
+          ./scripts/validate_stabilization.sh | tee stabilization_report.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+      
+      - name: Upload compliance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stabilization-compliance-report
+          path: stabilization_report.txt
+          retention-days: 30
+      
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## Stabilization Compliance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 20 stabilization_report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Standards Document" >> $GITHUB_STEP_SUMMARY
+          echo "See \`.copilot/stabilize_sierra_painting.yaml\` for complete requirements" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('stabilization_report.txt', 'utf8');
+            
+            // Extract summary from report
+            const summaryMatch = report.match(/Total checks:\s+(\d+)/);
+            const passedMatch = report.match(/Passed:\s+(\d+)/);
+            const warningsMatch = report.match(/Warnings:\s+(\d+)/);
+            const failedMatch = report.match(/Failed:\s+(\d+)/);
+            const complianceMatch = report.match(/Compliance:\s+(\d+)%/);
+            
+            const total = summaryMatch ? summaryMatch[1] : '?';
+            const passed = passedMatch ? passedMatch[1] : '?';
+            const warnings = warningsMatch ? warningsMatch[1] : '?';
+            const failed = failedMatch ? failedMatch[1] : '?';
+            const compliance = complianceMatch ? complianceMatch[1] : '?';
+            
+            let emoji = '✅';
+            let status = 'Excellent';
+            if (parseInt(compliance) < 90) {
+              emoji = '⚠️';
+              status = 'Good';
+            }
+            if (parseInt(compliance) < 75) {
+              emoji = '⚠️';
+              status = 'Moderate';
+            }
+            if (parseInt(compliance) < 50) {
+              emoji = '❌';
+              status = 'Needs Improvement';
+            }
+            
+            const comment = `## ${emoji} Stabilization Compliance Check
+            
+            **Status:** ${status} (${compliance}% compliant)
+            
+            | Metric | Count |
+            |--------|-------|
+            | Total checks | ${total} |
+            | ✅ Passed | ${passed} |
+            | ⚠️ Warnings | ${warnings} |
+            | ❌ Failed | ${failed} |
+            
+            ### What This Checks
+            
+            This workflow validates compliance with the stabilization standards defined in \`.copilot/stabilize_sierra_painting.yaml\`, including:
+            
+            - ✓ CI/CD workflow standards and required workflows
+            - ✓ GitHub Action version pinning
+            - ✓ Dependency management (lock files, version constraints)
+            - ✓ Build stability (caching, Flutter channel)
+            - ✓ Testing infrastructure (test directories, smoke tests)
+            - ✓ Deployment stability (scripts, workflows)
+            - ✓ Timeout policies
+            - ✓ Security and quality gates
+            
+            <details>
+            <summary>View Full Report</summary>
+            
+            \`\`\`
+            ${report.slice(0, 4000)}
+            \`\`\`
+            
+            </details>
+            
+            For complete requirements, see [\`.copilot/stabilize_sierra_painting.yaml\`](.copilot/stabilize_sierra_painting.yaml).
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Check compliance threshold
+        if: steps.validate.outputs.exit_code != '0'
+        run: |
+          echo "⚠️ Stabilization compliance check found issues"
+          echo "Review the report above and address any failed checks"
+          exit 0  # Don't fail the build, just warn
