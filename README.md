@@ -41,16 +41,22 @@ flutter pub run build_runner build --delete-conflicting-outputs
 cd functions
 npm ci
 cd ..
-2) Firebase Setup
-bash
-Copy code
+```
+
+### 2) Firebase Setup
+
+```bash
 firebase login
 firebase projects:list         # or create a project in the Firebase Console
 firebase use --add             # select or add an alias (e.g., staging, prod)
 
 # Generate Flutter firebase_options.dart
 flutterfire configure
-3) Start Dev Environment
+```
+
+### 3) Start Dev Environment
+
+```bash
 # Terminal 1: Emulators
 firebase emulators:start
 
@@ -59,37 +65,50 @@ flutter run
 
 # Optional: Watch for codegen
 flutter pub run build_runner watch
-Emulator UI: http://localhost:4000
-Firestore: http://localhost:8080 · Auth: http://localhost:9099 · Functions: http://localhost:5001 · Storage: http://localhost:9199
+```
 
-🧭 Golden Paths
-GP1: Auth & Time Tracking
-Sign up (Auth emulator) → 2) Clock in/out (offline queue to Firestore) → 3) View today’s jobs & entries
+**Emulator UI:** http://localhost:4000  
+**Firestore:** http://localhost:8080 · **Auth:** http://localhost:9099 · **Functions:** http://localhost:5001 · **Storage:** http://localhost:9199
 
-GP2: Estimate → Invoice → Payment
-Create estimate with line items → 2) Generate PDF (Cloud Function) → 3) Convert to invoice → 4) Mark paid (admin-only with audit trail)
+---
 
-GP3: Lead Capture → Schedule
-Submit lead via web form (App Check + captcha) → 2) Admin reviews → 3) Schedule job (lite scheduler)
+## 🧭 Golden Paths
 
-📚 Documentation
-Architecture: docs/Architecture.md → **See [ARCHITECTURE.md](ARCHITECTURE.md)**
+**GP1: Auth & Time Tracking**
+1. Sign up (Auth emulator)
+2. Clock in/out (offline queue to Firestore)
+3. View today's jobs & entries
 
-Migration Guide: docs/MIGRATION.md
+**GP2: Estimate → Invoice → Payment**
+1. Create estimate with line items
+2. Generate PDF (Cloud Function)
+3. Convert to invoice
+4. Mark paid (admin-only with audit trail)
 
-ADRs: docs/adrs/
+**GP3: Lead Capture → Schedule**
+1. Submit lead via web form (App Check + captcha)
+2. Admin reviews
+3. Schedule job (lite scheduler)
 
-Feature Flags: docs/FEATURE_FLAGS.md
+---
 
-App Check Setup: docs/APP_CHECK.md
+## 📚 Documentation
 
-Emulators Guide: docs/EMULATORS.md
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Full Index](docs/index.md)**
 
-Developer Workflow: docs/DEVELOPER_WORKFLOW.md
+**Quick Links:**
+- [Migration Guide](docs/MIGRATION.md)
+- [Feature Flags](docs/FEATURE_FLAGS.md)
+- [App Check Setup](docs/APP_CHECK.md)
+- [Emulators Guide](docs/EMULATORS.md)
+- [Developer Workflow](docs/DEVELOPER_WORKFLOW.md)
+- [UI/UX Overhaul](docs/ui_overhaul_mobile.md)
 
-UI/UX Overhaul: docs/ui_overhaul_mobile.md
+> **Note:** Older standalone setup/quickstart docs were consolidated into this README and the docs above.
 
-Note: Older standalone setup/quickstart docs were consolidated into the README and docs above.
+---
+
+## 🏗️ Tech Stack
 
 🏗️ Tech Stack
 Layer	Technology	Purpose
