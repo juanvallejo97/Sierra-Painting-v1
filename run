@@ -25,15 +25,20 @@ if [ -f "webapp/package.json" ]; then
     npm ci || npm install || true
   fi
   
-  # Build if needed
-  if [ ! -d ".next" ]; then
-    say "Building webapp..."
-    npm run build || true
+  # Check if we have a complete build (prerender-manifest.json indicates successful build)
+  if [ ! -f ".next/prerender-manifest.json" ] && [ ! -f ".next/BUILD_ID" ]; then
+    say "No production build found, starting in development mode..."
+    if npm run | grep -qE "^  dev"; then
+      exec npm run dev
+    else
+      error "No dev script found in webapp/package.json"
+      exit 1
+    fi
   fi
   
-  # Start the application
+  # We have a build, try to start in production mode
   if npm run | grep -qE "^  start"; then
-    say "Starting Next.js webapp..."
+    say "Starting Next.js webapp in production mode..."
     exec npm start
   elif npm run | grep -qE "^  dev"; then
     say "Starting Next.js webapp in development mode..."
