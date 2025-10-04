@@ -45,6 +45,32 @@ Comprehensive stabilization configuration that defines:
 
 See [docs/STABILIZATION_EXECUTION.md](../docs/STABILIZATION_EXECUTION.md) for detailed execution instructions.
 
+### sierra_painting_update.yaml
+Comprehensive update management configuration that defines:
+- Dependency update strategy and cadence
+- Security vulnerability remediation procedures
+- Breaking change management workflow
+- Version compatibility testing requirements
+- Documentation of changes and migrations
+- Monthly, quarterly, and annual review cycles
+- Critical package minimum version requirements
+- Rollback procedures for failed updates
+
+**Purpose**: This configuration focuses on keeping the project current and secure through:
+- Maintaining < 5% version drift
+- Zero high/critical security vulnerabilities
+- Monthly dependency review cycles
+- Documented migration paths for major updates
+- < 24 hour response time for critical security patches
+
+**Execution**: Standards are enforced through:
+- **Validation Script**: `scripts/validate_updates.sh` - Checks compliance with update standards
+- **CI Workflow**: `.github/workflows/updates.yml` - Runs validation and security audits
+- **Make Target**: `make validate-updates` - Run validation locally
+- **Documentation**: `docs/UPDATES_EXECUTION.md` - Complete execution guide
+
+See [docs/UPDATES_EXECUTION.md](../docs/UPDATES_EXECUTION.md) for detailed execution instructions.
+
 ## Purpose
 
 This governance framework implements the cleanup plan described in `docs/Plan.md` to bring the repository to V1 ship-readiness state. It defines:
