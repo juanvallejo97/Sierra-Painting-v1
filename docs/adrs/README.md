@@ -14,25 +14,20 @@ We follow the format popularized by Michael Nygard:
 ## Index
 
 ### Infrastructure & Operations
-- [ADR-001: Firebase as Backend Platform](./001-firebase-backend.md)
-- [ADR-002: Deny-by-Default Security Model](./002-deny-by-default-security.md)
-- [ADR-003: Offline-First Architecture](./003-offline-first.md)
-- [ADR-004: App Check for API Protection](./004-app-check.md)
+- [ADR-0001: Tech Stack](./0001-tech-stack.md)
+- [ADR-0002: Offline-First Architecture](./0002-offline-first-architecture.md)
 
 ### Data & Storage
-- [ADR-005: Firestore Data Model](./005-firestore-data-model.md)
 - [ADR-006: Idempotency Strategy](./006-idempotency-strategy.md)
-- [ADR-007: Audit Logging Approach](./007-audit-logging.md)
 
 ### Application Architecture
-- [ADR-008: Feature-Based Code Organization](./008-feature-based-organization.md)
-- [ADR-009: Zod for Runtime Validation](./009-zod-validation.md)
-- [ADR-010: Role-Based Access Control](./010-rbac.md)
+- [ADR-0003: Manual Payments Primary](./0003-manual-payments-primary.md)
+- [ADR-0004: Riverpod State Management](./0004-riverpod-state-management.md)
+- [ADR-0005: GoRouter Navigation](./0005-gorouter-navigation.md)
 
 ### Developer Experience
 - [ADR-011: Story-Driven Development](./011-story-driven-development.md)
 - [ADR-012: Sprint-Based Feature Flags](./012-sprint-based-flags.md)
-- [ADR-013: Telemetry and Observability](./013-telemetry-observability.md)
 
 ## Creating a New ADR
 ```bash

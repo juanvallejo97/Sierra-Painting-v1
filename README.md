@@ -6,7 +6,7 @@
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
-**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)** · **[Performance](docs/PERFORMANCE_IMPLEMENTATION.md)**
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Documentation Index](docs/index.md)**
 
 ---
 

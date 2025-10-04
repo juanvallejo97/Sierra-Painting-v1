@@ -2,41 +2,32 @@
 
 Welcome to the Sierra Painting documentation! This directory contains all the documentation you need to understand, set up, and contribute to the project.
 
-## Quick Links
+## Canonical Navigation
 
-### Getting Started
-- **[QUICKSTART.md](../QUICKSTART.md)** - Get up and running in 5 minutes
-- **[SETUP.md](../SETUP.md)** - Comprehensive setup guide
-- **[README.md](../README.md)** - Project overview and features
+This documentation follows the [Diátaxis](https://diataxis.fr/) framework for clarity and ease of navigation.
 
-### Understanding the Project
-- **[Architecture.md](./Architecture.md)** - System architecture and design
+### 🚀 Getting Started (Tutorials)
+- **[README](../README.md)** - Quickstart guide to get running in minutes
+
+### 📖 Reference Documentation
+- **[ARCHITECTURE](../ARCHITECTURE.md)** - System components, flows, and ADR index
+- **[SECURITY](../SECURITY.md)** - Threat model and security rules testing
 - **[Testing.md](./Testing.md)** - Testing strategy and guidelines
-- **[EnhancementsAndAdvice.md](./EnhancementsAndAdvice.md)** - Performance and enhancement recommendations
 
-### UI/UX Documentation
-- **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)** - Comprehensive UI/UX overhaul specification
-
-### Contributing
+### 🔧 How-To Guides (Operational)
+- **[OPERATIONS](./ops/)** - Deploy, rollback, monitoring, and runbooks
 - **[DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md)** - Development workflow and best practices
 
-## Documentation Structure
-
-```
-docs/
-├── index.md                    # This file
-├── getting-started/           # Setup and configuration guides
-├── features/                  # Feature-specific documentation
-├── api/                       # API documentation
-└── deployment/                # Deployment guides
-```
+### 💡 Explanation (Understanding)
+- **[EnhancementsAndAdvice.md](./EnhancementsAndAdvice.md)** - Performance and enhancement recommendations
+- **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)** - UI/UX overhaul specification
 
 ## Key Technologies
 
 - **Frontend**: Flutter (Dart) with Material Design 3
 - **Backend**: Firebase (Auth, Firestore, Storage, Functions)
 - **Functions**: TypeScript with Zod validation
-- **State Management**: Provider
+- **State Management**: Riverpod (see [ADR-0004](./adrs/0004-riverpod-state-management.md))
 - **Local Storage**: Hive (offline-first)
 - **Payments**: Manual (check/cash) + Optional Stripe
 
@@ -55,7 +46,7 @@ Sierra-Painting-v1/
 └── docs/                      # Documentation
 ```
 
-## Common Tasks
+## Quick Commands
 
 ### Development
 ```bash
@@ -86,6 +77,3 @@ cd functions && npm test          # Test functions
 
 This project is licensed under the MIT License - see [LICENSE](../LICENSE) file for details.
 
----
-
-Last updated: 2024-10-01
