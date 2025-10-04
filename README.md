@@ -73,11 +73,11 @@ GP3: Lead Capture → Schedule
 Submit lead via web form (App Check + captcha) → 2) Admin reviews → 3) Schedule job (lite scheduler)
 
 📚 Documentation
-Architecture: docs/Architecture.md
+Architecture: docs/Architecture.md → **See [ARCHITECTURE.md](ARCHITECTURE.md)**
 
 Migration Guide: docs/MIGRATION.md
 
-ADRs: docs/ADRs/
+ADRs: docs/adrs/
 
 Feature Flags: docs/FEATURE_FLAGS.md
 
@@ -249,7 +249,7 @@ Sierra Painting uses GitHub Actions for automated CI/CD with separate workflows 
 **Workflows:**
 - **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
 - **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
-- **[CI Tests](.github/workflows/ci.yml)** - Runs on all PRs
+- **[CI Tests](.github/workflows/flutter_ci.yml)** - Runs on all PRs
 
 **Pipeline Stages:**
 1. **Setup** - Cache dependencies (Flutter, Node, Gradle)

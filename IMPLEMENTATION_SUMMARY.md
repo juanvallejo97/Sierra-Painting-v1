@@ -349,7 +349,7 @@ Before considering this complete, verify:
 - [AUDIT_REPORT.md](../AUDIT_REPORT.md) - Pre-implementation audit
 - [SECURITY.md](../SECURITY.md) - Security policy
 - [CHANGELOG.md](../CHANGELOG.md) - Version history
-- [ADR-0004](../docs/ADRs/0004-riverpod-state-management.md) - State management decision
+- [ADR-0004](../docs/adrs/0004-riverpod-state-management.md) - State management decision
 
 ---
 

@@ -191,18 +191,24 @@ See [docs/ops/monitoring.md](docs/ops/monitoring.md) for detailed setup instruct
 
 ## Runbooks
 
-Operational procedures for common tasks. All runbooks are in `docs/ops/runbooks/`.
+Operational procedures for common tasks.
 
 ### Available Runbooks
 
-- **[Deploy](docs/ops/runbooks/deploy.md)** - Step-by-step deployment guide
-- **[Rollback](docs/ops/runbooks/rollback.md)** - Emergency rollback procedures
-- **[Emulators](docs/EMULATORS.md)** - Local development with Firebase Emulators
-- **[Incident Response](docs/ops/runbooks/incident.md)** - Handling production incidents
+- **[EMULATORS](docs/EMULATORS.md)** - Local development with Firebase Emulators
+- **[Runbooks Directory](docs/ops/runbooks/)** - Operational runbook templates
+
+### Deployment Runbook
+
+See [Deployment](#deployment) section above for step-by-step deployment procedures.
+
+### Rollback Runbook
+
+See [Rollback Procedures](#rollback-procedures) section above for emergency rollback procedures.
 
 ### Runbook Template
 
-Each runbook includes:
+Each runbook should include:
 - Purpose and when to use
 - Prerequisites
 - Step-by-step procedures
