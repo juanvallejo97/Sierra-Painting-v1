@@ -237,29 +237,99 @@ cd ..
 
 # Flutter E2E
 flutter test integration_test/
-🧰 Environment Setup
-App Check (Debug Mode)
-Run flutter run to get the debug token in logs
+## 🧰 Environment Setup
+
+### Environment Configuration
+
+Sierra Painting supports three environments:
+
+| Environment | Firebase Project | Purpose | Deployment |
+|-------------|-----------------|---------|------------|
+| **Development** | Emulators | Local development | Manual (local) |
+| **Staging** | `sierra-painting-staging` | Testing & validation | Auto on `main` |
+| **Production** | `sierra-painting-prod` | Live app | Manual approval on tags |
+
+### Setting Up Environments
+
+**1. Copy and configure .env file:**
+
+```bash
+cp .env.example .env
+# Edit .env with your Firebase project details
+```
+
+**2. Configure Firebase projects:**
+
+```bash
+# Development (uses emulators by default)
+firebase use default
+
+# Staging
+firebase use staging
+
+# Production  
+firebase use production
+```
+
+**3. Generate Firebase configuration:**
+
+```bash
+# Generates lib/firebase_options.dart with platform-specific config
+flutterfire configure
+```
+
+**4. Run with specific environment:**
+
+```bash
+# Development (with emulators)
+flutter run --dart-define=USE_EMULATORS=true
+
+# Staging
+flutter run --dart-define=ENVIRONMENT=staging
+
+# Production
+flutter run --dart-define=ENVIRONMENT=production --release
+```
+
+### App Check (Debug Mode)
+
+Run `flutter run` to get the debug token in logs
 
 Register it in Firebase Console → App Check → Debug tokens
 
 (Optional) Save locally:
 
+```bash
 echo "APP_CHECK_DEBUG_TOKEN=your-token-here" > .env.debug
-/.env.debug is gitignored.
+# .env.debug is gitignored.
+```
 
-Feature Flags (Remote Config)
-Flag	Type	Default	Description
-payments.stripeEnabled	boolean	false	Enable Stripe payments
-features.pdfGeneration	boolean	true	Server-side PDF generation
-features.offlineMode	boolean	true	Offline queue & sync
+### Feature Flags (Remote Config)
 
-Example:
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `payments.stripeEnabled` | boolean | `false` | Enable Stripe payments |
+| `features.pdfGeneration` | boolean | `true` | Server-side PDF generation |
+| `features.offlineMode` | boolean | `true` | Offline queue & sync |
 
-dart
-Copy code
+**Example:**
+
+```dart
 final clockInEnabled = ref.watch(clockInEnabledProvider);
 return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
+```
+
+### Environment Variables Reference
+
+See [`.env.example`](.env.example) for complete list of available environment variables including:
+- Firebase configuration
+- API settings
+- Feature flag overrides
+- Stripe configuration (optional)
+- Observability settings
+- Testing credentials
+
+
 ## 🚢 Deployment
 
 ### CI/CD Pipeline
