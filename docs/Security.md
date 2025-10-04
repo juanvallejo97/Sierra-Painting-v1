@@ -754,6 +754,48 @@ export const onUserDelete = functions.auth.user().onDelete(async (user) => {
 - ✅ PII handling and data deletion
 - ✅ Workload Identity Federation for CI/CD (no long-lived keys)
 
-For questions, see [Architecture.md](./Architecture.md) or [DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md).
+For questions, see [ARCHITECTURE.md](./ARCHITECTURE.md) or [DEVELOPER.md](./DEVELOPER.md).
 
-For CI/CD security setup, see [GCP Workload Identity Setup](./ops/gcp-workload-identity-setup.md).
+For CI/CD security setup, see [GCP Workload Identity Setup](./docs/ops/gcp-workload-identity-setup.md).
+
+---
+
+## Security Policy
+
+### Secrets Handling
+
+#### Never Commit Secrets
+
+**Critical:** Never commit real service account JSON files, API keys, or credentials to the repository.
+
+#### Prohibited Files
+
+The following files must **never** be committed:
+- `*service-account*.json`
+- `*-service-account*.json`
+- `firebase-adminsdk-*.json`
+- `*credentials.json`
+- Any file containing `private_key` or `"type": "service_account"`
+
+#### Best Practices
+
+1. **Use GitHub Actions Secrets**: Store sensitive credentials in GitHub repository secrets
+2. **Use OIDC Workload Identity**: Prefer Workload Identity Federation over service account keys
+3. **Local Development**: Copy examples from `secrets/_examples/` and set environment variables
+4. **Environment Variables**: Use `.env` files (which are gitignored) for local configuration
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please:
+
+1. **Do not** open a public issue
+2. Email the maintainers directly (see repository contact)
+3. Provide details about the vulnerability and potential impact
+4. Allow reasonable time for a fix before public disclosure
+
+### Automated Security Checks
+
+The repository has automated security checks that run on every pull request:
+- **JSON Credentials Check**: Prevents service account keys from being committed
+- **Firestore Rules Tests**: Validates security rules for proper access control
+- **Dependency Scanning**: Checks for known vulnerabilities in dependencies
