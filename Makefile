@@ -1,4 +1,4 @@
-.PHONY: analyze test format smoke clean help build-web size-report audit functions-test rules-test validate-stabilization
+.PHONY: analyze test format smoke clean help build-web size-report audit functions-test rules-test validate-stabilization validate-updates
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -65,6 +65,11 @@ validate-stabilization: ## Validate compliance with stabilization standards
 	@echo "Running stabilization compliance check..."
 	@chmod +x scripts/validate_stabilization.sh
 	@./scripts/validate_stabilization.sh
+
+validate-updates: ## Validate compliance with update standards
+	@echo "Running update compliance check..."
+	@chmod +x scripts/validate_updates.sh
+	@./scripts/validate_updates.sh
 
 clean: ## Clean build artifacts
 	flutter clean
