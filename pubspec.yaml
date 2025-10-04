@@ -1,95 +1,12 @@
-name: sierra_painting
-description: A Flutter painting application for small business management with Firebase backend
-publish_to: 'none'
-version: 1.0.0+1
-
-environment:
-  sdk: '>=3.8.0 <4.0.0'
-
 dependencies:
-  flutter:
-    sdk: flutter
-
-  # Keep this in sync with Flutter SDK's integration_test (older CI images pull 0.5.0)
-  material_color_utilities: 0.5.0
-
-  # Firebase
   firebase_core: ^4.1.1
-  firebase_auth: ^6.1.0
-  firebase_storage: ^13.0.2
+  firebase_auth: ^6.2.0
+  firebase_storage: ^13.3.1
   cloud_firestore: ^6.0.2
   cloud_functions: ^6.0.2
   firebase_app_check: ^0.4.1
-  firebase_performance: ^0.10.0+9
+  firebase_performance: ^0.10.1+10
   firebase_crashlytics: ^4.1.3
   firebase_analytics: ^11.3.3
-
-  # Routing & State
-  go_router: ^16.2.4
-  provider: ^6.1.1
-  flutter_riverpod: ^3.0.1
-
-  # Local Storage / Offline-first
-  shared_preferences: ^2.2.2
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-
-  # Networking
-  http: ^1.1.2
-  connectivity_plus: ^7.0.0
-  cached_network_image: ^3.4.1
-
-  # Feature Flags
   firebase_remote_config: ^6.0.2
-
-  # Payments (optional)
-  flutter_stripe: ^12.0.2
-
-  # Utilities
-  intl: ^0.20.2
-  uuid: ^4.2.2
-  path_provider: ^2.1.1
-
-  # Accessibility / i18n
-  flutter_localizations:
-    sdk: flutter
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
-  # Lints & Codegen
-  flutter_lints: ^5.0.0
-  build_runner: ^2.4.7
-  hive_generator: ^2.0.1
-
-  # Testing
-  mockito: ^5.4.4
-  mocktail: ^1.0.0
-  integration_test:
-    sdk: flutter
-
-  # Fix analyzer <> SDK mismatch seen in your logs
-  analyzer: ^6.4.1
-
-# Dependency overrides to resolve version conflicts
-# These are necessary to align with Flutter SDK's transitive dependencies
-dependency_overrides:
-  # Keep material_color_utilities at 0.5.0 to match Flutter SDK's integration_test package
-  # This prevents version conflicts when running integration tests in CI
-  # Reference: Flutter SDK includes integration_test with material_color_utilities 0.5.0
-  material_color_utilities: 0.5.0
-  
-  # Pin analyzer to match the version required by build_runner
-  # This ensures consistent analysis results across development and CI environments
-  analyzer: ^6.4.1
-
-
-flutter:
-  uses-material-design: true
-  # assets:
-  #   - images/
-  # fonts:
-  #   - family: CustomFont
-  #     fonts:
-  #       - asset: fonts/CustomFont-Regular.ttf
+  # other dependencies...
