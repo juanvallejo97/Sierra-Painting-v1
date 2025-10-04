@@ -12,15 +12,23 @@ This documentation follows the [Diátaxis](https://diataxis.fr/) framework for c
 ### 📖 Reference Documentation
 - **[ARCHITECTURE](../ARCHITECTURE.md)** - System components, flows, and ADR index
 - **[SECURITY](../SECURITY.md)** - Threat model and security rules testing
-- **[Testing.md](./Testing.md)** - Testing strategy and guidelines
+- **[Testing](./Testing.md)** - Testing strategy and guidelines
 
 ### 🔧 How-To Guides (Operational)
-- **[OPERATIONS](./ops/)** - Deploy, rollback, monitoring, and runbooks
-- **[DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md)** - Development workflow and best practices
+- **[OPERATIONS](../OPERATIONS.md)** - Deploy, rollback, monitoring, and SLOs
+- **[DEVELOPER](../DEVELOPER.md)** - Development workflow, code style, and contribution guidelines
+- **[EMULATORS](./EMULATORS.md)** - Local development with Firebase Emulators
+- **[FEATURE_FLAGS](./FEATURE_FLAGS.md)** - Feature flag management
 
 ### 💡 Explanation (Understanding)
-- **[EnhancementsAndAdvice.md](./EnhancementsAndAdvice.md)** - Performance and enhancement recommendations
-- **[ui_overhaul_mobile.md](./ui_overhaul_mobile.md)** - UI/UX overhaul specification
+- **[Migration Guide](./MIGRATION.md)** - V1 refactoring and migration notes
+- **[EnhancementsAndAdvice](./EnhancementsAndAdvice.md)** - Performance recommendations
+- **[ui_overhaul_mobile](./ui_overhaul_mobile.md)** - UI/UX overhaul specification
+
+### 📚 Additional Resources
+- **[ADRs](./adrs/)** - Architecture Decision Records with template
+- **[Stories](./stories/)** - User stories organized by sprint
+- **[Operations](./ops/)** - Detailed operational guides and runbooks
 
 ## Key Technologies
 
