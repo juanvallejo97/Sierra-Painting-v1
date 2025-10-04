@@ -971,7 +971,7 @@ firebase deploy --only hosting  # if web affected
 
 ## Related Documentation
 
-- [EnhancementsAndAdvice.md](./EnhancementsAndAdvice.md) - Source of enhancement ideas
+- [Backlog.md](./Backlog.md) - Enhancement stories and priorities
 - [perf-playbook-fe.md](./perf-playbook-fe.md) - Performance guidelines
 - [Architecture.md](./Architecture.md) - System architecture
 - [Testing.md](./Testing.md) - Testing strategy
