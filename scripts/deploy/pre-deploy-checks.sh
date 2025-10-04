@@ -16,8 +16,13 @@ echo -e "${BLUE}🔍 Pre-Deploy Checks${NC}"
 echo "================================================"
 echo ""
 
-# Get environment from firebase use command or parameter
-ENVIRONMENT=${1:-$(firebase use 2>/dev/null || echo "default")}
+# Get environment from parameter (required)
+ENVIRONMENT=${1:-}
+if [ -z "$ENVIRONMENT" ]; then
+  echo -e "${RED}❌ Error: Environment parameter is required${NC}"
+  echo "Usage: $0 <environment>"
+  exit 1
+fi
 echo "Environment: $ENVIRONMENT"
 echo ""
 
