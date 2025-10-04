@@ -1,0 +1,19 @@
+name: Dependabot Automerge
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  merge:
+    if: github.actor == 'dependabot[bot]' && !startsWith(github.base_ref, 'release/')
+    runs-on: ubuntu-latest
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v2
+      - uses: peter-evans/enable-pull-request-automerge@v3
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.dependency-type == 'development'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash

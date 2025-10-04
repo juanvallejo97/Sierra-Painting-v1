@@ -38,7 +38,6 @@ dependencies:
   path_provider: ^2.1.5
 
   # UI/UX
-  material_color_utilities: 0.5.0
   intl: ^0.20.2
 
   # Networking
@@ -64,14 +63,6 @@ dev_dependencies:
 
   # Code Quality
   flutter_lints: ^6.0.0
-  analyzer: ^6.4.1
-
-# Dependency overrides are required for compatibility
-dependency_overrides:
-  # Required by integration_test to match Flutter SDK's internal version
-  material_color_utilities: 0.5.0
-  # Required by build_runner and dart_code_metrics
-  analyzer: ^6.4.1
 
 flutter:
   uses-material-design: true
