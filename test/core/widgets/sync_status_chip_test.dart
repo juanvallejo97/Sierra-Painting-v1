@@ -26,10 +26,10 @@ void main() {
       expect(find.byType(Chip), findsOneWidget);
 
       // Verify label text
-      expect(find.text('Pending'), findsOneWidget);
+      expect(find.text('Syncing...'), findsOneWidget);
 
       // Verify icon
-      expect(find.byIcon(Icons.schedule), findsOneWidget);
+      expect(find.byIcon(Icons.sync), findsOneWidget);
     });
 
     testWidgets('Synced status shows green chip', (tester) async {

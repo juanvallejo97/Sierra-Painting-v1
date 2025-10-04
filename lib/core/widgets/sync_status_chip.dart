@@ -21,11 +21,11 @@ class SyncStatusChip extends StatelessWidget {
   final String? errorMessage;
 
   const SyncStatusChip({
-    Key? key,
+    super.key,
     required this.status,
     this.onRetry,
     this.errorMessage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -100,11 +100,11 @@ class GlobalSyncIndicator extends StatelessWidget {
   final VoidCallback? onTap;
 
   const GlobalSyncIndicator({
-    Key? key,
+    super.key,
     required this.pendingCount,
     this.isSyncing = false,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

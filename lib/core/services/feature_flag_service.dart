@@ -1,4 +1,5 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service for managing feature flags using Firebase Remote Config
@@ -75,7 +76,9 @@ class FeatureFlagService {
     } catch (e) {
       // If Remote Config fails, use default values
       // This ensures the app continues to work
-      print('Failed to initialize Remote Config: $e');
+      if (kDebugMode) {
+        debugPrint('Failed to initialize Remote Config: $e');
+      }
     }
   }
 
@@ -146,7 +149,9 @@ class FeatureFlagService {
     try {
       await _remoteConfig!.fetchAndActivate();
     } catch (e) {
-      print('Failed to refresh Remote Config: $e');
+      if (kDebugMode) {
+        debugPrint('Failed to refresh Remote Config: $e');
+      }
     }
   }
 }

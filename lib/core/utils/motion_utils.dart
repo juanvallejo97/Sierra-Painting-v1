@@ -95,12 +95,12 @@ class AccessibleAnimatedOpacity extends StatelessWidget {
   final Curve? curve;
 
   const AccessibleAnimatedOpacity({
-    Key? key,
+    super.key,
     required this.opacity,
     required this.child,
     this.duration,
     this.curve,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +134,7 @@ class AccessibleAnimatedContainer extends StatelessWidget {
   final Curve? curve;
 
   const AccessibleAnimatedContainer({
-    Key? key,
+    super.key,
     this.child,
     this.alignment,
     this.padding,
@@ -150,7 +150,7 @@ class AccessibleAnimatedContainer extends StatelessWidget {
     this.clipBehavior = Clip.none,
     this.duration,
     this.curve,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
