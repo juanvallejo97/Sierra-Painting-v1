@@ -13,8 +13,9 @@
 /// - id: Unique identifier for the queue item (UUID)
 /// - type: Operation type (e.g., 'clockIn', 'clockOut', 'createInvoice')
 /// - data: Operation-specific payload as JSON
-/// - createdAt: Timestamp when item was queued
+/// - timestamp: Timestamp when item was queued (alias for createdAt)
 /// - processed: Whether item has been successfully synced
+/// - retryCount: Number of failed sync attempts
 /// - error: Error message from last failed sync attempt (if any)
 import 'package:hive/hive.dart';
 
@@ -32,30 +33,38 @@ class QueueItem extends HiveObject {
   Map<String, dynamic> data;
 
   @HiveField(3)
-  DateTime createdAt;
+  DateTime timestamp;
 
   @HiveField(4)
   bool processed;
 
   @HiveField(5)
+  int retryCount;
+
+  @HiveField(6)
   String? error;
 
   QueueItem({
     required this.id,
     required this.type,
     required this.data,
-    required this.createdAt,
+    required this.timestamp,
     this.processed = false,
+    this.retryCount = 0,
     this.error,
   });
+
+  /// Legacy getter for backwards compatibility
+  DateTime get createdAt => timestamp;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'type': type,
       'data': data,
-      'createdAt': createdAt.toIso8601String(),
+      'timestamp': timestamp.toIso8601String(),
       'processed': processed,
+      'retryCount': retryCount,
       'error': error,
     };
   }
@@ -65,8 +74,11 @@ class QueueItem extends HiveObject {
       id: json['id'] as String,
       type: json['type'] as String,
       data: json['data'] as Map<String, dynamic>,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      timestamp: DateTime.parse(
+        json['timestamp'] as String? ?? json['createdAt'] as String,
+      ),
       processed: json['processed'] as bool? ?? false,
+      retryCount: json['retryCount'] as int? ?? 0,
       error: json['error'] as String?,
     );
   }
