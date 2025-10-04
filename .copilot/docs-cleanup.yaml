@@ -1,0 +1,304 @@
+version: "1.0"
+name: "docs_cleanup_baseline"
+classification:
+  level: "INTERNAL"
+  owner: "D'Sierra – Engineering"
+  handling: ["Internal Only"]
+
+description: |
+  Baseline configuration for Project Sierra documentation and code cleanup.
+  Defines quality gates, files to remove, and governance standards for
+  bringing the repository to V1 ship-readiness state.
+
+files_to_delete:
+  # Root level redundant documentation
+  root:
+    - path: "CHANGELOG.md"
+      rationale: "Use GitHub releases instead"
+    - path: "CONTRIBUTING.md"
+      rationale: "Keep minimal version in README"
+  
+  # Historical documentation files (no longer actionable)
+  docs:
+    - path: "docs/index.md"
+      rationale: "README serves this purpose"
+    - path: "docs/EnhancementsAndAdvice.md"
+      rationale: "Historical, not actionable"
+
+quality_gates:
+  code:
+    - "Zero TypeScript lint errors/warnings in functions/"
+    - "Zero Dart analysis issues in lib/"
+    - "All tests pass (unit + emulator)"
+    - "No 'any' types without justification"
+    - "No hardcoded secrets in code"
+  
+  documentation:
+    - "All markdown files spell-checked"
+    - "No broken internal links"
+    - "Professional tone throughout"
+    - "Consistent formatting (Markdown)"
+    - "Concise content (remove fluff)"
+  
+  security:
+    - "Firestore rules: deny-by-default posture"
+    - "App Check enforced on all callable functions"
+    - "Idempotency keys for mutation operations"
+    - "Audit logging for sensitive operations"
+    - "Custom claims for RBAC (no email-based checks)"
+  
+  performance:
+    - "P95 function latency < 600ms"
+    - "P75 mobile startup < 1200ms"
+    - "Bundle size budgets enforced"
+    - "Required Firestore indexes defined"
+  
+  testing:
+    - "Unit tests for critical business logic"
+    - "Emulator tests for Firestore rules"
+    - "Integration tests for payment flows"
+    - "Smoke tests for golden paths"
+
+review_rubric:
+  pr_structure:
+    - "Clear title describing the change"
+    - "Description with context and rationale"
+    - "Links to related issues/ADRs"
+    - "Before/after screenshots for UI changes"
+    - "Test evidence (logs, coverage)"
+  
+  code_quality:
+    - "Minimal, surgical changes only"
+    - "No commented-out code"
+    - "Proper error handling"
+    - "Structured logging with context"
+    - "Type safety maintained"
+  
+  security:
+    - "No secrets in code or env files"
+    - "Input validation on all endpoints"
+    - "Authentication checks in place"
+    - "Authorization verified per-resource"
+  
+  documentation:
+    - "ADRs for architectural decisions"
+    - "Inline comments for complex logic"
+    - "README updated if setup changed"
+    - "Migration notes if breaking changes"
+
+architectural_principles:
+  - "Small, reversible, auditable changes"
+  - "No schema breaks without migration plan"
+  - "Security and performance over cosmetic changes"
+  - "Flutter + Firebase patterns for mobile/web parity"
+  - "Deny-by-default security posture"
+  - "Feature flags for gradual rollout"
+  - "Observability built-in from day one"
+
+enforcement:
+  ci_checks:
+    - "Lint and format checks"
+    - "Type checking (TypeScript + Dart)"
+    - "Unit test execution"
+    - "Emulator test execution"
+    - "Security scanning (secrets detection)"
+  
+  deployment_gates:
+    - "All CI checks passing"
+    - "Code review approval required"
+    - "No critical TODOs in changed files"
+    - "Smoke tests green on target environments"
+
+target_structure:
+  description: "Proposed V1 repository structure"
+  root_files:
+    keep:
+      - "README.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - ".editorconfig"
+      - ".firebaserc"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - "storage.rules"
+      - "pubspec.yaml"
+      - "analysis_options.yaml"
+  
+  docs_structure:
+    keep:
+      - "Architecture.md"
+      - "Backlog.md"
+      - "KickoffTicket.md"
+      - "Testing.md"
+      - "Security.md"
+      - "MIGRATION.md"
+      - "APP_CHECK.md"
+      - "EMULATORS.md"
+      - "DEVELOPER_WORKFLOW.md"
+      - "FEATURE_FLAGS.md"
+      - "ADRs/"
+    
+    polish_required:
+      - "Architecture.md: Add sequence diagrams, RBAC patterns"
+      - "Backlog.md: Condense to P0 stories only"
+      - "KickoffTicket.md: Polish to executive quality"
+      - "MIGRATION.md: Complete before/after tree"
+  
+  lib_structure:
+    directories:
+      - "main.dart"
+      - "firebase_options.dart"
+      - "app/"
+      - "core/services/"
+      - "core/telemetry/"
+      - "core/utils/"
+      - "core/providers/"
+      - "core/models/"
+      - "core/widgets/"
+      - "design/"
+      - "features/"
+  
+  functions_structure:
+    directories:
+      - "src/index.ts"
+      - "src/lib/"
+      - "src/leads/"
+      - "src/pdf/"
+      - "src/payments/"
+      - "src/test/"
+
+migration_strategy:
+  phases:
+    - id: "audit"
+      name: "Audit & Plan"
+      status: "COMPLETE"
+      artifacts:
+        - "docs/Plan.md"
+    
+    - id: "cleanup"
+      name: "Repo Restructure & Cleanup"
+      tasks:
+        - "Delete redundant documentation files"
+        - "Remove duplicate directories"
+        - "Update MIGRATION.md with inventory"
+      acceptance:
+        - "All files in delete list removed"
+        - "No build breaks after restructure"
+        - "Git history preserved"
+    
+    - id: "hardening"
+      name: "Functional Hardening"
+      tasks:
+        - "Fix all TypeScript lint errors"
+        - "Implement router RBAC guards"
+        - "Complete offline queue reconciliation"
+        - "Add telemetry service"
+        - "Harden Cloud Functions (App Check, validation)"
+      acceptance:
+        - "Zero lint errors/warnings"
+        - "Functions build passes"
+        - "Emulator tests pass"
+        - "Critical paths have test coverage"
+    
+    - id: "documentation"
+      name: "Final Documentation"
+      tasks:
+        - "Create Testing.md"
+        - "Create Security.md"
+        - "Polish README.md"
+        - "Update Architecture.md"
+        - "Complete MIGRATION.md"
+      acceptance:
+        - "All docs typo-free"
+        - "No broken internal links"
+        - "Professional tone"
+        - "Concise content"
+    
+    - id: "ci_cd"
+      name: "CI/CD & Ship Checks"
+      tasks:
+        - "Ensure emulator tests in CI"
+        - "Verify no secrets committed"
+        - "Confirm feature flags defaulted correctly"
+      acceptance:
+        - "CI runs all checks"
+        - "Emulator tests cover rules"
+        - "E2E scripts documented"
+
+risk_register:
+  - id: "R1"
+    risk: "Deleting wrong files"
+    likelihood: "Low"
+    impact: "High"
+    mitigation: "Verify each deletion against MIGRATION.md; keep git history"
+  
+  - id: "R2"
+    risk: "Breaking existing flows"
+    likelihood: "Medium"
+    impact: "High"
+    mitigation: "Test emulators after each change; maintain backward compatibility"
+  
+  - id: "R3"
+    risk: "TypeScript lint errors blocking deploy"
+    likelihood: "High"
+    impact: "Medium"
+    mitigation: "Fix all lint errors before hardening"
+  
+  - id: "R4"
+    risk: "Firestore rule regressions"
+    likelihood: "Medium"
+    impact: "High"
+    mitigation: "Write emulator tests for all rules; test before deploy"
+  
+  - id: "R5"
+    risk: "App Check blocking development"
+    likelihood: "Medium"
+    impact: "Low"
+    mitigation: "Document debug token setup clearly"
+  
+  - id: "R6"
+    risk: "Offline queue data loss"
+    likelihood: "Low"
+    impact: "High"
+    mitigation: "Implement proper error handling and retry logic"
+  
+  - id: "R7"
+    risk: "Security rule bypass"
+    likelihood: "Low"
+    impact: "Critical"
+    mitigation: "Deny-by-default; peer review all rule changes"
+
+success_metrics:
+  technical:
+    - "Functions build with 0 lint errors/warnings"
+    - "Emulator tests pass (rules + functions)"
+    - "No secrets in git history"
+    - "All indexes defined"
+    - "CI green"
+  
+  documentation:
+    - "Typo-free"
+    - "Professional tone"
+    - "Concise (no rambling)"
+    - "Complete (all sections filled)"
+  
+  security:
+    - "Deny-by-default rules"
+    - "Server-only paid status"
+    - "App Check enforced"
+    - "Audit logs for sensitive ops"
+  
+  offline:
+    - "Hive outbox working"
+    - "Idempotency keys"
+    - "Sync status UI"
+    - "Reconciliation logic"
+
+notes:
+  - "This baseline is imported and extended by enterprise_app_streamline_blueprint"
+  - "Changes should be minimal and surgical"
+  - "Preserve git history for auditability"
+  - "Test incrementally after each change"
+  - "Document all breaking changes in MIGRATION.md"
