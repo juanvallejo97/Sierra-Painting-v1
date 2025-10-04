@@ -14,14 +14,15 @@ Reference documentation provides technical descriptions of APIs, configurations,
 - [Security rules](security-rules.md)
 - [Feature flags list](feature-flags.md)
 
-## Project structure
+## Project organization
 
 - [Directory structure](project-structure.md)
 - [Naming conventions](naming-conventions.md)
 
-## Performance budgets
+## Performance
 
-- [Performance targets](performance-budgets.md)
+- [Performance budgets](performance-budgets.md)
+- [Performance targets](performance-targets.md)
 
 ## What is reference documentation?
 
