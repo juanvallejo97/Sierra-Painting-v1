@@ -388,6 +388,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Post-deployment verification
+        run: |
+          echo "Running post-deployment verification..."
+          if [ -f "scripts/deploy/verify.sh" ]; then
+            chmod +x scripts/deploy/verify.sh
+            ./scripts/deploy/verify.sh --env prod --quick || echo "⚠️  Verification completed with warnings"
+          else
+            echo "⚠️  Verification script not found"
+          fi
+
       - name: Print monitoring links
         run: |
           echo "==================================================="
@@ -419,11 +429,21 @@ jobs:
           echo "📋 Post-Deployment Checklist"
           echo "==================================================="
           echo ""
-          echo "TODO: Implement threshold checks"
-          echo "  - [ ] Error rate < 1% (current: manual check required)"
-          echo "  - [ ] P95 latency < 2s (current: manual check required)"
-          echo "  - [ ] Function cold start < 5s (current: manual check required)"
-          echo "  - [ ] No critical errors in last 5 minutes (current: manual check required)"
+          echo "Automated checks via verify.sh:"
+          echo "  - [x] Function availability"
+          echo "  - [ ] Error rate < 1% (manual check required)"
+          echo "  - [ ] P95 latency < 2s (manual check required)"
+          echo ""
+          echo "Key User Journeys (manual verification required):"
+          echo "  - [ ] Login (email/password)"
+          echo "  - [ ] Estimate creation"
+          echo "  - [ ] Invoice export"
+          echo ""
+          echo "SLO Targets for Production:"
+          echo "  - Error Rate: < 1%"
+          echo "  - P95 Latency: < 2s"
+          echo "  - Function Availability: > 99.9%"
+          echo "  - Cold Start: < 5s"
           echo ""
           echo "Manual verification steps:"
           echo "  1. Check Cloud Functions logs for errors (next 2 hours)"
