@@ -1,3 +1,4 @@
+---
 name: CI Pipeline
 
 on:
@@ -143,7 +144,8 @@ jobs:
         if: failure()
         run: |
           chmod +x scripts/ci/failure-triage.sh
-          ./scripts/ci/failure-triage.sh build/failure-triage-test-${{ matrix.target }}
+          ./scripts/ci/failure-triage.sh \
+            build/failure-triage-test-${{ matrix.target }}
 
       - name: Upload test failure diagnostics
         if: failure()
@@ -176,7 +178,9 @@ jobs:
 
       - name: Install Firestore test dependencies
         working-directory: firestore-tests
-        run: npm ci --prefer-offline --no-audit || npm install --no-audit --no-fund
+        run: |
+          npm ci --prefer-offline --no-audit || \
+            npm install --no-audit --no-fund
 
       - name: Run Firestore rules tests
         working-directory: firestore-tests
@@ -229,8 +233,11 @@ jobs:
 
       - name: Start Firebase Emulators
         run: |
-          firebase emulators:start --only auth,firestore,functions,storage &
-          timeout 60 bash -c 'until curl -s http://localhost:4000 > /dev/null; do sleep 2; done' || true
+          firebase emulators:start \
+            --only auth,firestore,functions,storage &
+          timeout 60 bash -c \
+            'until curl -s http://localhost:4000 > /dev/null; \
+             do sleep 2; done' || true
 
       - name: Run Functions integration tests
         working-directory: ./functions
@@ -296,7 +303,9 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: |
+            gradle-${{ runner.os }}-${{ hashFiles(
+              '**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-
 
@@ -311,7 +320,8 @@ jobs:
         if: matrix.platform == 'ios'
         run: |
           echo "iOS build verification (no actual build on Linux)"
-          flutter build ios --debug --no-codesign || echo "iOS build skipped on Linux"
+          flutter build ios --debug --no-codesign || \
+            echo "iOS build skipped on Linux"
 
       - name: Build Web
         if: matrix.platform == 'web'
@@ -320,7 +330,8 @@ jobs:
       - name: Get build size
         if: matrix.platform == 'android'
         run: |
-          APK_SIZE=$(stat -f%z build/app/outputs/flutter-apk/app-debug.apk 2>/dev/null || stat -c%s build/app/outputs/flutter-apk/app-debug.apk)
+          APK_PATH="build/app/outputs/flutter-apk/app-debug.apk"
+          APK_SIZE=$(stat -c%s "$APK_PATH")
           echo "APK_SIZE=$APK_SIZE" >> $GITHUB_ENV
           echo "APK size: $APK_SIZE bytes"
 
@@ -330,14 +341,17 @@ jobs:
         with:
           name: build-${{ matrix.platform }}
           path: |
-            ${{ matrix.platform == 'android' && 'build/app/outputs/flutter-apk/app-debug.apk' || 'build/web' }}
+            ${{ matrix.platform == 'android' &&
+              'build/app/outputs/flutter-apk/app-debug.apk' ||
+              'build/web' }}
           retention-days: 14
 
       - name: Run failure triage
         if: failure()
         run: |
           chmod +x scripts/ci/failure-triage.sh
-          ./scripts/ci/failure-triage.sh build/failure-triage-${{ matrix.platform }}
+          ./scripts/ci/failure-triage.sh \
+            build/failure-triage-${{ matrix.platform }}
 
       - name: Upload failure diagnostics
         if: failure()
@@ -370,7 +384,8 @@ jobs:
           MAX_SIZE=10485760  # 10MB
           echo "Total web build size: $TOTAL_SIZE bytes"
           if [ $TOTAL_SIZE -gt $MAX_SIZE ]; then
-            echo "::error::Web build size ($TOTAL_SIZE bytes) exceeds budget ($MAX_SIZE bytes)"
+            echo "::error::Web build size ($TOTAL_SIZE bytes) \
+              exceeds budget ($MAX_SIZE bytes)"
             exit 1
           fi
           echo "✅ Web build size within budget"
@@ -416,13 +431,13 @@ jobs:
         run: |
           cat > size-report.txt << 'EOF'
           ## 📊 Build Size Report
-          
+
           ### Android APK
           - Current: ${{ steps.sizes.outputs.current_apk }} bytes
-          
+
           ### Web Bundle
           - Current: ${{ steps.sizes.outputs.current_web }} bytes
-          
+
           EOF
 
       - name: Upload size report
@@ -449,7 +464,7 @@ jobs:
           echo "Functions Test: ${{ needs.functions-test.result }}"
           echo "Build: ${{ needs.build.result }}"
           echo "Web Budget: ${{ needs.build-web-budget.result }}"
-          
+
           if [[ "${{ needs.analyze.result }}" != "success" || \
                 "${{ needs.test.result }}" != "success" || \
                 "${{ needs.rules-test.result }}" != "success" || \
