@@ -576,4 +576,29 @@ This combination ensures:
 
 ---
 
+## Architecture Decision Records (ADRs)
+
+For detailed rationale behind architectural choices, see the following ADRs:
+
+### Infrastructure & Operations
+- [ADR-0001: Tech Stack](docs/adrs/0001-tech-stack.md)
+- [ADR-0002: Offline-First Architecture](docs/adrs/0002-offline-first-architecture.md)
+
+### Data & Storage
+- [ADR-006: Idempotency Strategy](docs/adrs/006-idempotency-strategy.md)
+
+### Application Architecture
+- [ADR-0003: Manual Payments Primary](docs/adrs/0003-manual-payments-primary.md)
+- [ADR-0004: Riverpod State Management](docs/adrs/0004-riverpod-state-management.md)
+- [ADR-0005: GoRouter Navigation](docs/adrs/0005-gorouter-navigation.md)
+
+### Developer Experience
+- [ADR-011: Story-Driven Development](docs/adrs/011-story-driven-development.md)
+- [ADR-012: Sprint-Based Feature Flags](docs/adrs/012-sprint-based-flags.md)
+
+For the complete ADR index and template, see [docs/adrs/README.md](docs/adrs/README.md)
+
+---
+
+
 This architecture provides a solid, production-ready foundation with strong security, scalability, and maintainability, while enabling rapid delivery for the MVP and beyond.

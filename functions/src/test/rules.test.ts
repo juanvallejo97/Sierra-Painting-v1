@@ -474,3 +474,236 @@ describe('Firestore Rules - Other Collections (Existing)', () => {
     await assertFails(userDb.collection('users').doc('user2').get());
   });
 });
+
+describe('Firestore Rules - Time Entries (Pagination & Query Patterns)', () => {
+  test('User can create time entry in their job', async () => {
+    const userDb = testEnv
+      .authenticatedContext('user1', {
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user1',
+        title: 'Paint House',
+      });
+    });
+
+    // Test: user can create time entry
+    await assertSucceeds(
+      userDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .add({
+          userId: 'user1',
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        })
+    );
+  });
+
+  test('User can read their own time entries', async () => {
+    const userDb = testEnv
+      .authenticatedContext('user1', {
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job and time entry
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user1',
+        title: 'Paint House',
+      });
+      
+      await context
+        .firestore()
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .set({
+          userId: 'user1',
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        });
+    });
+
+    // Test: user can read their time entry
+    await assertSucceeds(
+      userDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .get()
+    );
+  });
+
+  test('User cannot create time entry for another user', async () => {
+    const userDb = testEnv
+      .authenticatedContext('user1', {
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user2',
+        title: 'Paint House',
+      });
+    });
+
+    // Test: user1 cannot create time entry for user2
+    await assertFails(
+      userDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .add({
+          userId: 'user2', // Different user
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        })
+    );
+  });
+
+  test('Admin can read any time entries in their org', async () => {
+    const adminDb = testEnv
+      .authenticatedContext('admin1', {
+        roles: { admin: true },
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job and time entry
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user1',
+        title: 'Paint House',
+      });
+      
+      await context
+        .firestore()
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .set({
+          userId: 'user1',
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        });
+    });
+
+    // Test: admin can read any time entry
+    await assertSucceeds(
+      adminDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .get()
+    );
+  });
+
+  test('Time entries cannot be updated by client', async () => {
+    const userDb = testEnv
+      .authenticatedContext('user1', {
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job and time entry
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user1',
+        title: 'Paint House',
+      });
+      
+      await context
+        .firestore()
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .set({
+          userId: 'user1',
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        });
+    });
+
+    // Test: cannot update time entry (server-side only)
+    await assertFails(
+      userDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .update({
+          clockOut: new Date(),
+        })
+    );
+  });
+
+  test('Time entries cannot be deleted by client', async () => {
+    const userDb = testEnv
+      .authenticatedContext('user1', {
+        orgs: { org1: true },
+      })
+      .firestore();
+
+    // Setup: create job and time entry
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection('jobs').doc('job1').set({
+        orgId: 'org1',
+        status: 'active',
+        ownerId: 'user1',
+        title: 'Paint House',
+      });
+      
+      await context
+        .firestore()
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .set({
+          userId: 'user1',
+          orgId: 'org1',
+          clockIn: new Date(),
+          jobId: 'job1',
+        });
+    });
+
+    // Test: cannot delete time entry (server-side only)
+    await assertFails(
+      userDb
+        .collection('jobs')
+        .doc('job1')
+        .collection('timeEntries')
+        .doc('entry1')
+        .delete()
+    );
+  });
+});

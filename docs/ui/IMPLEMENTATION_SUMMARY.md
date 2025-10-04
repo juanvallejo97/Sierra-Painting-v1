@@ -406,7 +406,7 @@ Complete mapping documented in `docs/ui/web-mapping.md`:
 This implementation follows the guidelines from:
 - `docs/perf-playbook-fe.md` - Performance best practices
 - `docs/ui_overhaul_mobile.md` - UI enhancement requirements
-- `docs/ADRs/0002-offline-first-architecture.md` - Offline architecture
+- `docs/adrs/0002-offline-first-architecture.md` - Offline architecture
 - Material 3 design guidelines
 - WCAG 2.2 AA accessibility standards
 - Flutter testing best practices
