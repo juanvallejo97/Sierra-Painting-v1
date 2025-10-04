@@ -3,12 +3,37 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule: { interval: "monthly" }
+    open-pull-requests-limit: 3
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+    groups:
+      firebase:
+        patterns: ["firebase*", "@firebase/", "firebase-admin", "firebase-functions"]
+      linting:
+        patterns: ["eslint", "@typescript-eslint/", "typescript"]
+      observability:
+        patterns: ["@opentelemetry/", "trace"]
   - package-ecosystem: "npm"
     directory: "/firestore-tests"
     schedule: { interval: "weekly" }
+    open-pull-requests-limit: 3
+  - package-ecosystem: "npm"
+    directory: "/webapp"
+    schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+    groups:
+      react-next:
+        patterns: ["react", "react-", "next", "eslint-config-next"]
+      ui-tooling:
+        patterns: ["tailwind", "postcss*", "autoprefixer"]
   - package-ecosystem: "pub"
     directory: "/"
     schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+    groups:
+      flutterfire:
+        patterns: ["firebase_", "cloud_functions", "firebase_core*", "firebase_performance*"]
+      lints-build:
+        patterns: ["flutter_lints", "build_runner", "source_gen", "mockito", "dart_style", "analyzer*"]
