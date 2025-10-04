@@ -17,12 +17,12 @@ jobs:
       - name: Assert explicit flags in deploy scripts
         run: |
           grep -R -- '--project ' scripts || (echo "::error::--project flag missing in scripts"; exit 1)
-          # Check that firebase use is not present (allow 'used' and 'unused' words)
-          if grep -Rn 'firebase use[^du]' scripts . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=build 2>/dev/null | grep -v '.yml:'; then
-            echo "::error::found forbidden 'firebase use' command"
+          # Check that firebase use is not present in scripts or workflows (allow in docs)
+          if grep -Rn 'firebase use[^du]' scripts .github/workflows --exclude-dir=node_modules 2>/dev/null; then
+            echo "::error::found forbidden 'firebase use' command in scripts or workflows"
             exit 1
           fi
-          echo "✓ Scripts use explicit --project flags and no 'firebase use' commands"
+          echo "✓ Scripts and workflows use explicit --project flags and no 'firebase use' commands"
       - name: Secrets presence (best-effort)
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
