@@ -1,4 +1,4 @@
-name: Staging CI/CD Pipeline
+name: Staging CI/CD Pipeline - Auto Deploy
 
 on:
   push:

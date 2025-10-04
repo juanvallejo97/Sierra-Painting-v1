@@ -30,6 +30,14 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
+      - name: Check for VERIFICATION_CHECKLIST.md
+        run: |
+          if [ ! -f VERIFICATION_CHECKLIST.md ]; then
+            echo "::error::VERIFICATION_CHECKLIST.md is required for production releases"
+            exit 1
+          fi
+          echo "✅ VERIFICATION_CHECKLIST.md found"
+
       - name: Generate cache keys
         id: cache-keys
         run: |
@@ -194,6 +202,12 @@ jobs:
       - name: Build AAB (release)
         run: flutter build appbundle --release --dart-define=ENABLE_APP_CHECK=true
 
+      - name: Generate SBOM
+        run: |
+          echo "Generating Software Bill of Materials..."
+          flutter pub deps --json > sbom-flutter.json
+          echo "Flutter SBOM generated"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -201,6 +215,7 @@ jobs:
           path: |
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/bundle/release/app-release.aab
+            sbom-flutter.json
           retention-days: 90
 
   smoke_tests:
@@ -285,6 +300,8 @@ jobs:
 
       - name: Deploy to Firebase Production
         run: |
+          echo "Deploying to production with canary strategy..."
+          echo "Note: After deployment, use scripts/promote_canary.sh to control traffic split"
           firebase deploy --only functions,firestore:rules,storage:rules --project ${{ env.FIREBASE_PROJECT_PROD }} --non-interactive --force
         continue-on-error: false
 
@@ -394,6 +411,13 @@ jobs:
         run: |
           if [ "${{ needs.deploy_functions_production.result }}" == "success" ]; then
             echo "✅ Production deployment completed successfully!"
+            echo ""
+            echo "🚦 Canary Deployment:"
+            echo "  The deployment is initially at 100% traffic."
+            echo "  For safer rollouts, use canary deployment:"
+            echo "    ./scripts/deploy_canary.sh --project sierra-painting-prod"
+            echo "  Then promote when metrics are good:"
+            echo "    ./scripts/promote_canary.sh --project sierra-painting-prod"
             echo ""
             echo "⚠️  Critical Post-Deployment Actions:"
             echo "  1. Monitor production for next 2 hours"
