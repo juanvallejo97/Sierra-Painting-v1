@@ -1,8 +1,9 @@
 # Sierra Painting
 
+[![CI Pipeline](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
 [![Staging CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
 [![Production CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
-[![Flutter CI](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
+[![Nightly](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml)
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
@@ -244,21 +245,38 @@ return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
 
 ### CI/CD Pipeline
 
-Sierra Painting uses GitHub Actions for automated CI/CD with separate workflows for staging and production.
+Sierra Painting uses GitHub Actions for automated CI/CD with comprehensive testing, caching, and deployment automation.
 
 **Workflows:**
+- **[CI Pipeline](.github/workflows/ci.yml)** - Matrix builds, testing, size validation (runs on PRs)
 - **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
 - **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
-- **[CI Tests](.github/workflows/ci.yml)** - Runs on all PRs
+- **[Nightly Maintenance](.github/workflows/nightly.yml)** - Link checking, dependency audits (2 AM UTC)
 
-**Pipeline Stages:**
-1. **Setup** - Cache dependencies (Flutter, Node, Gradle)
-2. **Lint & Test** - Flutter analyze + test, Functions lint + test
-3. **Build Check** - Validate Flutter builds (APK for staging, release builds for production)
-4. **Emulator Smoke** - Run smoke tests against Firebase emulators
-5. **Deploy Indexes** - Deploy Firestore indexes
-6. **Deploy Functions** - Deploy Cloud Functions with authentication
-7. **Post Checks** - Print monitoring links and deployment status
+**Key Features:**
+- ✅ **Matrix Builds**: Android, iOS (lint only), Web - parallel execution
+- ✅ **Smart Caching**: Flutter pub, Gradle, Node modules (40-60% faster)
+- ✅ **Emulator Tests**: Firestore rules + Functions integration on every PR
+- ✅ **Size Tracking**: Web budget validation (10MB), APK size monitoring
+- ✅ **Failure Triage**: Automatic diagnostics collection on failures
+- ✅ **SBOM Generation**: Software bill of materials on releases
+- ✅ **Canary Deployment**: Gradual rollout support with monitoring
+
+**Documentation:**
+- 📖 [CI/CD Quick Reference](docs/CI_CD_QUICK_REFERENCE.md) - Common tasks and commands
+- 📖 [CI/CD Enhancements](docs/CI_CD_ENHANCEMENTS.md) - Implementation details
+- 📖 [Branch Protection](docs/BRANCH_PROTECTION.md) - Required checks and policies
+- 📖 [Canary Deployment](docs/ops/CANARY_DEPLOYMENT.md) - Gradual rollout guide
+- 📖 [CI/CD Implementation](docs/ops/CI_CD_IMPLEMENTATION.md) - Original implementation
+
+**Pipeline Jobs:**
+1. **Analyze** - Code quality (Flutter, Functions, WebApp)
+2. **Test** - Unit/integration tests with coverage
+3. **Rules Test** - Firestore security rules validation
+4. **Functions Test** - Cloud Functions integration tests
+5. **Build** - Android APK, iOS validation, Web bundle
+6. **Web Budget** - Bundle size enforcement (10MB limit)
+7. **Size Report** - Track size changes vs previous builds
 
 ### Staging Deployment (Automatic)
 
