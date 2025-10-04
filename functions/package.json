@@ -16,7 +16,7 @@
     "test:rules": "jest --testPathPattern=test/rules.test.ts"
   },
   "engines": {
-    "node": "18"
+    "node": ">=18 <21"
   },
   "main": "lib/index.js",
   "dependencies": {
