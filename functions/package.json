@@ -30,7 +30,7 @@
     "firebase-functions": "^6.4.0",
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.17.2",
-    "stripe": "^16.0.0",
+    "stripe": "^19.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
