@@ -25,6 +25,8 @@ Sierra Painting helps small painting businesses manage operations, projects, est
 - **Firebase CLI** — [Install](https://firebase.google.com/docs/cli#install_the_firebase_cli)
 - **Git** and a code editor (VS Code recommended)
 
+> **Automated Setup:** Use `./scripts/setup_env.sh` to automatically verify and install dependencies. See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for details.
+
 ### 1) Clone & Install
 
 ```bash
@@ -409,11 +411,18 @@ See [GitHub Environments Setup Guide](docs/ops/github-environments.md) for detai
 
 ### Deployment Scripts
 
+**Environment Setup:**
+- `scripts/setup_env.sh` - Install and verify required dependencies
+- `scripts/configure_env.sh` - Configure .env file from template
+- `scripts/verify_config.sh` - Verify environment configuration
+
 **Helper scripts available:**
 - `scripts/ci/firebase-login.sh` - Validate Firebase authentication
 - `scripts/smoke/run.sh` - Run emulator smoke tests
 - `scripts/remote-config/manage-flags.sh` - Manage feature flags
 - `scripts/rollback/rollback-functions.sh` - Emergency rollback
+
+See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for comprehensive deployment guide.
 
 ### Monitoring Post-Deployment
 
