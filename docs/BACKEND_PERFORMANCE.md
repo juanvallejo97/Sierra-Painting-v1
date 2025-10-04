@@ -27,16 +27,40 @@ Cold starts occur when:
 
 ### Solution: Minimum Instances
 
-Set `minInstances` for critical functions to keep them warm:
+Set `minInstances` for critical functions to keep them warm. Sierra Painting uses centralized deployment configuration:
 
 ```typescript
-// functions/src/leads/createLead.ts
+// functions/src/config/deployment.ts
+export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
+  clockIn: {
+    minInstances: 1,
+    maxInstances: 20,
+    region: 'us-central1',
+    memory: '256MB',
+    timeoutSeconds: 30,
+  },
+  createLead: {
+    minInstances: 1,
+    maxInstances: 10,
+    region: 'us-central1',
+    memory: '256MB',
+    timeoutSeconds: 30,
+  },
+  // ... other functions
+};
+
+// Apply to functions using withValidation middleware:
+export const clockIn = withValidation(
+  TimeInSchema,
+  authenticatedEndpoint({ functionName: 'clockIn' })
+)(async (data, context) => {
+  // Function implementation
+});
+
+// Or apply directly to functions:
 export const createLead = functions
   .runWith({
-    minInstances: 1,           // Keep 1 instance warm
-    maxInstances: 10,          // Scale up to 10
-    memory: '256MB',           // Optimize for payload size
-    timeoutSeconds: 30,        // 30s timeout
+    ...getDeploymentConfig('createLead'),
     enforceAppCheck: true,
     consumeAppCheckToken: true,
   })
