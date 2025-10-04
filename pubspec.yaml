@@ -1,12 +1,86 @@
+name: sierra_painting
+description: Professional painting services management application
+publish_to: 'none'
+version: 0.0.12+12
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
 dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Firebase
   firebase_core: ^4.1.1
-  firebase_auth: ^6.2.0
-  firebase_storage: ^13.3.1
+  firebase_auth: ^6.1.0
+  firebase_storage: ^13.0.2
   cloud_firestore: ^6.0.2
   cloud_functions: ^6.0.2
   firebase_app_check: ^0.4.1
-  firebase_performance: ^0.10.1+10
-  firebase_crashlytics: ^4.1.3
-  firebase_analytics: ^11.3.3
   firebase_remote_config: ^6.0.2
-  # other dependencies...
+  firebase_crashlytics: ^4.1.3
+  firebase_performance: ^0.10.1+10
+  firebase_analytics: ^11.3.3
+
+  # State Management
+  flutter_riverpod: ^3.0.1
+  provider: ^6.1.5
+
+  # Routing
+  go_router: ^16.2.4
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
+
+  # UI/UX
+  material_color_utilities: 0.5.0
+  intl: ^0.20.2
+
+  # Networking
+  http: ^1.5.0
+  connectivity_plus: ^7.0.0
+
+  # Payments
+  flutter_stripe: ^12.0.2
+
+  # Utilities
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.4.13
+  hive_generator: ^2.0.1
+  mockito: ^5.4.4
+
+  # Code Quality
+  flutter_lints: ^6.0.0
+  analyzer: ^6.4.1
+
+# Dependency overrides are required for compatibility
+dependency_overrides:
+  # Required by integration_test to match Flutter SDK's internal version
+  material_color_utilities: 0.5.0
+  # Required by build_runner and dart_code_metrics
+  analyzer: ^6.4.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # fonts:
+  #   - family: Custom
+  #     fonts:
+  #       - asset: fonts/Custom-Regular.ttf
