@@ -1,459 +1,66 @@
-version: "1.0"
-name: "sierra_painting_update"
-classification:
-  level: "INTERNAL"
-  owner: "D'Sierra – Engineering"
-  handling: ["Internal Only"]
+name: sierra_painting_update
+description: >
+  Governance config for dependency management, security monitoring,
+  version drift limits, and update workflows for Sierra Painting v1.
 
-description: |
-  Comprehensive update management configuration for Sierra Painting v1 project.
-  Defines standards for dependency updates, version management, security patching,
-  and keeping the project current with latest stable releases.
-
-  This configuration focuses on:
-  - Dependency update strategy and cadence
-  - Security vulnerability remediation
-  - Breaking change management
-  - Version compatibility testing
-  - Documentation of changes and migrations
-
-update_goals:
-  primary_objectives:
-    - "Maintain < 5% version drift (dependencies not more than 2 minor versions behind)"
-    - "Zero high/critical security vulnerabilities"
-    - "Monthly dependency review and update cycle"
-    - "100% backward compatibility for minor updates"
-    - "Documented migration path for major updates"
-  
-  success_metrics:
-    dependency_freshness:
-      - metric: "Version drift rate"
-        target: "< 5% of dependencies"
-        measurement: "Packages more than 2 minor versions behind latest"
-      - metric: "Security vulnerability count"
-        target: "0 high/critical"
-        measurement: "Combined npm audit and Dependabot findings"
-      - metric: "Update success rate"
-        target: ">= 95%"
-        measurement: "Successful updates without breaking changes"
-    
-    security_posture:
-      - metric: "Mean time to patch (MTTP)"
-        target: "< 7 days for critical"
-        measurement: "Time from CVE disclosure to deployment"
-      - metric: "Vulnerable dependency count"
-        target: "0 with known exploits"
-        measurement: "Active CVEs in production dependencies"
-    
-    update_quality:
-      - metric: "Rollback rate"
-        target: "< 5% of updates"
-        measurement: "Updates requiring reversion"
-      - metric: "Breaking change incidents"
-        target: "0 unplanned"
-        measurement: "Production incidents from updates"
-
-dependency_management:
-  flutter_packages:
-    update_strategy:
-      policy: "Conservative updates via flutter pub upgrade"
-      cadence: "Monthly review, critical security patches immediately"
-      process:
-        - "Run flutter pub outdated to identify updates"
-        - "Review changelogs for breaking changes"
-        - "Update in development environment"
-        - "Run full test suite"
-        - "Deploy to staging for integration testing"
-        - "Monitor for 48 hours before production"
-    
-    version_constraints:
-      firebase_packages:
-        - "Use compatible versions (^x.y.z) for flexibility"
-        - "Pin exact versions if compatibility issues arise"
-        - "Document all overrides with rationale"
-      
-      core_dependencies:
-        - "flutter_riverpod: ^2.4.0 (state management)"
-        - "firebase_core: ^2.24.0 (Firebase initialization)"
-        - "cloud_firestore: ^4.13.0 (database)"
-        - "firebase_auth: ^4.15.0 (authentication)"
-        - "cloud_functions: ^4.5.0 (callable functions)"
-      
-      testing_packages:
-        - "Keep test packages on latest stable"
-        - "Update immediately for security fixes"
-    
-    critical_packages:
-      - name: "firebase_core"
-        min_version: "2.24.0"
-        rationale: "Security patches, stability improvements"
-      - name: "firebase_auth"
-        min_version: "4.15.0"
-        rationale: "Auth security fixes"
-      - name: "cloud_firestore"
-        min_version: "4.13.0"
-        rationale: "Data integrity fixes"
-  
-  node_packages:
-    functions:
-      update_strategy:
-        policy: "Pin exact versions in package.json, update via npm ci"
-        cadence: "Monthly security audits, immediate critical patches"
-        process:
-          - "Run npm audit to identify vulnerabilities"
-          - "Run npm outdated to check versions"
-          - "Update package.json with new versions"
-          - "Run npm ci to install exact versions"
-          - "Run npm test to verify"
-          - "Deploy to staging environment"
-      
-      version_pinning:
-        - "Use exact versions (x.y.z) in package.json"
-        - "Commit package-lock.json to version control"
-        - "Never use npm update (prevents drift)"
-      
-      critical_packages:
-        - name: "firebase-functions"
-          min_version: "4.5.0"
-          rationale: "Core runtime, security updates"
-        - name: "firebase-admin"
-          min_version: "11.11.0"
-          rationale: "Admin SDK, security patches"
-        - name: "stripe"
-          min_version: "14.0.0"
-          rationale: "Payment processing, PCI compliance"
-    
-    webapp:
-      update_strategy:
-        policy: "Same as functions, maintain consistency"
-        cadence: "Aligned with functions updates"
-  
-  gradle_dependencies:
-    update_strategy:
-      policy: "Follow Flutter stable channel recommendations"
-      cadence: "Quarterly review, immediate security patches"
-      process:
-        - "Check Flutter stable channel release notes"
-        - "Update android/build.gradle versions"
-        - "Test on physical devices"
-        - "Verify Google Play Store compatibility"
-    
-    version_tracking:
-      - file: "android/build.gradle"
-        track: "gradle_version, kotlin_version, compileSdk, targetSdk"
-      - file: "android/app/build.gradle"
-        track: "applicationId, versionCode, versionName"
-
-security_updates:
-  vulnerability_scanning:
-    tools:
-      - name: "Dependabot"
-        scope: "All package.json and pubspec.yaml files"
-        schedule: "Daily scan"
-        auto_merge: "Patch versions only, after CI passes"
-      
-      - name: "npm audit"
-        scope: "functions/ and webapp/ directories"
-        schedule: "Pre-deployment and weekly"
-        threshold: "No high/critical vulnerabilities"
-      
-      - name: "flutter pub audit"
-        scope: "Root pubspec.yaml"
-        schedule: "Weekly"
-        threshold: "No known security issues"
-  
-  patch_policy:
-    critical_vulnerabilities:
-      response_time: "< 24 hours"
-      process:
-        - "Automated alert via Dependabot/GitHub Security"
-        - "Assess impact and exploitability"
-        - "Create emergency update branch"
-        - "Apply patch and run smoke tests"
-        - "Fast-track to production"
-        - "Document in CHANGELOG"
-    
-    high_vulnerabilities:
-      response_time: "< 7 days"
-      process:
-        - "Review vulnerability details"
-        - "Plan update in next sprint"
-        - "Test thoroughly in staging"
-        - "Deploy during maintenance window"
-    
-    medium_low_vulnerabilities:
-      response_time: "< 30 days"
-      process:
-        - "Include in monthly update cycle"
-        - "Batch with other updates"
-        - "Standard deployment process"
-  
-  security_advisories:
-    monitoring:
-      - "GitHub Security Advisories"
-      - "Firebase Release Notes"
-      - "Flutter Security Announcements"
-      - "Node.js Security Releases"
-      - "Stripe API Updates"
-    
-    notification:
-      channels: ["Slack #engineering", "Email to on-call"]
-      severity_threshold: "Medium and above"
-
-breaking_change_management:
-  detection:
-    - "Review CHANGELOG files for BREAKING CHANGE markers"
-    - "Check migration guides in dependency documentation"
-    - "Run automated tests to catch API changes"
-    - "Use semantic versioning to identify major updates"
-  
-  assessment:
-    impact_analysis:
-      - "Identify affected code paths"
-      - "Estimate refactoring effort"
-      - "Evaluate benefits vs. cost"
-      - "Consider alternatives (stay on current, fork, replace)"
-    
-    decision_criteria:
-      - "Security benefits outweigh migration cost"
-      - "End of life for current version"
-      - "New features required for business"
-      - "Performance improvements significant"
-  
-  migration_process:
-    planning:
-      - "Create migration ADR (Architecture Decision Record)"
-      - "Document breaking changes and migration steps"
-      - "Allocate dedicated sprint for migration"
-      - "Set up rollback plan"
-    
-    execution:
-      - "Create feature branch for migration"
-      - "Update dependencies incrementally"
-      - "Fix breaking changes with tests"
-      - "Update documentation"
-      - "Deploy to staging for extended testing"
-      - "Gradual rollout to production"
-    
-    documentation:
-      required_docs:
-        - "Migration guide in docs/migrations/"
-        - "Updated README if setup changed"
-        - "CHANGELOG entry with upgrade instructions"
-        - "ADR documenting decision rationale"
-
-update_cadence:
-  scheduled_reviews:
-    monthly:
-      - "Review flutter pub outdated"
-      - "Review npm audit results"
-      - "Check Dependabot alerts"
-      - "Update patch versions"
-      - "Minor version updates if no breaking changes"
-    
-    quarterly:
-      - "Review gradle dependencies"
-      - "Evaluate major version updates"
-      - "Update Flutter SDK if stable"
-      - "Review and clean up deprecated APIs"
-    
-    annual:
-      - "Major version updates (plan migrations)"
-      - "Architecture review for dependency strategy"
-      - "Evaluate new alternatives"
-  
-  maintenance_windows:
-    preferred_times:
-      - "First Monday of month (09:00-11:00 UTC)"
-      - "Low traffic periods"
-      - "Not during business-critical periods"
-    
-    communication:
-      - "Notify team 48 hours in advance"
-      - "Document update scope in calendar"
-      - "Assign on-call engineer"
-      - "Prepare rollback commands"
-
-testing_requirements:
-  pre_update:
-    - "All existing tests pass"
-    - "No pending security vulnerabilities"
-    - "Staging environment healthy"
-    - "Rollback plan documented"
-  
-  post_update:
-    automated_tests:
-      - "Unit tests: 100% pass"
-      - "Integration tests: 100% pass"
-      - "Firestore rules tests: 100% pass"
-      - "Functions emulator tests: 100% pass"
-      - "Smoke tests: All critical paths work"
-    
-    manual_verification:
-      - "Test authentication flows"
-      - "Verify Stripe payment processing"
-      - "Check Firebase Performance metrics"
-      - "Review error rates in Cloud Logging"
-      - "Validate on physical devices (iOS/Android)"
-    
-    monitoring_period:
-      staging: "48 hours minimum"
-      production: "7 days enhanced monitoring"
-  
-  rollback_criteria:
-    automatic:
-      - "Test failures > 5%"
-      - "Error rate increase > 10%"
-      - "Critical functionality broken"
-    
-    manual:
-      - "Performance degradation > 20%"
-      - "User-reported issues > normal baseline"
-      - "Third-party integration failures"
-
-version_tracking:
-  required_files:
-    - path: "pubspec.yaml"
-      track: "Flutter dependencies and constraints"
-      validation: "flutter pub get succeeds"
-    
-    - path: "pubspec.lock"
-      track: "Resolved dependency versions"
-      validation: "Committed to version control"
-    
-    - path: "functions/package.json"
-      track: "Functions dependencies"
-      validation: "npm ci succeeds"
-    
-    - path: "functions/package-lock.json"
-      track: "Functions resolved versions"
-      validation: "Committed to version control"
-    
-    - path: "webapp/package.json"
-      track: "WebApp dependencies"
-      validation: "npm ci succeeds"
-    
-    - path: "webapp/package-lock.json"
-      track: "WebApp resolved versions"
-      validation: "Committed to version control"
-  
-  changelog_maintenance:
-    - "Document all dependency updates"
-    - "Include version numbers (from → to)"
-    - "Note breaking changes"
-    - "Link to upstream changelogs"
-
-tools_and_automation:
-  dependabot_config:
-    file: ".github/dependabot.yml"
-    settings:
-      - "Enable for package.json files"
-      - "Enable for pubspec.yaml"
-      - "Daily security updates"
-      - "Weekly version updates"
-      - "Auto-merge patch versions"
-      - "Require manual review for major/minor"
-  
-  github_actions:
-    - name: "Update Check Workflow"
-      file: ".github/workflows/updates.yml"
-      schedule: "Weekly on Mondays"
-      actions:
-        - "Run flutter pub outdated"
-        - "Run npm audit in functions/"
-        - "Run npm audit in webapp/"
-        - "Generate update report"
-        - "Create issue if critical updates needed"
-  
-  scripts:
-    - name: "Update Validation Script"
-      file: "scripts/validate_updates.sh"
-      purpose: "Check compliance with update standards"
+standards:
+  cadence:
+    flutter: monthly
+    node_functions: monthly
+    webapp_node: monthly
+    github_actions: monthly
+    gradle_android: quarterly
+    major_versions: annually
+  security_response:
+    critical_cve_days: 1
+    high_cve_days: 7
+    medium_cve_days: 30
+  version_management:
+    max_version_drift_percent: 5
+    critical_min_versions:
+      firebase_core: ">=4.0.0"
+      firebase_auth: ">=5.0.0"
+      firebase_performance: ">=0.11.0"
+      flutter_riverpod: ">=2.5.0"
+  breaking_changes:
+    require_migration_guide: true
+    require_rollback_plan: true
+    require_release_notes: true
+  quality_gates:
+    require_lockfiles_committed: true
+    require_zero_critical_or_high_vulns: true
+    require_analysis_clean: true
+    docs_updated_within_days: 60
+validation:
+  sections:
+    - name: yaml_validity
       checks:
-        - "Lock files exist and committed"
-        - "No high/critical vulnerabilities"
-        - "Version drift within acceptable range"
-        - "Required packages meet minimum versions"
-        - "Changelog documents recent updates"
-
-documentation_requirements:
-  update_records:
-    - "Maintain docs/UPDATES.md with update history"
-    - "Document rationale for version pinning"
-    - "Record known compatibility issues"
-    - "Link to upstream issue trackers"
-  
-  migration_guides:
-    location: "docs/migrations/"
-    format:
-      - "Migration-YYYY-MM-DD-description.md"
-      - "Include before/after code examples"
-      - "List all breaking changes"
-      - "Provide rollback instructions"
-
-compliance_checks:
-  required_checks:
-    - name: "Lock files committed"
-      validation: "pubspec.lock, package-lock.json in git"
-      severity: "CRITICAL"
-    
-    - name: "No critical vulnerabilities"
-      validation: "npm audit and Dependabot clean"
-      severity: "CRITICAL"
-    
-    - name: "Version drift acceptable"
-      validation: "< 5% packages more than 2 minor versions behind"
-      severity: "HIGH"
-    
-    - name: "Minimum versions met"
-      validation: "Core packages meet minimum version requirements"
-      severity: "HIGH"
-    
-    - name: "Changelog updated"
-      validation: "CHANGELOG.md has entry for last 30 days"
-      severity: "MEDIUM"
-    
-    - name: "Update script exists"
-      validation: "scripts/validate_updates.sh is executable"
-      severity: "MEDIUM"
-  
-  enforcement:
-    ci_workflow: ".github/workflows/updates.yml"
-    local_validation: "make validate-updates"
-    merge_requirement: "Update checks pass for critical/high severity"
-
-risk_management:
-  risks:
-    - risk: "Breaking changes in minor/patch updates"
-      mitigation: "Comprehensive test suite, staging validation, gradual rollout"
-      impact: "HIGH"
-      likelihood: "MEDIUM"
-    
-    - risk: "Dependency conflicts between packages"
-      mitigation: "Lock files, version constraints, compatibility testing"
-      impact: "HIGH"
-      likelihood: "LOW"
-    
-    - risk: "Security vulnerability in updated dependency"
-      mitigation: "Security scanning, staged rollout, monitoring"
-      impact: "CRITICAL"
-      likelihood: "LOW"
-    
-    - risk: "Update disrupts production during deployment"
-      mitigation: "Maintenance windows, rollback plan, canary deployment"
-      impact: "HIGH"
-      likelihood: "LOW"
-  
-  mitigation_strategies:
-    - "Always test in staging first"
-    - "Maintain rollback capability"
-    - "Monitor closely after updates"
-    - "Document all changes"
-    - "Have on-call engineer during updates"
-
-related_documents:
-  - "docs/UPDATES_EXECUTION.md - Detailed execution guide"
-  - "docs/DEPLOYMENT.md - Deployment procedures"
-  - ".copilot/stabilize_sierra_painting.yaml - Stability standards"
-  - "docs/migrations/ - Migration guides directory"
-  - "CHANGELOG.md - Update history"
+        - path_exists: ".copilot/sierra_painting_update.yaml"
+        - yaml_is_valid: ".copilot/sierra_painting_update.yaml"
+    - name: lockfiles
+      checks:
+        - path_exists: "pubspec.lock"
+        - path_exists: "functions/package-lock.json"
+        - path_exists: "firestore-tests/package-lock.json"
+    - name: security
+      checks:
+        - npm_audit_ok: "functions"
+        - npm_audit_ok: "firestore-tests"
+    - name: versions_minimums
+      checks:
+        - dart_pkg_meets_min: {pkg: "firebase_core", min: "4.0.0"}
+        - dart_pkg_meets_min: {pkg: "flutter_riverpod", min: "2.5.0"}
+        - dart_pkg_meets_min: {pkg: "firebase_performance", min: "0.11.0"}
+    - name: version_drift
+      checks:
+        - report_outdated_pub: true
+        - report_outdated_npm: ["functions","firestore-tests"]
+    - name: docs_completeness
+      checks:
+        - path_exists: "docs/UPDATES_EXECUTION.md"
+        - path_exists: "docs/UPDATES.md"
+        - path_exists: "docs/migrations/README.md"
+    - name: automation_tooling
+      checks:
+        - workflow_exists: ".github/workflows/updates.yml"
+        - dependabot_exists: ".github/dependabot.yml"
