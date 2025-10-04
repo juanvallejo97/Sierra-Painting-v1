@@ -1,4 +1,4 @@
-.PHONY: analyze test format smoke clean help build-web size-report audit functions-test rules-test
+.PHONY: analyze test format smoke clean help build-web size-report audit functions-test rules-test validate-stabilization
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -60,6 +60,11 @@ functions-test: ## Run Functions tests with emulators
 rules-test: ## Run Firestore rules tests
 	@echo "Running Firestore rules tests..."
 	cd firestore-tests && npm test
+
+validate-stabilization: ## Validate compliance with stabilization standards
+	@echo "Running stabilization compliance check..."
+	@chmod +x scripts/validate_stabilization.sh
+	@./scripts/validate_stabilization.sh
 
 clean: ## Clean build artifacts
 	flutter clean
