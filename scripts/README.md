@@ -15,6 +15,13 @@ scripts/
 │   └── manage-flags.sh          # Feature flag management
 ├── rollback/                    # Rollback procedures
 │   └── rollback-functions.sh    # Function rollback helper
+├── deploy/                      # Deployment scripts
+│   ├── deploy.sh                # Main deployment script
+│   ├── pre-deploy-checks.sh    # Pre-deployment validation
+│   └── verify.sh                # Post-deployment verification
+├── setup_env.sh                 # Environment setup and dependency verification
+├── configure_env.sh             # Configure .env file from template
+├── verify_config.sh             # Verify environment configuration
 ├── quality.sh                   # Code quality checks
 ├── generate-docs.sh             # Generate API documentation
 ├── deploy_canary.sh             # Deploy with canary strategy
@@ -23,6 +30,103 @@ scripts/
 ```
 
 ## Scripts Overview
+
+### Environment Setup Scripts
+
+#### `setup_env.sh`
+
+**Purpose:** Verify and install required dependencies for the Sierra Painting project
+
+**Usage:**
+```bash
+# Full setup
+./scripts/setup_env.sh
+
+# Skip specific checks
+./scripts/setup_env.sh --skip-flutter
+./scripts/setup_env.sh --skip-firebase
+./scripts/setup_env.sh --skip-node
+```
+
+**What it does:**
+1. Verifies Flutter SDK (>=3.10.0)
+2. Verifies Node.js (>=18.x)
+3. Verifies/installs Firebase CLI (>=12.0.0)
+4. Installs FlutterFire CLI
+5. Installs Flutter dependencies
+6. Installs Cloud Functions dependencies
+
+**When to use:**
+- Initial project setup for new developers
+- After cloning the repository
+- When setting up a new development machine
+
+---
+
+#### `configure_env.sh`
+
+**Purpose:** Configure .env file from .env.example template
+
+**Usage:**
+```bash
+# Interactive mode (recommended for first-time setup)
+./scripts/configure_env.sh --interactive
+
+# Non-interactive with arguments
+./scripts/configure_env.sh --env development
+./scripts/configure_env.sh --env staging --project-id sierra-painting-staging
+./scripts/configure_env.sh --env production --project-id sierra-painting-prod --force
+```
+
+**Options:**
+- `--env <environment>` - Target environment: development, staging, production
+- `--project-id <id>` - Firebase project ID
+- `--interactive` - Prompts for configuration values
+- `--force` - Overwrite existing .env file without confirmation
+
+**When to use:**
+- After running setup_env.sh
+- When switching between environments
+- When setting up a new Firebase project
+
+---
+
+#### `verify_config.sh`
+
+**Purpose:** Verify that environment and Firebase configuration is correct
+
+**Usage:**
+```bash
+# Standard verification
+./scripts/verify_config.sh
+
+# Verbose output
+./scripts/verify_config.sh --verbose
+
+# Skip specific checks
+./scripts/verify_config.sh --skip-firebase
+./scripts/verify_config.sh --skip-flutter
+```
+
+**Verifies:**
+1. .env file exists with required variables
+2. Flutter configuration and dependencies
+3. Firebase CLI and project configuration
+4. Firebase options file (lib/firebase_options.dart)
+5. Cloud Functions dependencies
+6. Firestore and Storage rules
+
+**Exit codes:**
+- 0: All checks passed or warnings only
+- 1: One or more errors found
+
+**When to use:**
+- After running configure_env.sh
+- Before deploying
+- In CI/CD pipelines
+- When troubleshooting configuration issues
+
+---
 
 ### Code Quality Scripts
 
