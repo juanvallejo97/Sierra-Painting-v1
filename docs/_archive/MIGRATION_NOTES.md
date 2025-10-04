@@ -45,11 +45,12 @@ This document describes the changes made to fix all GitHub Actions workflows and
 - Uses: Flutter stable, ubuntu-latest, bash shell
 - Includes pub cache for faster builds
 
-#### B. Flutter CI (`.github/workflows/flutter_ci.yml`)
-- Job name: `analyze-and-test-flutter` (matches org gate)
-- Runs: analyze, test with coverage, build debug APK
-- Uses: Java 17, Gradle caching
-- All commands use bash shell
+#### B. Flutter CI (consolidated into `.github/workflows/ci.yml`)
+- **Note**: Previously standalone as `flutter_ci.yml`, now part of comprehensive `ci.yml`
+- The `ci.yml` workflow now handles all Flutter, Functions, and build jobs with matrix strategy
+- Job names: `analyze`, `test`, `build` (with platform matrix: android, ios, web)
+- Includes: analyze, test with coverage, multi-platform builds
+- Uses: Java 17, Gradle caching, Flutter stable
 
 #### C. Firestore Rules (`.github/workflows/firestore_rules.yml`)
 - Job name: `rules` (matches org gate)
@@ -71,10 +72,13 @@ This document describes the changes made to fix all GitHub Actions workflows and
 
 **Files Created**:
 - `.github/workflows/code_quality.yml`
-- `.github/workflows/flutter_ci.yml`
+- `.github/workflows/ci.yml` (comprehensive pipeline consolidating Flutter, Functions, Rules tests)
 - `.github/workflows/firestore_rules.yml`
 - `.github/workflows/secrets_check.yml`
 - `.github/workflows/smoke_tests.yml`
+
+**Files Removed** (Phase 2 Consolidation):
+- `.github/workflows/flutter_ci.yml` (consolidated into `ci.yml`)
 
 **Old Workflows**: The old workflows (`ci.yml`, `quality.yml`, `rules-test.yml`, `prevent-json-credentials.yml`, `smoke.yml`) should be removed after validating the new ones work.
 
