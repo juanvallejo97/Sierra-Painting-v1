@@ -200,9 +200,9 @@ if [ -f "pubspec.yaml" ]; then
   # firebase_core minimum version
   FIREBASE_CORE_VERSION=$(grep 'firebase_core:' pubspec.yaml | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0.0.0")
   if [ "$FIREBASE_CORE_VERSION" != "0.0.0" ]; then
-    MAJOR=$(echo $FIREBASE_CORE_VERSION | cut -d. -f1)
-    MINOR=$(echo $FIREBASE_CORE_VERSION | cut -d. -f2)
-    if [ "$MAJOR" -gt 2 ] || ([ "$MAJOR" -eq 2 ] && [ "$MINOR" -ge 24 ]); then
+    MAJOR=$(echo "$FIREBASE_CORE_VERSION" | cut -d. -f1)
+    MINOR=$(echo "$FIREBASE_CORE_VERSION" | cut -d. -f2)
+    if [ "$MAJOR" -gt 2 ] || { [ "$MAJOR" -eq 2 ] && [ "$MINOR" -ge 24 ]; }; then
       check "firebase_core >= 2.24.0" "PASS"
     else
       check "firebase_core >= 2.24.0" "FAIL" "Current version: $FIREBASE_CORE_VERSION"
@@ -214,9 +214,9 @@ if [ -f "pubspec.yaml" ]; then
   # firebase_auth minimum version
   FIREBASE_AUTH_VERSION=$(grep 'firebase_auth:' pubspec.yaml | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0.0.0")
   if [ "$FIREBASE_AUTH_VERSION" != "0.0.0" ]; then
-    MAJOR=$(echo $FIREBASE_AUTH_VERSION | cut -d. -f1)
-    MINOR=$(echo $FIREBASE_AUTH_VERSION | cut -d. -f2)
-    if [ "$MAJOR" -gt 4 ] || ([ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 15 ]); then
+    MAJOR=$(echo "$FIREBASE_AUTH_VERSION" | cut -d. -f1)
+    MINOR=$(echo "$FIREBASE_AUTH_VERSION" | cut -d. -f2)
+    if [ "$MAJOR" -gt 4 ] || { [ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 15 ]; }; then
       check "firebase_auth >= 4.15.0" "PASS"
     else
       check "firebase_auth >= 4.15.0" "WARN" "Current version: $FIREBASE_AUTH_VERSION"
@@ -228,9 +228,9 @@ if [ -f "pubspec.yaml" ]; then
   # cloud_firestore minimum version
   FIRESTORE_VERSION=$(grep 'cloud_firestore:' pubspec.yaml | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0.0.0")
   if [ "$FIRESTORE_VERSION" != "0.0.0" ]; then
-    MAJOR=$(echo $FIRESTORE_VERSION | cut -d. -f1)
-    MINOR=$(echo $FIRESTORE_VERSION | cut -d. -f2)
-    if [ "$MAJOR" -gt 4 ] || ([ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 13 ]); then
+    MAJOR=$(echo "$FIRESTORE_VERSION" | cut -d. -f1)
+    MINOR=$(echo "$FIRESTORE_VERSION" | cut -d. -f2)
+    if [ "$MAJOR" -gt 4 ] || { [ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 13 ]; }; then
       check "cloud_firestore >= 4.13.0" "PASS"
     else
       check "cloud_firestore >= 4.13.0" "WARN" "Current version: $FIRESTORE_VERSION"
@@ -247,9 +247,9 @@ if [ -f "functions/package.json" ]; then
   # firebase-functions minimum version
   FIREBASE_FUNCTIONS_VERSION=$(grep '"firebase-functions"' functions/package.json | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0.0.0")
   if [ "$FIREBASE_FUNCTIONS_VERSION" != "0.0.0" ]; then
-    MAJOR=$(echo $FIREBASE_FUNCTIONS_VERSION | cut -d. -f1)
-    MINOR=$(echo $FIREBASE_FUNCTIONS_VERSION | cut -d. -f2)
-    if [ "$MAJOR" -gt 4 ] || ([ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 5 ]); then
+    MAJOR=$(echo "$FIREBASE_FUNCTIONS_VERSION" | cut -d. -f1)
+    MINOR=$(echo "$FIREBASE_FUNCTIONS_VERSION" | cut -d. -f2)
+    if [ "$MAJOR" -gt 4 ] || { [ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 5 ]; }; then
       check "firebase-functions >= 4.5.0" "PASS"
     else
       check "firebase-functions >= 4.5.0" "WARN" "Current version: $FIREBASE_FUNCTIONS_VERSION"
@@ -261,9 +261,9 @@ if [ -f "functions/package.json" ]; then
   # firebase-admin minimum version
   FIREBASE_ADMIN_VERSION=$(grep '"firebase-admin"' functions/package.json | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0.0.0")
   if [ "$FIREBASE_ADMIN_VERSION" != "0.0.0" ]; then
-    MAJOR=$(echo $FIREBASE_ADMIN_VERSION | cut -d. -f1)
-    MINOR=$(echo $FIREBASE_ADMIN_VERSION | cut -d. -f2)
-    if [ "$MAJOR" -gt 11 ] || ([ "$MAJOR" -eq 11 ] && [ "$MINOR" -ge 11 ]); then
+    MAJOR=$(echo "$FIREBASE_ADMIN_VERSION" | cut -d. -f1)
+    MINOR=$(echo "$FIREBASE_ADMIN_VERSION" | cut -d. -f2)
+    if [ "$MAJOR" -gt 11 ] || { [ "$MAJOR" -eq 11 ] && [ "$MINOR" -ge 11 ]; }; then
       check "firebase-admin >= 11.11.0" "PASS"
     else
       check "firebase-admin >= 11.11.0" "WARN" "Current version: $FIREBASE_ADMIN_VERSION"
@@ -288,7 +288,7 @@ if [ -f "CHANGELOG.md" ]; then
   # Check if changelog has been updated in last 60 days
   LAST_MODIFIED=$(git log -1 --format="%at" -- CHANGELOG.md 2>/dev/null || echo 0)
   CURRENT_TIME=$(date +%s)
-  DAYS_OLD=$(( ($CURRENT_TIME - $LAST_MODIFIED) / 86400 ))
+  DAYS_OLD=$(( (CURRENT_TIME - LAST_MODIFIED) / 86400 ))
   
   if [ $DAYS_OLD -lt 60 ]; then
     check "CHANGELOG.md updated recently" "PASS"
@@ -371,7 +371,7 @@ echo -e "Failed:        ${RED}$FAILED_CHECKS${NC}"
 
 # Calculate compliance percentage
 if [ $TOTAL_CHECKS -gt 0 ]; then
-  COMPLIANCE=$(( ($PASSED_CHECKS * 100) / $TOTAL_CHECKS ))
+  COMPLIANCE=$(( (PASSED_CHECKS * 100) / TOTAL_CHECKS ))
   echo -e "Compliance:    ${BLUE}$COMPLIANCE%${NC}"
 fi
 
