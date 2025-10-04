@@ -7,7 +7,8 @@ This directory contains helper scripts for CI/CD, testing, and deployment operat
 ```
 scripts/
 ├── ci/                          # CI/CD helper scripts
-│   └── firebase-login.sh        # Validate Firebase authentication
+│   ├── firebase-login.sh        # Validate Firebase authentication
+│   └── failure-triage.sh        # Collect diagnostics on CI failures
 ├── smoke/                       # Smoke testing scripts
 │   └── run.sh                   # Emulator smoke test suite
 ├── remote-config/               # Remote Config management
@@ -16,6 +17,8 @@ scripts/
 │   └── rollback-functions.sh    # Function rollback helper
 ├── quality.sh                   # Code quality checks
 ├── generate-docs.sh             # Generate API documentation
+├── deploy_canary.sh             # Deploy with canary strategy
+├── promote_canary.sh            # Promote canary to production
 └── build-and-deploy.sh          # Legacy web app build script
 ```
 
@@ -48,6 +51,45 @@ scripts/
 - Before committing code
 - During CI/CD workflows
 - Before creating pull requests
+
+---
+
+#### `ci/failure-triage.sh`
+
+**Purpose:** Collect comprehensive diagnostic information when CI jobs fail
+
+**Usage:**
+```bash
+# Collect failure diagnostics in default location
+./scripts/ci/failure-triage.sh
+
+# Collect diagnostics in custom location
+./scripts/ci/failure-triage.sh build/my-diagnostics
+```
+
+**Collected Information:**
+- System and environment details
+- Flutter/Dart versions and doctor output
+- Node.js and npm versions
+- Build logs
+- Test results
+- Code coverage data
+- APK/web bundle sizes
+- Size diffs vs previous builds
+
+**When to use:**
+- Automatically in CI on job failure
+- Manually when debugging local issues
+- Before reporting CI/CD issues
+
+**Artifacts Generated:**
+- `system-info.txt` - System configuration
+- `flutter-doctor.txt` - Flutter environment
+- `*.log` - Build and test logs
+- `size-diff.txt` - Bundle size changes
+- `README.md` - Summary report
+
+---
 - Regular code health audits
 
 ---

@@ -51,6 +51,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { z } from 'zod';
 import { log, getOrCreateRequestId } from '../lib/ops';
+import { getDeploymentConfig } from '../config/deployment';
 
 // ============================================================
 // TYPES
@@ -85,6 +86,12 @@ export interface ValidationOptions {
    * @default "2.0.0-refactor"
    */
   version?: string;
+
+  /**
+   * Function name for deployment config lookup
+   * If not provided, deployment config will use defaults
+   */
+  functionName?: string;
 }
 
 export type ValidatedHandler<TInput, TOutput> = (
@@ -117,11 +124,16 @@ export function withValidation<TInput, TOutput>(
     requireAdmin = false,
     requireRole,
     version = '2.0.0-refactor',
+    functionName,
   } = options;
 
   return (handler: ValidatedHandler<TInput, TOutput>) => {
+    // Get deployment config if functionName is provided
+    const deploymentConfig = functionName ? getDeploymentConfig(functionName) : {};
+    
     return functions
       .runWith({
+        ...deploymentConfig,
         enforceAppCheck: requireAppCheck,
         consumeAppCheckToken: requireAppCheck, // Prevent replay attacks
       })
@@ -142,7 +154,26 @@ export function withValidation<TInput, TOutput>(
 
         try {
           // ========================================
-          // 1. AUTHENTICATION CHECK
+          // 1. PAYLOAD SIZE CHECK
+          // ========================================
+          
+          // Limit payload size to 10MB (10 * 1024 * 1024 bytes)
+          const MAX_PAYLOAD_SIZE = 10 * 1024 * 1024;
+          const payloadSize = JSON.stringify(data).length;
+          
+          if (payloadSize > MAX_PAYLOAD_SIZE) {
+            baseLogger.warn('request_payload_too_large', {
+              payloadSize,
+              maxSize: MAX_PAYLOAD_SIZE,
+            });
+            throw new functions.https.HttpsError(
+              'invalid-argument',
+              `Payload size (${payloadSize} bytes) exceeds maximum allowed size (${MAX_PAYLOAD_SIZE} bytes)`
+            );
+          }
+
+          // ========================================
+          // 2. AUTHENTICATION CHECK
           // ========================================
           
           if (requireAuth && !context.auth) {
@@ -162,7 +193,7 @@ export function withValidation<TInput, TOutput>(
             : baseLogger;
 
           // ========================================
-          // 2. APP CHECK VERIFICATION
+          // 3. APP CHECK VERIFICATION
           // ========================================
           
           if (requireAppCheck && !context.app) {
@@ -176,7 +207,7 @@ export function withValidation<TInput, TOutput>(
           }
 
           // ========================================
-          // 3. ROLE AUTHORIZATION CHECK
+          // 4. ROLE AUTHORIZATION CHECK
           // ========================================
 
           if ((requireAdmin || requireRole) && context.auth) {
@@ -220,7 +251,7 @@ export function withValidation<TInput, TOutput>(
           }
 
           // ========================================
-          // 4. INPUT VALIDATION
+          // 5. INPUT VALIDATION
           // ========================================
 
           let validatedData: TInput;
@@ -255,7 +286,7 @@ export function withValidation<TInput, TOutput>(
           }
 
           // ========================================
-          // 5. EXECUTE HANDLER
+          // 6. EXECUTE HANDLER
           // ========================================
 
           logger.info('request_processing', {
@@ -273,7 +304,7 @@ export function withValidation<TInput, TOutput>(
           const result = await handler(validatedData, enhancedContext);
 
           // ========================================
-          // 6. SUCCESS LOGGING
+          // 7. SUCCESS LOGGING
           // ========================================
 
           const latencyMs = Date.now() - startTime;
@@ -286,7 +317,7 @@ export function withValidation<TInput, TOutput>(
 
         } catch (error: unknown) {
           // ========================================
-          // 7. ERROR HANDLING
+          // 8. ERROR HANDLING
           // ========================================
 
           const latencyMs = Date.now() - startTime;

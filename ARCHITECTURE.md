@@ -1,445 +1,604 @@
+# Sierra Painting — Architecture Overview
+
+> **Version:** 2.0.0-refactor  
+> **Last Updated:** 2024  
+> **Status:** Professional Skeleton (Refactored)
+
+## Table of Contents
+1. [System Architecture](#system-architecture)
+2. [Frontend Architecture (Flutter)](#frontend-architecture-flutter)
+3. [Backend Architecture (Firebase)](#backend-architecture-firebase)
+4. [Security Architecture](#security-architecture)
+5. [Offline-First Strategy](#offline-first-strategy)
+6. [Payment Architecture](#payment-architecture)
+7. [Routing & RBAC](#routing--rbac)
+8. [Observability & Monitoring](#observability--monitoring)
+9. [Performance Targets](#performance-targets)
+10. [CI/CD Pipeline](#cicd-pipeline)
+11. [Data Flow Examples](#data-flow-examples)
+12. [Technology Stack Summary](#technology-stack-summary)
+13. [File Organization](#file-organization)
+14. [Key Design Decisions](#key-design-decisions)
+15. [Scalability](#scalability)
+16. [Future Considerations](#future-considerations)
+17. [Optimized Widgets](#optimized-widgets)
+18. [Monitoring & Debugging](#monitoring--debugging)
+
+---
+
 # Architecture Overview
 
-## Technology Stack
+## System Architecture
 
-- **Framework**: Flutter 3.8+
-- **Language**: Dart 3.8+
-- **State Management**: Riverpod 3.0+
-- **Backend**: Firebase (Auth, Firestore, Cloud Functions, Storage)
-- **Routing**: GoRouter 16.2+
-- **Local Storage**: Hive 2.2+ (offline-first architecture)
+Sierra Painting follows a modern, mobile-first architecture with offline-first capabilities and a Firebase backend.
 
-## Project Structure
+### High-Level Architecture
 
-```
+┌─────────────────────────────────────────────────────────┐
+│ Flutter App (Dart) │
+│ ┌─────────────┐ ┌──────────────┐ ┌───────────────┐ │
+│ │ UI │ │ Business │ │ Data Layer │ │
+│ │ (Widgets) │→ │ Logic │→ │ (Services) │ │
+│ └─────────────┘ └──────────────┘ └───────────────┘ │
+│ ↓ ↓ ↓ │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │ Offline Storage / Queue (Hive) │ │
+│ └──────────────────────────────────────────────────┘ │
+└────────────────────────┬────────────────────────────────┘
+│
+Internet
+│
+┌────────────────────────┴────────────────────────────────┐
+│ Firebase Backend │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
+│ │ Auth │ │ Firestore │ │ Storage │ │
+│ └──────────────┘ └──────────────┘ └──────────────┘ │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
+│ │ Functions │ │ App Check │ │ Remote Config│ │
+│ │ (TypeScript) │ │ │ │ (Feat Flags) │ │
+│ └──────────────┘ └──────────────┘ └──────────────┘ │
+└─────────────────────────────────────────────────────────┘
+│
+(Optional)
+│
+┌───────┴────────┐
+│ Stripe API │
+└─────────────────┘
+
+
+---
+
+## Frontend Architecture (Flutter)
+
+### Layer Structure
+
+
+
 lib/
-├── main.dart                    # Application entry point, Firebase initialization
-├── firebase_options.dart        # Generated Firebase configuration
-├── app/                         # App-level configuration
-│   ├── app.dart                 # MaterialApp setup with theme
-│   └── router.dart              # GoRouter configuration with RBAC
-├── core/                        # Shared infrastructure
-│   ├── models/                  # Data models (QueueItem, etc.)
-│   ├── network/                 # API client with retry logic
-│   ├── providers/               # Riverpod providers (auth, Firestore)
-│   ├── services/                # Business services
-│   │   ├── haptic_service.dart  # Haptic feedback service
-│   │   ├── offline_service.dart # Offline storage (Hive)
-│   │   ├── queue_service.dart   # Offline queue management
-│   │   └── feature_flag_service.dart # Firebase Remote Config
-│   ├── telemetry/               # Observability services
-│   ├── utils/                   # Utility functions
-│   └── widgets/                 # Shared UI components
-├── design/                      # Design system
-│   ├── design.dart              # Barrel export for design system
-│   ├── tokens.dart              # Design tokens (colors, spacing, etc.)
-│   ├── theme.dart               # Material 3 theme configuration
-│   └── components/              # Reusable UI components
-│       ├── app_button.dart
-│       ├── app_input.dart
-│       ├── app_card.dart
-│       └── ...
-└── features/                    # Feature modules (feature-first structure)
-    ├── auth/
-    │   └── presentation/
-    │       └── login_screen.dart
-    ├── timeclock/
-    │   ├── data/                # Data layer (repositories)
-    │   ├── domain/              # Business logic
-    │   └── presentation/        # UI layer
-    ├── invoices/
-    ├── estimates/
-    ├── settings/
-    └── admin/
-```
+├── main.dart # Entry point
+├── app/
+│ ├── app.dart # MaterialApp setup
+│ └── router.dart # go_router + RBAC guards
+├── core/
+│ ├── config/ # firebase_options.dart, theme_config.dart
+│ ├── services/ # feature_flag_service.dart, offline_service.dart
+│ ├── providers/ # Riverpod providers (global DI)
+│ ├── utils/ # Helpers
+│ └── constants/ # Constants / keys
+├── features/ # Feature modules (vertical slices)
+│ ├── auth/
+│ ├── timeclock/
+│ ├── estimates/
+│ ├── invoices/
+│ ├── payments/
+│ └── admin/
+└── shared/
+├── widgets/ # Reusable UI
+└── models/ # Shared models
 
-## Architecture Principles
 
-### 1. Feature-First Organization
+### State Management
+- **Riverpod** for reactive state and DI.
+- Feature-specific state lives within feature modules; global cross-cutting providers in `core/providers`.
 
-Each feature is self-contained with its own data, domain, and presentation layers following Clean Architecture principles.
+---
 
-### 2. Dependency Injection via Riverpod
+## Backend Architecture (Firebase)
 
-All services and providers are defined using Riverpod providers and injected where needed:
+### Cloud Functions Structure
 
-```dart
-// Define provider
-final hapticServiceProvider = Provider<HapticService>((ref) {
-  return HapticService(ref);
-});
 
-// Use in widgets
-class MyWidget extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final haptics = ref.read(hapticServiceProvider);
-    // Use service
-  }
-}
-```
 
-### 3. Import Conventions
+functions/
+├── src/
+│ ├── index.ts # Main exports
+│ ├── schemas/ # Zod schemas
+│ ├── services/ # Business helpers (e.g., pdf-service.ts)
+│ ├── stripe/ # Stripe integration
+│ │ └── webhookHandler.ts # Webhook processing
+│ └── utils/ # Utilities (logging, auth checks)
+├── package.json
+├── tsconfig.json
+└── .eslintrc.js
 
-- **Cross-feature imports**: Always use `package:sierra_painting/...` syntax
-- **Intra-feature imports**: Can use relative imports within the same feature
-- **No deep relative imports**: Avoid `../../../` patterns
 
-**Example:**
-```dart
-// ✅ Good - package import
-import 'package:sierra_painting/core/services/haptic_service.dart';
+### Function Types
+1. **HTTP**
+   - `healthCheck`
+   - `stripeWebhook` (optional; idempotent, signature-verified)
+2. **Callable**
+   - `markPaymentPaid` (admin-only, manual payments)
+3. **Triggers**
+   - `onUserCreate` (provision user profile)
+   - `onUserDelete` (cleanup)
 
-// ❌ Bad - deep relative import
-import '../../../core/services/haptic_service.dart';
-```
+---
 
-### 4. Offline-First Architecture
+## Security Architecture
 
-The app implements an offline queue system:
+### Firestore Security Rules (Deny-by-Default)
 
-1. User actions are immediately queued locally (Hive)
-2. Queue items sync to Firebase when connectivity is available
-3. UI optimistically updates before confirmation
-4. Sync status is visible via `SyncStatusChip` widget
 
-### 5. Provider Naming Conventions
 
-Following ADR-0004 guidelines:
+Default: DENY ALL
 
-- **Data providers**: `xxxProvider` (e.g., `invoicesProvider`)
-- **Controllers**: `xxxControllerProvider` (e.g., `invoiceControllerProvider`)
-- **Services**: `xxxServiceProvider` (e.g., `hapticServiceProvider`)
-- **Repositories**: `xxxRepositoryProvider` (e.g., `invoiceRepositoryProvider`)
+users:
+read: request.auth != null
+write: isAdmin(request.auth) && !changingProtectedFields()
 
-## State Management
+projects, estimates, invoices, payments:
+read: request.auth != null
+create/update: role-based checks (admin/crew lead/crew)
+✗ client cannot set invoice.paid / paidAt
 
-### ✅ Single Pattern: Riverpod
+audit_logs:
+read: isAdmin(request.auth)
+write: functions-only
 
-**Decision:** Sierra Painting uses **Riverpod 3.0+** exclusively for all state management.
 
-**Why Riverpod:**
-- Type-safe dependency injection
-- Testability (easy to mock providers)
-- Compile-time safety (no runtime reflection)
-- Built-in support for async operations
-- Granular rebuilds (better performance)
+### Storage Security Rules
 
-**Forbidden Patterns:**
-- ❌ Provider package (old, less type-safe)
-- ❌ BLoC pattern (too verbose for this project)
-- ❌ GetX (state + routing coupling, global state issues)
-- ❌ setState for global state (local widget state only)
 
-**Enforcement:**
-- Linter rules enforce package imports
-- Code reviews check for consistent patterns
-- ADR-0004 documents the decision
 
-### Riverpod Providers
+Default: DENY ALL
 
-The app uses Riverpod for all state management:
+Authenticated:
 
-- **Provider**: For immutable services/dependencies
-- **StateProvider**: For simple mutable state
-- **FutureProvider**: For async data that doesn't change
-- **StreamProvider**: For real-time Firebase streams
-- **StateNotifierProvider**: For complex state with business logic
+Upload profile images (<10MB)
 
-### Main Providers
+Read images
 
-Located in `lib/core/providers/`:
+Admins:
 
-- `firebaseAuthProvider` - Firebase Auth instance
-- `currentUserProvider` - Current authenticated user
-- `firestoreProvider` - Firestore instance
-- `hapticServiceProvider` - Haptic feedback service
-- `hapticEnabledProvider` - Haptic on/off state
+Upload project images (<10MB)
 
-## Firebase Integration
+Upload invoice PDFs (<10MB)
 
-### Initialization Order (main.dart)
 
-1. `WidgetsFlutterBinding.ensureInitialized()`
-2. `Firebase.initializeApp()` with platform-specific options
-3. Firebase App Check (security layer)
-4. Firebase Performance Monitoring
-5. Firebase Crashlytics
-6. Offline storage (Hive)
-7. Feature flags (Remote Config)
-8. Run app with `ProviderScope`
+---
 
-### Firebase Services Used
+## Offline-First Strategy
 
-- **Authentication**: Email/password, role-based access
-- **Firestore**: Primary database for invoices, estimates, time entries
-- **Cloud Functions**: Server-side business logic, Stripe integration
-- **Storage**: File/photo uploads
-- **Remote Config**: Feature flags for gradual rollout
-- **Performance**: Monitoring app performance
-- **Crashlytics**: Error tracking and crash reporting
-- **Analytics**: User behavior tracking
 
-## Routing Strategy
 
-**Package:** GoRouter 16.2+
+User Action
+↓
+[Optimistic UI Update]
+↓
+[Save to Local Cache (Hive)]
+↓
+[Enqueue for Sync]
+↓
+If Online → Sync to Firestore → Update Cache → Confirm UI
+If Offline → Keep in Pending Queue → Auto-sync on reconnect
 
-### Route Configuration
 
-All routes are defined in `lib/app/router.dart` with:
-- Declarative route definitions
-- RBAC (Role-Based Access Control) guards
-- Deep linking support
-- Type-safe navigation
+---
 
-### Route Guards
+## Payment Architecture
 
-Routes are protected based on user authentication and role:
-- **Public routes**: Login, password reset
-- **Authenticated routes**: Dashboard, timeclock, estimates
-- **Admin routes**: User management, settings (requires admin role)
+### Manual Payment (Check/Cash)
 
-### Navigation Pattern
 
-```dart
-// Type-safe navigation
-context.go('/timeclock');
-context.push('/invoices/create');
+Admin creates invoice in Firestore
 
-// With parameters
-context.go('/invoices/${invoice.id}');
-```
+Customer pays check/cash
 
-### Web/Mobile Parity
+Admin calls markPaymentPaid (callable)
 
-The same routing configuration works across:
-- Android
-- iOS  
-- Web (Flutter web at `/`)
+Validates admin role
 
-**Note:** The Next.js app in `webapp/` is deprecated. See `webapp/DEPRECATION_NOTICE.md`.
+Creates payment record
 
-## Design System
+Adds audit log
 
-**Location:** `lib/design/`
+Updates invoice status
 
-### Theming
 
-Sierra Painting uses **Material Design 3** with light and dark themes.
+### Stripe Payment (Optional; behind Remote Config)
 
-**Theme Configuration:**
-- Source: `lib/design/theme.dart` (canonical)
-- Exported via: `lib/design/design.dart`
-- Applied in: `lib/app/app.dart`
+
+Admin creates invoice
+
+Customer selects "Pay with Stripe"
+
+App creates Checkout session
+
+Stripe redirects back after payment
+
+stripeWebhook verifies & updates invoice (idempotent)
+
+
+---
+
+## Routing & RBAC
+
+- **go_router** with **route guards**:
+  - Redirect unauthenticated users to `/login`
+  - Restrict admin screens via user role from `authStateProvider` + user profile
+- **Example Guard Flow**
+
+
+User taps Admin
+→ check auth
+→ unauth? redirect /login
+→ check role (isAdmin)
+→ not admin? redirect /timeclock
+→ admin? allow
+
+
+---
+
+## Observability & Monitoring
+
+- **Crashlytics**: crash reporting
+- **Performance Monitoring**: screen/network traces
+- **Analytics**: feature usage, funnels
+- **Structured Logs** (Functions): entity, action, actor, orgId
+
+**Key Metrics**
+- App startup time, screen transition time
+- API response time, offline sync latency
+- Crash-free users, function error rates
+- Payment success, feature adoption
+
+---
+
+## Performance Targets
+
+- **Mobile**: P95 < **2.0s** on critical flows
+- **Functions**: cold start mitigations (min instances on hot paths)
+- **PDF Gen**: ≤ **10s**
+
+**Strategies**
+- Lazy image loading; pagination
+- Cache-first reads, network-first writes
+- Indexed queries; snapshot listeners where appropriate
+- Background sync; optimistic updates
+
+---
+
+## CI/CD Pipeline
+
+
+
+GitHub Actions
+
+On PR:
+
+Flutter: format, analyze, test
+
+Functions: lint, build
+
+Build APK (debug) as artifact
+
+On main:
+
+Build Functions
+
+Deploy to Staging:
+• Functions
+• Firestore Rules
+• Storage Rules
+
+On tag v*:
+
+Build Flutter release (APK + AAB)
+
+Build Functions
+
+Deploy to Production
+
+Upload artifacts (release)
+
+
+---
+
+## Data Flow Examples
+
+### 1) User Authentication Flow
+
+
+Login Screen
+→ Firebase Auth (email/password)
+→ authStateProvider (Riverpod StreamProvider)
+→ go_router redirects based on auth/role
+→ Navigate to Timeclock
+
+
+### 2) Create Estimate with PDF
+
+
+Estimate Screen
+→ call createEstimatePdf (Callable/HTTP)
+→ Zod validate
+→ Generate PDF (PDFKit)
+→ Upload to Storage
+→ Create estimate doc in Firestore
+→ Return signed URL
+→ Display URL
+
+
+### 3) Mark Invoice Paid (Manual)
+
+
+Admin Screen
+→ call markPaymentPaid
+→ verify admin
+→ Zod validate payload
+→ Firestore transaction:
+- set invoice.paid = true
+- create audit_log entry
+→ success response
+
+
+### 4) Offline Operation
+
+
+Create invoice while offline
+→ enqueue (Hive)
+→ show "Queued for sync"
+Reconnect
+→ QueueService processes items
+→ write to Firestore
+→ mark processed & notify "Synced"
+
+
+---
+
+## Technology Stack Summary
+
+| Layer                | Technology                    | Purpose                                |
+|--------------------- |------------------------------ |----------------------------------------|
+| UI Framework         | Flutter (Material 3)          | Cross-platform mobile UI               |
+| State Management     | Riverpod                      | Reactive state & DI                    |
+| Routing              | go_router                     | Declarative routing + guards           |
+| Local Storage        | Hive                          | Offline queue/cache                    |
+| Backend (BaaS)       | Firebase                      | Auth, Firestore, Storage, Functions    |
+| Functions Language   | TypeScript + Zod              | Type-safe backend & validation         |
+| PDF Generation       | PDFKit                        | Server-side PDFs                       |
+| Payments (optional)  | Stripe                        | Card payments                          |
+| CI/CD                | GitHub Actions                | Build, test, deploy                    |
+
+---
+
+## File Organization
+
+### Flutter App
+
+
+lib/
+├── main.dart
+├── firebase_options.dart
+├── app/
+│ ├── app.dart
+│ └── router.dart
+├── core/
+│ ├── models/
+│ ├── providers/
+│ ├── services/
+│ ├── utils/
+│ └── constants/
+└── features/
+├── auth/ (data, domain, presentation)
+├── timeclock/ (data, domain, presentation)
+├── estimates/ (data, domain, presentation)
+├── invoices/ (data, domain, presentation)
+└── admin/ (data, domain, presentation)
+
+
+### Cloud Functions
+
+
+functions/
+├── src/
+│ ├── index.ts
+│ ├── schemas/
+│ ├── services/
+│ ├── stripe/
+│ └── utils/
+├── package.json
+├── tsconfig.json
+└── .eslintrc.js
+
+
+---
+
+## Key Design Decisions
+
+1. **Feature-based architecture** (vertical slices)
+2. **Clean separation** of data / domain / presentation
+3. **RBAC** enforced at router + server rules
+4. **Offline-first** with local queue and automatic sync
+5. **Server-side PDFs** for consistency and security
+6. **Audit trail** for sensitive ops
+7. **Type safety** in Flutter (Dart) & Functions (TS + Zod)
+8. **Environment separation** (staging / prod)
+9. **CI/CD automation** with pre-merge tests and tag-based releases
+
+---
+
+## Scalability
+
+**Supported Today**
+- 10,000+ concurrent users (subject to Firebase quotas)
+- Auto-scaling Functions & Storage
+- Global CDN for assets
+
+**Strategies**
+- Horizontal scaling (managed by Firebase)
+- Data partitioning by collections
+- Composite indexes for complex queries
+- CDN + local caching
+
+---
+
+## Future Considerations
+
+- Multi-tenant org model
+- Real-time collaboration (admin/admin)
+- Advanced analytics / BI (BigQuery exports)
+- Push notifications
+- Internationalization
+- Conflict resolution UI for offline edits
+- Background sync workers
+- Additional caching on hot data
+
+---
+
+## Optimized Widgets
+
+### PaginatedListView
+
+**Purpose:** High-performance list widget with built-in pagination, loading states, and error handling.
 
 **Key Features:**
-- WCAG 2.2 AA compliance (proper contrast ratios)
-- Minimum touch targets: 48x48dp (accessibility)
-- System theme detection (light/dark mode)
-- Consistent color scheme across platforms
+- **Lazy Loading:** Uses `ListView.builder` for efficient rendering - only builds visible items
+- **Automatic Pagination:** Triggers when user scrolls 80% through the list
+- **Pull-to-Refresh:** Built-in refresh functionality
+- **State Management:** Handles loading, error, and empty states
+- **Memory Efficient:** Minimal rebuilds and smooth scrolling
 
-**Usage:**
+**Usage Example:**
 ```dart
-import 'package:sierra_painting/design/design.dart';
-
-// Themes are automatically applied via MaterialApp
-// Access theme in widgets:
-final theme = Theme.of(context);
-final primaryColor = theme.colorScheme.primary;
+PaginatedListView<Job>(
+  itemBuilder: (context, job, index) => JobTile(job: job),
+  onLoadMore: () async {
+    return await jobRepository.fetchJobs(page: currentPage);
+  },
+  emptyWidget: const EmptyJobsList(),
+  enableRefresh: true,
+)
 ```
 
-### Design Tokens
+**Performance Characteristics:**
+- Only builds visible items (typically 10-20 on screen)
+- Automatic item recycling
+- Smooth 60fps scrolling
+- Low memory footprint
 
-Defined in `tokens.dart`:
-- Colors: `DesignTokens.primaryBlue`, `DesignTokens.successGreen`, etc.
-- Spacing: `DesignTokens.spaceSM`, `DesignTokens.spaceMD`, etc.
-- Border radius, font sizes, shadows, etc.
+**Also Available:** `PaginatedGridView` for grid-based layouts with the same pagination features.
 
-### Components
+### CachedImage
 
-All components follow Material 3 guidelines:
-- `AppButton` - Primary/secondary buttons with loading states
-- `AppInput` - Text fields with validation
-- `AppCard` - Content containers
-- `AppBadge` - Status indicators
-- `AppSkeleton` - Loading skeletons
-- `AppEmpty` - Empty state displays
+**Purpose:** Optimized image widget with caching, progressive loading, and error handling using `cached_network_image`.
 
-### Usage
+**Key Features:**
+- **Dual Caching:** Memory + disk caching for fast subsequent loads
+- **Progressive Loading:** Shows placeholder while loading
+- **Error Handling:** Graceful fallback for failed loads
+- **Performance Optimized:** Automatic image resizing and memory management
+- **List-View Ready:** Optimized for use in scrolling lists
+
+**Usage Example:**
+```dart
+CachedImage(
+  imageUrl: 'https://example.com/image.jpg',
+  width: 300,
+  height: 200,
+  fit: BoxFit.cover,
+  borderRadius: 8,
+)
+```
+
+**Performance Characteristics:**
+- **Cache Hit:** ~1-5ms (memory cache)
+- **Cache Miss:** ~100-500ms (network + caching)
+- **Memory Management:** Automatic downsampling to specified dimensions
+- **Disk Cache:** Persistent across app sessions
+
+**Variants:**
+- `CachedCircleImage` - For circular avatars and profile pictures
+- `CachedBackgroundImage` - For background images with overlaid content
+
+**Cache Configuration:**
+- Max memory cache: Automatically managed by specified width/height
+- Max disk cache: 1000x1000 pixels for regular images, 200x200 for avatars
+- Fade animations: 200ms in, 100ms out
+
+**Integration with Lists:**
+Both `PaginatedListView` and `CachedImage` work seamlessly together for optimal performance in image-heavy lists:
 
 ```dart
-import 'package:sierra_painting/design/design.dart';
-
-// All design tokens and components are available
-const padding = DesignTokens.spaceLG;
-AppButton(label: 'Save', onPressed: () {});
+PaginatedListView<Project>(
+  itemBuilder: (context, project, index) => Card(
+    child: CachedImage(
+      imageUrl: project.thumbnailUrl,
+      width: double.infinity,
+      height: 200,
+      fit: BoxFit.cover,
+    ),
+  ),
+  onLoadMore: () => projectRepository.fetchProjects(),
+)
 ```
 
-## Accessibility
+This combination ensures:
+- Only visible images are loaded and cached
+- Smooth scrolling with no jank
+- Efficient memory usage
+- Fast subsequent renders
 
-### Standards
+---
 
-Sierra Painting follows **WCAG 2.2 Level AA** guidelines.
+## Monitoring & Debugging
 
-### Implementation
+**Development**
+- Firebase Emulator UI (localhost:4000)
+- Flutter DevTools
+- Hot reload
 
-**Minimum Touch Targets:**
-- All interactive elements: 48x48dp minimum
-- Enforced in theme via `MaterialTapTargetSize.padded`
-- Buttons: `minimumSize: Size(88, 48)`
+**Production**
+- Firebase Console (logs, traces)
+- Functions logs with structured fields
+- Firestore usage metrics
+- Auth audit logs
 
-**Text Scaling:**
-- All text uses relative sizes (em/rem equivalent)
-- Supports system font scaling up to 200%
-- TextTheme uses Material 3 type scale
+---
 
-**Contrast Ratios:**
-- Primary text: 7:1 (AAA level)
-- Secondary text: 4.5:1 (AA level)
-- Verified in design tokens
+## Architecture Decision Records (ADRs)
 
-**Semantics:**
-- Critical widgets use `Semantics` wrapper
-- Images have semantic labels
-- Form fields have proper labels and hints
+For detailed rationale behind architectural choices, see the following ADRs:
 
-### Testing
+### Infrastructure & Operations
+- [ADR-0001: Tech Stack](docs/adrs/0001-tech-stack.md)
+- [ADR-0002: Offline-First Architecture](docs/adrs/0002-offline-first-architecture.md)
 
-```bash
-# Run with large text
-flutter run --dart-define=TEXT_SCALE_FACTOR=2.0
+### Data & Storage
+- [ADR-006: Idempotency Strategy](docs/adrs/006-idempotency-strategy.md)
 
-# Check semantics in DevTools
-flutter run --profile
-# Open DevTools → Widget Inspector → Enable "Show Semantics"
-```
+### Application Architecture
+- [ADR-0003: Manual Payments Primary](docs/adrs/0003-manual-payments-primary.md)
+- [ADR-0004: Riverpod State Management](docs/adrs/0004-riverpod-state-management.md)
+- [ADR-0005: GoRouter Navigation](docs/adrs/0005-gorouter-navigation.md)
 
-## Testing Strategy
-
-### Unit Tests
-
-Located in `test/core/`:
-- Service tests (e.g., `haptic_service_test.dart`)
-- Utility tests (e.g., `result_test.dart`)
-- Network tests (e.g., `api_client_test.dart`)
-
-### Widget Tests
-
-Located in `test/` feature directories:
-- Screen tests for critical flows
-- Component tests for reusable widgets
-
-### Integration Tests
-
-Located in `integration_test/`:
-- End-to-end user flows
-- Auth, clock-in, payment flows
-
-### Coverage Goals
-
-- Core services: ≥ 80%
-- Repositories: ≥ 80%
-- Widgets: ≥ 60%
-- Overall: ≥ 70%
-
-## Performance Budgets
-
-### Web Bundle Size
-
-**Target:** ≤ 600KB initial bundle (gzipped)
-
-**Monitoring:**
-```bash
-flutter build web --analyze-size
-# Check build/web-report.json
-```
-
-**Strategies:**
-- Tree shaking (automatic in release builds)
-- Code splitting by route
-- Lazy loading of features
-- Minification enabled
-
-### Asset Budget
-
-**Total Assets:** ≤ 5MB
-
-**Per-Image Limits:**
-- Maximum size: 300KB
-- Preferred format: WebP
-- Use `cacheWidth`/`cacheHeight` to decode at display size
-
-**Asset Optimization:**
-```bash
-# Compress images
-imagemagick convert input.png -quality 85 output.webp
-
-# SVG optimization
-svgo --multipass --pretty input.svg
-```
-
-### Build Performance
-
-**Target Times:**
-- `flutter build web`: ≤ 2 minutes
-- `flutter build apk`: ≤ 3 minutes
-- `flutter build ios`: ≤ 4 minutes
-
-**CI Gates:**
-- Must complete in CI timeout (10 minutes)
-- Size regression checks on PR
-- Performance metrics tracked per commit
-
-### Runtime Performance
-
-**Frame Budget:**
-- 60 FPS (16.67ms per frame)
-- No jank on lists with 100+ items
-- Smooth animations (no dropped frames)
-
-**Startup Time:**
-- Cold start: ≤ 2 seconds
-- Warm start: ≤ 1 second
-- Time to interactive: ≤ 3 seconds
-
-## Security Considerations
-
-1. **Firebase App Check**: Protects backend from abuse
-2. **Firestore Security Rules**: Server-side authorization
-3. **RBAC**: Role-based access control via GoRouter guards
-4. **Secrets Management**: No credentials in source code
-5. **Input Validation**: Zod schemas in Cloud Functions
-
-## Performance Optimizations
-
-1. **Const constructors**: Used throughout for build performance
-2. **Cached network images**: Via `cached_network_image` package
-3. **Pagination**: Large lists use `PaginatedListView`
-4. **Lazy loading**: Features load on-demand
-5. **Firebase indexing**: Optimized Firestore queries
-
-## Monitoring & Observability
-
-- **Firebase Performance**: Tracks app startup, screen transitions
-- **Firebase Crashlytics**: Crash reporting with stack traces
-- **Firebase Analytics**: User behavior and funnel tracking
-- **Custom traces**: Performance monitoring for critical operations
-
-## Deployment
-
-The app follows trunk-based development with feature flags:
-
-1. Develop on feature branches
-2. Merge to `main` via pull requests
-3. CI validates formatting, analysis, tests, build
-4. Features gated behind Remote Config flags
-5. Gradual rollout via flag percentages
-6. Emergency kill switches available
-
-## References
-
-- [ADR-0004: Riverpod State Management](docs/ADRs/0004-riverpod-state-management.md)
+### Developer Experience
+- [ADR-011: Story-Driven Development](docs/adrs/011-story-driven-development.md)
 - [ADR-012: Sprint-Based Feature Flags](docs/adrs/012-sprint-based-flags.md)
-- [AUDIT_SUMMARY.md](docs/AUDIT_SUMMARY.md) - Comprehensive code audit
-- [GOVERNANCE.md](docs/GOVERNANCE.md) - Development standards
-- [ONBOARDING.md](docs/ONBOARDING.md) - Developer setup guide
+
+For the complete ADR index and template, see [docs/adrs/README.md](docs/adrs/README.md)
+
+---
+
+
+This architecture provides a solid, production-ready foundation with strong security, scalability, and maintainability, while enabling rapid delivery for the MVP and beyond.

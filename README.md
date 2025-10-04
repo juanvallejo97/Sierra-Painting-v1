@@ -1,12 +1,13 @@
 # Sierra Painting
 
+[![CI Pipeline](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
 [![Staging CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
 [![Production CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
-[![Flutter CI](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
+[![Nightly](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml)
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
-**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)** · **[Performance](docs/PERFORMANCE_IMPLEMENTATION.md)**
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Documentation Index](docs/index.md)**
 
 ---
 
@@ -41,16 +42,22 @@ flutter pub run build_runner build --delete-conflicting-outputs
 cd functions
 npm ci
 cd ..
-2) Firebase Setup
-bash
-Copy code
+```
+
+### 2) Firebase Setup
+
+```bash
 firebase login
 firebase projects:list         # or create a project in the Firebase Console
 firebase use --add             # select or add an alias (e.g., staging, prod)
 
 # Generate Flutter firebase_options.dart
 flutterfire configure
-3) Start Dev Environment
+```
+
+### 3) Start Dev Environment
+
+```bash
 # Terminal 1: Emulators
 firebase emulators:start
 
@@ -59,37 +66,50 @@ flutter run
 
 # Optional: Watch for codegen
 flutter pub run build_runner watch
-Emulator UI: http://localhost:4000
-Firestore: http://localhost:8080 · Auth: http://localhost:9099 · Functions: http://localhost:5001 · Storage: http://localhost:9199
+```
 
-🧭 Golden Paths
-GP1: Auth & Time Tracking
-Sign up (Auth emulator) → 2) Clock in/out (offline queue to Firestore) → 3) View today’s jobs & entries
+**Emulator UI:** http://localhost:4000  
+**Firestore:** http://localhost:8080 · **Auth:** http://localhost:9099 · **Functions:** http://localhost:5001 · **Storage:** http://localhost:9199
 
-GP2: Estimate → Invoice → Payment
-Create estimate with line items → 2) Generate PDF (Cloud Function) → 3) Convert to invoice → 4) Mark paid (admin-only with audit trail)
+---
 
-GP3: Lead Capture → Schedule
-Submit lead via web form (App Check + captcha) → 2) Admin reviews → 3) Schedule job (lite scheduler)
+## 🧭 Golden Paths
 
-📚 Documentation
-Architecture: docs/Architecture.md
+**GP1: Auth & Time Tracking**
+1. Sign up (Auth emulator)
+2. Clock in/out (offline queue to Firestore)
+3. View today's jobs & entries
 
-Migration Guide: docs/MIGRATION.md
+**GP2: Estimate → Invoice → Payment**
+1. Create estimate with line items
+2. Generate PDF (Cloud Function)
+3. Convert to invoice
+4. Mark paid (admin-only with audit trail)
 
-ADRs: docs/ADRs/
+**GP3: Lead Capture → Schedule**
+1. Submit lead via web form (App Check + captcha)
+2. Admin reviews
+3. Schedule job (lite scheduler)
 
-Feature Flags: docs/FEATURE_FLAGS.md
+---
 
-App Check Setup: docs/APP_CHECK.md
+## 📚 Documentation
 
-Emulators Guide: docs/EMULATORS.md
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Full Index](docs/index.md)**
 
-Developer Workflow: docs/DEVELOPER_WORKFLOW.md
+**Quick Links:**
+- [Migration Guide](docs/MIGRATION.md)
+- [Feature Flags](docs/FEATURE_FLAGS.md)
+- [App Check Setup](docs/APP_CHECK.md)
+- [Emulators Guide](docs/EMULATORS.md)
+- [Developer Workflow](docs/DEVELOPER_WORKFLOW.md)
+- [UI/UX Overhaul](docs/ui_overhaul_mobile.md)
 
-UI/UX Overhaul: docs/ui_overhaul_mobile.md
+> **Note:** Older standalone setup/quickstart docs were consolidated into this README and the docs above.
 
-Note: Older standalone setup/quickstart docs were consolidated into the README and docs above.
+---
+
+## 🏗️ Tech Stack
 
 🏗️ Tech Stack
 Layer	Technology	Purpose
@@ -314,12 +334,13 @@ See [`.env.example`](.env.example) for complete list of available environment va
 
 ### CI/CD Pipeline
 
-Sierra Painting uses GitHub Actions for automated CI/CD with separate workflows for staging and production.
+Sierra Painting uses GitHub Actions for automated CI/CD with comprehensive testing, caching, and deployment automation.
 
 **Workflows:**
+- **[CI Pipeline](.github/workflows/ci.yml)** - Matrix builds, testing, size validation (runs on PRs)
 - **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
 - **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
-- **[CI Tests](.github/workflows/ci.yml)** - Runs on all PRs
+- **[CI Tests](.github/workflows/flutter_ci.yml)** - Runs on all PRs
 
 **Pipeline Stages:**
 1. **Setup** - Cache dependencies (Flutter, Node, Gradle)

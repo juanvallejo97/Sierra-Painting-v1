@@ -209,7 +209,7 @@ GoRouter(
 ### 11. Architecture Decision Records (ADRs)
 **Current State**: No formal decision documentation  
 **Enhancement**:
-- Create `docs/ADRs/` directory
+- Create `docs/adrs/` directory
 - Document all major technical decisions
 - Use lightweight ADR template (Context, Decision, Consequences)
 - ADRs should be immutable (add new ADR to supersede old one)
