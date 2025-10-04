@@ -1,258 +1,59 @@
-name: Update Standards Compliance Check
-
+name: Updates Governance
 on:
   pull_request:
-    branches: [main]
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [ main, develop, chore/*, fix/* ]
   schedule:
-    # Run weekly on Mondays at 10 AM UTC
-    - cron: '0 10 * * 1'
-
+    - cron: '0 10 * * 1' # Mondays 10:00 UTC
+  workflow_dispatch:
 jobs:
   validate-updates:
-    name: Validate Update Standards
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: |
-            functions/package-lock.json
-            webapp/package-lock.json
-      
-      - name: Setup Flutter
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          cache: true
-      
-      - name: Install Functions dependencies
-        if: hashFiles('functions/package-lock.json') != ''
-        run: |
-          cd functions
-          npm ci
-      
-      - name: Install WebApp dependencies
-        if: hashFiles('webapp/package-lock.json') != ''
-        run: |
-          cd webapp
-          npm ci
-      
-      - name: Get Flutter dependencies
-        run: flutter pub get
-      
-      - name: Run update compliance check
-        id: validate
+          channel: stable
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Shellcheck validator
+        uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          severity: warning
+      - name: Run governance validation
         run: |
           chmod +x scripts/validate_updates.sh
-          ./scripts/validate_updates.sh | tee update_report.txt
-          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
-      
-      - name: Upload compliance report
+          ./scripts/validate_updates.sh
+      - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: update-compliance-report
-          path: update_report.txt
-          retention-days: 30
-      
-      - name: Generate summary
-        if: always()
-        run: |
-          echo "## Update Standards Compliance Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -n 20 update_report.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Standards Document" >> $GITHUB_STEP_SUMMARY
-          echo "See \`.copilot/sierra_painting_update.yaml\` for complete requirements" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Comment on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('update_report.txt', 'utf8');
-            
-            // Extract summary from report
-            const summaryMatch = report.match(/Total checks:\s+(\d+)/);
-            const passedMatch = report.match(/Passed:\s+(\d+)/);
-            const warningsMatch = report.match(/Warnings:\s+(\d+)/);
-            const failedMatch = report.match(/Failed:\s+(\d+)/);
-            const complianceMatch = report.match(/Compliance:\s+(\d+)%/);
-            
-            const total = summaryMatch ? summaryMatch[1] : '?';
-            const passed = passedMatch ? passedMatch[1] : '?';
-            const warnings = warningsMatch ? warningsMatch[1] : '?';
-            const failed = failedMatch ? failedMatch[1] : '?';
-            const compliance = complianceMatch ? complianceMatch[1] : '?';
-            
-            let emoji = '✅';
-            let status = 'Excellent';
-            if (parseInt(compliance) < 90) {
-              emoji = '⚠️';
-              status = 'Good';
-            }
-            if (parseInt(compliance) < 75) {
-              emoji = '⚠️';
-              status = 'Moderate';
-            }
-            if (parseInt(compliance) < 50) {
-              emoji = '❌';
-              status = 'Needs Improvement';
-            }
-            
-            const comment = `## ${emoji} Update Standards Compliance Check
-            
-            **Status:** ${status} (${compliance}% compliant)
-            
-            | Metric | Count |
-            |--------|-------|
-            | Total checks | ${total} |
-            | ✅ Passed | ${passed} |
-            | ⚠️ Warnings | ${warnings} |
-            | ❌ Failed | ${failed} |
-            
-            ### What This Checks
-            
-            This workflow validates compliance with the update management standards defined in \`.copilot/sierra_painting_update.yaml\`, including:
-            
-            - ✓ Lock files committed (pubspec.lock, package-lock.json)
-            - ✓ Security vulnerabilities (npm audit, Dependabot)
-            - ✓ Version drift monitoring (< 5% packages behind)
-            - ✓ Minimum version requirements for critical packages
-            - ✓ Changelog maintenance
-            - ✓ Update documentation
-            - ✓ Automation and tooling setup
-            
-            <details>
-            <summary>View Full Report</summary>
-            
-            \`\`\`
-            ${report.slice(0, 4000)}
-            \`\`\`
-            
-            </details>
-            
-            ### Quick Actions
-            
-            - **Critical vulnerabilities?** Run \`npm audit fix\` in affected directories
-            - **Version drift?** Review \`flutter pub outdated\` and plan updates
-            - **Failed checks?** See [docs/UPDATES_EXECUTION.md](docs/UPDATES_EXECUTION.md) for guidance
-            
-            For complete requirements, see [\`.copilot/sierra_painting_update.yaml\`](.copilot/sierra_painting_update.yaml).
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-      
-      - name: Check compliance threshold
-        if: steps.validate.outputs.exit_code != '0'
-        run: |
-          echo "⚠️ Update compliance check found issues"
-          echo "Review the report above and address any failed checks"
-          exit 0  # Don't fail the build, just warn
-
+          name: update-reports
+          path: .reports
   dependency-audit:
-    name: Dependency Security Audit
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      
-      - name: Audit Functions dependencies
-        if: hashFiles('functions/package-lock.json') != ''
+          node-version: '20'
+      - name: Audit npm projects
         run: |
-          cd functions
-          npm audit --audit-level=moderate || true
-          echo "## Functions Audit Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          npm audit || true >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-      
-      - name: Audit WebApp dependencies
-        if: hashFiles('webapp/package-lock.json') != ''
-        run: |
-          cd webapp
-          npm audit --audit-level=moderate || true
-          echo "## WebApp Audit Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          npm audit || true >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-  
+          set -e
+          for d in functions firestore-tests; do
+            if [ -f "$d/package.json" ]; then
+              (cd "$d" && npm ci && npm audit --audit-level=high --omit=dev) || exit 1
+            fi
+          done
   version-check:
-    name: Version Drift Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          cache: true
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-      
-      - name: Check Flutter outdated packages
-        run: |
-          flutter pub get
-          echo "## Flutter Outdated Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          flutter pub outdated || true >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-      
-      - name: Check Functions outdated packages
-        if: hashFiles('functions/package-lock.json') != ''
-        run: |
-          cd functions
-          npm ci
-          echo "## Functions Outdated Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          npm outdated || true >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-      
-      - name: Check WebApp outdated packages
-        if: hashFiles('webapp/package-lock.json') != ''
-        run: |
-          cd webapp
-          npm ci
-          echo "## WebApp Outdated Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          npm outdated || true >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          channel: stable
+      - name: Pub outdated (non-failing)
+        run: flutter pub outdated || true

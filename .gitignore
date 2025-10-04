@@ -100,4 +100,4 @@ firestore-tests/node_modules/
 .vale/styles/
 docs/api/
 unused-code-report.txt
-
+.reports/
