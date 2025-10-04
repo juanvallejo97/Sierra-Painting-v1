@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# DEPRECATION NOTICE: This script builds the Next.js webapp
+# The webapp/ directory is deprecated. See webapp/DEPRECATION_NOTICE.md
+# This script will be removed once webapp/ is fully deprecated.
+#
 # Build and deploy script for Sierra Painting web app
 # This script builds the Next.js app and copies it to the Firebase hosting directory
 
