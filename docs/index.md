@@ -19,6 +19,9 @@ This documentation follows the [Diátaxis](https://diataxis.fr/) framework for c
 - **[DEVELOPER](../DEVELOPER.md)** - Development workflow, code style, and contribution guidelines
 - **[EMULATORS](./EMULATORS.md)** - Local development with Firebase Emulators
 - **[FEATURE_FLAGS](./FEATURE_FLAGS.md)** - Feature flag management
+- **[iOS Deployment](./IOS_DEPLOYMENT.md)** - Complete iOS deployment guide with App Store submission
+- **[Android Staged Rollout](./ANDROID_STAGED_ROLLOUT.md)** - Android deployment and Play Store rollout
+- **[Deployment Checklist](./deployment_checklist.md)** - Pre-deployment, deployment, and post-deployment checklists
 
 ### 💡 Explanation (Understanding)
 - **[Migration Guide](./MIGRATION.md)** - V1 refactoring and migration notes
