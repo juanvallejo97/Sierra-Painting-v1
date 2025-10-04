@@ -1,36 +1,84 @@
 # Contributing to Sierra Painting
 
-Thank you for your interest in contributing!
+Thanks for helping improve Sierra Painting! This guide explains the development setup, workflow, and
+standards.
 
-## Getting Started
-- Read the README and docs/index.md for architecture and workflows.
-- Set up your environment using the Quick Start in the README.
-- Ensure Firebase emulators can run locally.
+## Setup
 
-## Branching
-- Create a feature branch from `main`: `git checkout -b feat/short-description`
-- Use prefixes: `feat`, `fix`, `docs`, `chore`, `test`, `ci`.
+1. Complete the quickstart in the [README](README.md)
 
-## Commit Messages
-- Follow Conventional Commits:
-  - `feat(scope): add ...`
-  - `fix(scope): correct ...`
-  - `docs(scope): update ...`
+2. Run tests to verify your setup:
 
-## Tests & Lint
-- Flutter: `flutter analyze && flutter test`
-- Functions: `(cd functions && npm run typecheck && npm run lint && npm test)`
+   ```bash
+   flutter test
+   cd functions && npm test && cd ..
+   ```
 
-## Pull Requests
-- Link relevant issues and user stories.
-- Include screenshots or logs when helpful.
-- Ensure CI passes and the PR template is filled out.
+## Making changes
+
+1. Create a feature branch:
+
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+2. Make your changes following the coding style
+
+3. Run quality checks:
+
+   ```bash
+   flutter analyze
+   ./scripts/quality.sh
+   ```
+
+4. Run tests:
+
+   ```bash
+   flutter test
+   cd functions && npm test && cd ..
+   ```
+
+5. Commit using Conventional Commits format:
+
+   ```bash
+   git commit -m "feat: add new feature"
+   ```
+
+## Pull requests
+
+- Keep changes small and focused
+- Include tests for new functionality
+- Update documentation when relevant
+- Ensure CI passes before requesting review
+
+## Coding and documentation style
+
+- **Docstrings**: Use Dart doc comments for public APIs
+- **Markdown**: Lint with markdownlint and Vale (Google style)
+- **Commit messages**: Follow Conventional Commits
+
+## Conventional Commits
+
+Use these prefixes:
+
+- `feat: ...` - New feature
+- `fix: ...` - Bug fix
+- `docs: ...` - Documentation changes
+- `test: ...` - Test changes
+- `chore: ...` - Maintenance tasks
+- `refactor: ...` - Code refactoring
+- `ci: ...` - CI/CD changes
+
+Example: `docs: rewrite README quickstart and add link checks`
 
 ## Security
-- Do not include secrets in code or PRs. See `docs/secrets/`.
-- Sensitive operations must follow the deny-by-default model (see `docs/Security.md`).
+
+- Never commit secrets or credentials
+- See [SECURITY.md](SECURITY.md) for reporting vulnerabilities
+- Follow deny-by-default security model
 
 ## Code of Conduct
-By participating, you agree to abide by the Code of Conduct (CODE_OF_CONDUCT.md).
+
+By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
