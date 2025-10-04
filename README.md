@@ -1,8 +1,9 @@
 # Sierra Painting
 
+[![CI Pipeline](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
 [![Staging CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
 [![Production CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
-[![Flutter CI](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
+[![Nightly](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml)
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
@@ -263,9 +264,10 @@ return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
 
 ### CI/CD Pipeline
 
-Sierra Painting uses GitHub Actions for automated CI/CD with separate workflows for staging and production.
+Sierra Painting uses GitHub Actions for automated CI/CD with comprehensive testing, caching, and deployment automation.
 
 **Workflows:**
+- **[CI Pipeline](.github/workflows/ci.yml)** - Matrix builds, testing, size validation (runs on PRs)
 - **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
 - **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
 - **[CI Tests](.github/workflows/flutter_ci.yml)** - Runs on all PRs
