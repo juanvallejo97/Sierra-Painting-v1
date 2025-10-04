@@ -1,94 +1,67 @@
 # Security Policy
 
-## Secrets Handling
+## Reporting vulnerabilities
 
-### Never Commit Secrets
+If you discover a security issue, please email the maintainers directly. We will acknowledge
+receipt within 3 business days.
 
-**Critical:** Never commit real service account JSON files, API keys, or credentials to the repository.
+**Do not open public issues for sensitive security reports.**
 
-### Prohibited Files
+**Contact**: Create a private security advisory at
+<https://github.com/juanvallejo97/Sierra-Painting-v1/security/advisories>
 
-The following files must **never** be committed:
-- `*service-account*.json`
-- `*-service-account*.json`
-- `firebase-adminsdk-*.json`
-- `*credentials.json`
-- Any file containing `private_key` or `"type": "service_account"`
+## Supported versions
 
-### Best Practices
+We support security fixes for the latest released version only.
 
-1. **Use GitHub Actions Secrets**: Store sensitive credentials in GitHub repository secrets
-2. **Use OIDC Workload Identity**: Prefer Workload Identity Federation over service account keys
-3. **Local Development**: Copy examples from `secrets/_examples/` and set environment variables
-4. **Environment Variables**: Use `.env` files (which are gitignored) for local configuration
+## Security best practices
 
-### Example Placeholder
+### Secrets handling
 
-For documentation purposes, use placeholder files like:
+Never commit secrets or credentials to the repository:
 
-```json
-{
-  "type": "service_account",
-  "project_id": "REDACTED",
-  "private_key_id": "REDACTED",
-  "private_key": "REDACTED",
-  "client_email": "REDACTED",
-  "client_id": "REDACTED"
-}
-```
+- Service account JSON files
+- API keys
+- Private keys
+- Database credentials
+- Environment variables with sensitive data
 
-## CI/CD Security
+**For CI/CD**: Use GitHub Actions secrets and OIDC Workload Identity Federation instead of service
+account keys.
 
-### Workload Identity Federation
+**For local development**: Copy examples from `secrets/_examples/` and use `.env` files (which are
+gitignored).
 
-All deployment workflows use OIDC Workload Identity Federation instead of service account keys:
+### Firebase security
 
-```yaml
-permissions:
-  contents: read
-  id-token: write
+All Firebase services use deny-by-default security rules:
 
-- uses: google-github-actions/auth@v2
-  with:
-    workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-    service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-```
-
-### Automated Checks
-
-The repository has automated security checks that run on every pull request:
-- **JSON Credentials Check**: Prevents service account keys from being committed
-- **Firestore Rules Tests**: Validates security rules for proper access control
-- **Dependency Scanning**: Checks for known vulnerabilities in dependencies
-
-## Reporting Security Issues
-
-If you discover a security vulnerability, please:
-
-1. **Do not** open a public issue
-2. Email the maintainers directly at [security contact email]
-3. Provide details about the vulnerability and potential impact
-4. Allow reasonable time for a fix before public disclosure
-
-## Firestore Security Rules
-
-All Firestore security rules follow a **deny-by-default** policy:
 - Authentication required for all operations
-- Role-based access control (RBAC) via custom claims
+- Role-based access control (RBAC) with custom claims
 - Organization-scoped data isolation
-- Server-side only operations for sensitive data (payments, leads)
+- Server-side only operations for payments and sensitive data
 
-See `firestore.rules` for complete security rules.
+See `firestore.rules` and `storage.rules` for complete rules.
 
-## Firebase App Check
+### App Check
 
-Firebase App Check is enabled in production to protect backend resources from abuse:
-- **Android**: Play Integrity API (production) / Debug provider (development)
-- **iOS**: App Attest (production) / Debug provider (development)
-- **Web**: ReCaptcha v3
+Firebase App Check protects backend resources from abuse:
+
+- **Android**: Play Integrity API (production), debug provider (development)
+- **iOS**: App Attest (production), debug provider (development)
+- **Web**: reCAPTCHA v3
+
+## Automated security checks
+
+The repository runs automated security checks on every pull request:
+
+- JSON credentials check (prevents committing service accounts)
+- Firestore rules tests (validates access control)
+- Dependency scanning (checks for known vulnerabilities)
 
 ## References
 
-- [GitHub OIDC Workload Identity Setup](docs/ops/gcp-workload-identity-setup.md)
 - [Firebase Security Best Practices](https://firebase.google.com/docs/rules/best-practices)
 - [Firestore Rules Reference](https://firebase.google.com/docs/firestore/security/rules-structure)
+
+---
