@@ -1,7 +1,31 @@
 {
   "projects": {
     "default": "YOUR_PROJECT_ID",
+    "dev": "sierra-painting-dev",
     "staging": "sierra-painting-staging",
     "production": "sierra-painting-prod"
+  },
+  "targets": {
+    "sierra-painting-dev": {
+      "hosting": {
+        "dev": [
+          "sierra-painting-dev"
+        ]
+      }
+    },
+    "sierra-painting-staging": {
+      "hosting": {
+        "staging": [
+          "sierra-painting-staging"
+        ]
+      }
+    },
+    "sierra-painting-prod": {
+      "hosting": {
+        "prod": [
+          "sierra-painting-prod"
+        ]
+      }
+    }
   }
 }

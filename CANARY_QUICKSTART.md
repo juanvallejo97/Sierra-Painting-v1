@@ -8,11 +8,14 @@ This repository now includes a complete canary deployment system for safely rele
 
 ### 1. Deployment Scripts
 
-Three new scripts in the `scripts/` directory:
+Comprehensive deployment scripts in the `scripts/` and `scripts/deploy/` directories:
 
 - **`deploy_canary.sh`** - Deploy with 10% traffic split
 - **`promote_canary.sh`** - Promote to 50% or 100%
 - **`rollback.sh`** - One-command rollback
+- **`deploy/deploy.sh`** - Multi-environment deployment automation
+- **`deploy/pre-deploy-checks.sh`** - Pre-deployment validation
+- **`deploy/verify.sh`** - Post-deployment SLO verification
 
 ### 2. GitHub Actions Workflow
 
@@ -52,7 +55,23 @@ Tracks all deployments, promotions, and rollbacks as JSON files for audit purpos
 
 ## Quick Start
 
-### Deploy Canary (10%)
+### Multi-Environment Deployment
+
+For dev and staging environments, use the unified deployment script:
+
+```bash
+# Deploy to dev environment
+./scripts/deploy/deploy.sh --env dev
+
+# Deploy to staging with verification
+./scripts/deploy/deploy.sh --env staging
+./scripts/deploy/verify.sh --env staging
+
+# Deploy functions only to staging
+./scripts/deploy/deploy.sh --env staging --functions-only
+```
+
+### Deploy Canary (10%) - Production Only
 
 **Option A: Via Git Tag (Automatic)**
 ```bash
@@ -68,16 +87,26 @@ git push origin v1.2.0
 
 ### Monitor Deployment
 
-1. Check Firebase Console:
+1. Run automated verification:
+   ```bash
+   ./scripts/deploy/verify.sh --env prod
+   ```
+
+2. Check Firebase Console:
    - https://console.firebase.google.com/project/sierra-painting-prod/functions
 
-2. Check Cloud Run traffic split:
+3. Check Cloud Run traffic split:
    - https://console.cloud.google.com/run?project=sierra-painting-prod
 
-3. Monitor metrics:
-   - Error rate < 2%
-   - P95 latency < 1s
+4. Monitor metrics (automated in verify.sh):
+   - Error rate < 1% (prod) or < 2% (staging)
+   - P95 latency < 2s (prod) or < 3s (staging)
    - No critical errors
+
+5. Verify key user journeys:
+   - Login functionality
+   - Estimate creation
+   - Invoice export
 
 ### Promote to 50%
 
