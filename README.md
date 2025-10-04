@@ -7,7 +7,7 @@
 
 > A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
 
-**[View Architecture](docs/Architecture.md)** · **[Migration Guide](docs/MIGRATION.md)** · **[ADRs](docs/ADRs/)** · **[Code Audit](docs/AUDIT_SUMMARY.md)** · **[Governance](docs/GOVERNANCE.md)** · **[Performance](docs/PERFORMANCE_IMPLEMENTATION.md)**
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Documentation Index](docs/index.md)**
 
 ---
 
@@ -42,16 +42,22 @@ flutter pub run build_runner build --delete-conflicting-outputs
 cd functions
 npm ci
 cd ..
-2) Firebase Setup
-bash
-Copy code
+```
+
+### 2) Firebase Setup
+
+```bash
 firebase login
 firebase projects:list         # or create a project in the Firebase Console
 firebase use --add             # select or add an alias (e.g., staging, prod)
 
 # Generate Flutter firebase_options.dart
 flutterfire configure
-3) Start Dev Environment
+```
+
+### 3) Start Dev Environment
+
+```bash
 # Terminal 1: Emulators
 firebase emulators:start
 
@@ -60,37 +66,50 @@ flutter run
 
 # Optional: Watch for codegen
 flutter pub run build_runner watch
-Emulator UI: http://localhost:4000
-Firestore: http://localhost:8080 · Auth: http://localhost:9099 · Functions: http://localhost:5001 · Storage: http://localhost:9199
+```
 
-🧭 Golden Paths
-GP1: Auth & Time Tracking
-Sign up (Auth emulator) → 2) Clock in/out (offline queue to Firestore) → 3) View today’s jobs & entries
+**Emulator UI:** http://localhost:4000  
+**Firestore:** http://localhost:8080 · **Auth:** http://localhost:9099 · **Functions:** http://localhost:5001 · **Storage:** http://localhost:9199
 
-GP2: Estimate → Invoice → Payment
-Create estimate with line items → 2) Generate PDF (Cloud Function) → 3) Convert to invoice → 4) Mark paid (admin-only with audit trail)
+---
 
-GP3: Lead Capture → Schedule
-Submit lead via web form (App Check + captcha) → 2) Admin reviews → 3) Schedule job (lite scheduler)
+## 🧭 Golden Paths
 
-📚 Documentation
-Architecture: docs/Architecture.md
+**GP1: Auth & Time Tracking**
+1. Sign up (Auth emulator)
+2. Clock in/out (offline queue to Firestore)
+3. View today's jobs & entries
 
-Migration Guide: docs/MIGRATION.md
+**GP2: Estimate → Invoice → Payment**
+1. Create estimate with line items
+2. Generate PDF (Cloud Function)
+3. Convert to invoice
+4. Mark paid (admin-only with audit trail)
 
-ADRs: docs/ADRs/
+**GP3: Lead Capture → Schedule**
+1. Submit lead via web form (App Check + captcha)
+2. Admin reviews
+3. Schedule job (lite scheduler)
 
-Feature Flags: docs/FEATURE_FLAGS.md
+---
 
-App Check Setup: docs/APP_CHECK.md
+## 📚 Documentation
 
-Emulators Guide: docs/EMULATORS.md
+**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Full Index](docs/index.md)**
 
-Developer Workflow: docs/DEVELOPER_WORKFLOW.md
+**Quick Links:**
+- [Migration Guide](docs/MIGRATION.md)
+- [Feature Flags](docs/FEATURE_FLAGS.md)
+- [App Check Setup](docs/APP_CHECK.md)
+- [Emulators Guide](docs/EMULATORS.md)
+- [Developer Workflow](docs/DEVELOPER_WORKFLOW.md)
+- [UI/UX Overhaul](docs/ui_overhaul_mobile.md)
 
-UI/UX Overhaul: docs/ui_overhaul_mobile.md
+> **Note:** Older standalone setup/quickstart docs were consolidated into this README and the docs above.
 
-Note: Older standalone setup/quickstart docs were consolidated into the README and docs above.
+---
+
+## 🏗️ Tech Stack
 
 🏗️ Tech Stack
 Layer	Technology	Purpose
@@ -251,32 +270,16 @@ Sierra Painting uses GitHub Actions for automated CI/CD with comprehensive testi
 - **[CI Pipeline](.github/workflows/ci.yml)** - Matrix builds, testing, size validation (runs on PRs)
 - **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
 - **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
-- **[Nightly Maintenance](.github/workflows/nightly.yml)** - Link checking, dependency audits (2 AM UTC)
+- **[CI Tests](.github/workflows/flutter_ci.yml)** - Runs on all PRs
 
-**Key Features:**
-- ✅ **Matrix Builds**: Android, iOS (lint only), Web - parallel execution
-- ✅ **Smart Caching**: Flutter pub, Gradle, Node modules (40-60% faster)
-- ✅ **Emulator Tests**: Firestore rules + Functions integration on every PR
-- ✅ **Size Tracking**: Web budget validation (10MB), APK size monitoring
-- ✅ **Failure Triage**: Automatic diagnostics collection on failures
-- ✅ **SBOM Generation**: Software bill of materials on releases
-- ✅ **Canary Deployment**: Gradual rollout support with monitoring
-
-**Documentation:**
-- 📖 [CI/CD Quick Reference](docs/CI_CD_QUICK_REFERENCE.md) - Common tasks and commands
-- 📖 [CI/CD Enhancements](docs/CI_CD_ENHANCEMENTS.md) - Implementation details
-- 📖 [Branch Protection](docs/BRANCH_PROTECTION.md) - Required checks and policies
-- 📖 [Canary Deployment](docs/ops/CANARY_DEPLOYMENT.md) - Gradual rollout guide
-- 📖 [CI/CD Implementation](docs/ops/CI_CD_IMPLEMENTATION.md) - Original implementation
-
-**Pipeline Jobs:**
-1. **Analyze** - Code quality (Flutter, Functions, WebApp)
-2. **Test** - Unit/integration tests with coverage
-3. **Rules Test** - Firestore security rules validation
-4. **Functions Test** - Cloud Functions integration tests
-5. **Build** - Android APK, iOS validation, Web bundle
-6. **Web Budget** - Bundle size enforcement (10MB limit)
-7. **Size Report** - Track size changes vs previous builds
+**Pipeline Stages:**
+1. **Setup** - Cache dependencies (Flutter, Node, Gradle)
+2. **Lint & Test** - Flutter analyze + test, Functions lint + test
+3. **Build Check** - Validate Flutter builds (APK for staging, release builds for production)
+4. **Emulator Smoke** - Run smoke tests against Firebase emulators
+5. **Deploy Indexes** - Deploy Firestore indexes
+6. **Deploy Functions** - Deploy Cloud Functions with authentication
+7. **Post Checks** - Print monitoring links and deployment status
 
 ### Staging Deployment (Automatic)
 

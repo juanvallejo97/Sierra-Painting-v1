@@ -325,7 +325,7 @@ linter:
 - ✅ `docs/AUDIT_SUMMARY.md` - Previous audit
 - ✅ `docs/GOVERNANCE.md` - Development standards
 - ✅ `docs/ONBOARDING.md` - Developer setup
-- ✅ `docs/ADRs/` - 12+ architectural decisions
+- ✅ `docs/adrs/` - 12+ architectural decisions
 - ✅ Inline documentation - Excellent coverage
 
 **Added in This Audit:**
