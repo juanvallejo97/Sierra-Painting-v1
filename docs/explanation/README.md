@@ -12,17 +12,14 @@ Explanations are understanding-oriented discussions that clarify and illuminate 
 ## Design decisions
 
 - [Architecture Decision Records (ADRs)](../adrs/)
+- [Why Flutter and Firebase](why-flutter-firebase.md)
+- [Why Riverpod for state management](why-riverpod.md)
 
 ## Concepts
 
 - [Time clock workflow](time-clock-workflow.md)
 - [Invoice lifecycle](invoice-lifecycle.md)
 - [Lead management](lead-management.md)
-
-## Technology choices
-
-- [Why Flutter and Firebase](why-flutter-firebase.md)
-- [Why Riverpod for state management](why-riverpod.md)
 
 ## What is an explanation?
 
