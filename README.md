@@ -1,192 +1,141 @@
 # Sierra Painting
 
 [![CI Pipeline](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/ci.yml)
-[![Staging CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
-[![Production CI/CD](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
-[![Nightly](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/nightly.yml)
+[![Staging](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/staging.yml)
+[![Production](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml/badge.svg)](https://github.com/juanvallejo97/Sierra-Painting-v1/actions/workflows/production.yml)
 
-> A professional mobile-first painting business management application built with **Flutter** and **Firebase**.
-
-**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Documentation Index](docs/index.md)**
+> **Professional mobile painting business management system** — Flutter + Firebase with offline-first architecture, RBAC, and production-ready deployment pipelines.
 
 ---
 
-## 🎯 Overview
+## Overview
 
-Sierra Painting helps small painting businesses manage operations, projects, estimates/invoices, and payments efficiently. The project follows **story-driven development** with comprehensive documentation and best practices.
+Sierra Painting is a **production-ready mobile application** for painting contractors to manage projects, time tracking, estimates, invoices, and payments. Built with enterprise patterns: deny-by-default security, reversible migrations, canary deployments, and comprehensive audit trails.
+
+**Key Features**:
+- 📱 Cross-platform mobile (iOS/Android) with Flutter
+- ⚡ Offline-first with automatic sync
+- 🔒 Deny-by-default security (RBAC + App Check)
+- 📊 Real-time time tracking with GPS validation
+- 💼 Estimates, invoices, and payment processing
+- 🚀 Progressive deployment (10% → 50% → 100%)
+- 📈 Full observability (Crashlytics, Performance, Analytics)
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Prerequisites
 - **Flutter SDK** ≥ 3.8.0 — [Install](https://flutter.dev/docs/get-started/install)
 - **Node.js** ≥ 18 — [Install](https://nodejs.org/)
-- **Firebase CLI** — [Install](https://firebase.google.com/docs/cli#install_the_firebase_cli)
-- **Git** and a code editor (VS Code recommended)
+- **Firebase CLI** — `npm install -g firebase-tools`
 
-### 1) Clone & Install
+### Setup (3 commands)
 
 ```bash
-# Clone the repository
+# 1. Clone and install dependencies
 git clone https://github.com/juanvallejo97/Sierra-Painting-v1.git
-cd Sierra-Painting-v1
+cd Sierra-Painting-v1 && flutter pub get && cd functions && npm ci && cd ..
 
-# Flutter deps
-flutter pub get
+# 2. Configure Firebase
+firebase login && firebase use --add
 
-# (Optional) Generate adapters, etc.
-flutter pub run build_runner build --delete-conflicting-outputs
-
-# Cloud Functions deps
-cd functions
-npm ci
-cd ..
+# 3. Start development
+firebase emulators:start          # Terminal 1
+flutter run                       # Terminal 2
 ```
 
-### 2) Firebase Setup
-
-```bash
-firebase login
-firebase projects:list         # or create a project in the Firebase Console
-firebase use --add             # select or add an alias (e.g., staging, prod)
-
-# Generate Flutter firebase_options.dart
-flutterfire configure
-```
-
-### 3) Start Dev Environment
-
-```bash
-# Terminal 1: Emulators
-firebase emulators:start
-
-# Terminal 2: Run the app (connects to emulators)
-flutter run
-
-# Optional: Watch for codegen
-flutter pub run build_runner watch
-```
-
-**Emulator UI:** http://localhost:4000  
-**Firestore:** http://localhost:8080 · **Auth:** http://localhost:9099 · **Functions:** http://localhost:5001 · **Storage:** http://localhost:9199
+**Emulator UI**: http://localhost:4000
 
 ---
 
-## 🧭 Golden Paths
+## Documentation
 
-**GP1: Auth & Time Tracking**
-1. Sign up (Auth emulator)
-2. Clock in/out (offline queue to Firestore)
-3. View today's jobs & entries
+### Core Guides
+- **[Architecture](docs/ARCHITECTURE.md)** — System design, data flow, and technology stack
+- **[Deployment](docs/DEPLOYMENT.md)** — Canary rollout, monitoring, and rollback procedures
+- **[Security](docs/Security.md)** — Firestore rules, App Check, threat model, and audit logging
+- **[Database](docs/DATABASE.md)** — Schema, indexes, migrations, and optimization
+- **[Operations](docs/OPERATIONS.md)** — Runbooks, monitoring, incident response
+- **[Development](docs/DEVELOPMENT.md)** — Local setup, code style, testing, and workflow
+- **[Testing](docs/Testing.md)** — Unit, integration, and smoke test strategies
 
-**GP2: Estimate → Invoice → Payment**
-1. Create estimate with line items
-2. Generate PDF (Cloud Function)
-3. Convert to invoice
-4. Mark paid (admin-only with audit trail)
-
-**GP3: Lead Capture → Schedule**
-1. Submit lead via web form (App Check + captcha)
-2. Admin reviews
-3. Schedule job (lite scheduler)
-
----
-
-## 📚 Documentation
-
-**[Architecture](ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Operations](OPERATIONS.md)** · **[Developer Guide](DEVELOPER.md)** · **[ADRs](docs/adrs/)** · **[Full Index](docs/index.md)**
-
-**Quick Links:**
-- [Migration Guide](docs/MIGRATION.md)
-- [Feature Flags](docs/FEATURE_FLAGS.md)
-- [App Check Setup](docs/APP_CHECK.md)
-- [Emulators Guide](docs/EMULATORS.md)
-- [Developer Workflow](docs/DEVELOPER_WORKFLOW.md)
-- [UI/UX Overhaul](docs/ui_overhaul_mobile.md)
-
-> **Note:** Older standalone setup/quickstart docs were consolidated into this README and the docs above.
+### Additional Resources
+- **[ADRs](docs/adrs/)** — Architecture decision records
+- **[Migration Guide](docs/MIGRATION.md)** — V1 ship-readiness refactor notes
+- **[Feature Flags](docs/FEATURE_FLAGS.md)** — Feature flag management
+- **[App Check](docs/APP_CHECK.md)** — Firebase App Check setup
+- **[Emulators](docs/EMULATORS.md)** — Local development with Firebase emulators
+- **[Developer Workflow](docs/DEVELOPER_WORKFLOW.md)** — Story-driven development process
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
-🏗️ Tech Stack
-Layer	Technology	Purpose
-Frontend	Flutter (Material 3)	Cross-platform mobile app
-State	Riverpod	Reactive state & DI
-Routing	go_router	Declarative navigation with RBAC guards
-Offline	Hive	Local storage + sync queue
-Backend	Firebase (Auth, Firestore, Storage, Functions)	Serverless backend
-Functions	TypeScript + Zod	Type-safe serverless logic
-Payments	Manual primary, Stripe optional	Check/cash + optional card payments
-Security	App Check + Firestore Rules	Deny-by-default authorization
-Observability	Crashlytics, Performance, Analytics	Monitoring & debugging
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **Frontend** | Flutter (Material 3) | Cross-platform mobile |
+| **State** | Riverpod | Reactive state management |
+| **Routing** | go_router | RBAC-enabled navigation |
+| **Offline** | Hive | Local storage + sync queue |
+| **Backend** | Firebase | Auth, Firestore, Storage, Functions |
+| **Functions** | TypeScript + Zod | Type-safe serverless logic |
+| **Payments** | Manual/Stripe | Check/cash + optional cards |
+| **Security** | App Check + Rules | Deny-by-default authorization |
+| **Observability** | Firebase Suite | Crashlytics, Performance, Analytics |
 
-Why this stack? See ADR-0001.
+**Why this stack?** See [ADR-0001](docs/adrs/001-tech-stack.md)
 
-🎯 Development Methodology
-User Stories with BDD acceptance criteria (Given/When/Then)
+---
 
-Sprint Planning (V1, V2, V3, V4)
+## Project Structure
 
-Feature Flags via Firebase Remote Config for progressive rollout
-
-Idempotency for offline retries & webhooks
-
-Audit Trail for sensitive operations
-
-Observability with structured logs & performance traces
-
-See ADR-011 (Story-Driven Development) for details.
-
-📂 Project Structure
+```
 /
 ├── lib/                      # Flutter application
-│   ├── app/                  # App bootstrap, theme, router (RBAC)
-│   ├── core/                 # Services, models, utilities
-│   │   ├── services/         # auth, firestore, storage, offline_queue, feature_flags
-│   │   ├── telemetry/        # analytics, logging, crashlytics
-│   │   └── utils/            # result types, helpers
-│   ├── features/             # Feature modules (data/domain/presentation)
-│   │   ├── auth/             # Login, sign-up, role checks
-│   │   ├── timeclock/        # Clock in/out, jobs today
-│   │   ├── estimates/        # Quote builder, PDF preview
-│   │   ├── invoices/         # Invoice list, mark paid
-│   │   ├── admin/            # Dashboard, schedule lite
-│   │   └── website/          # Lead form (Flutter Web)
-│   └── widgets/              # Shared UI components
-├── functions/                # Cloud Functions (TypeScript + Zod)
+│   ├── app/                  # Bootstrap, theme, RBAC router
+│   ├── core/                 # Services, providers, utilities
+│   │   ├── services/         # Auth, Firestore, offline queue
+│   │   ├── telemetry/        # Analytics, logging, crashlytics
+│   │   └── utils/            # Result types, helpers
+│   ├── features/             # Feature modules (auth, timeclock, etc.)
+│   └── design/               # Design system (tokens, components)
+├── functions/                # Cloud Functions (TypeScript)
 │   ├── src/
-│   │   ├── index.ts          # Export wiring
 │   │   ├── lib/              # Shared (audit, idempotency, schemas)
-│   │   ├── leads/            # createLead
-│   │   ├── pdf/              # createEstimatePdf
-│   │   ├── payments/         # markPaidManual, Stripe (optional)
-│   │   └── tests/            # Rules & functions tests
-├── docs/                     # Documentation
-│   ├── Architecture.md
-│   ├── MIGRATION.md
-│   ├── FEATURE_FLAGS.md
-│   ├── APP_CHECK.md
-│   ├── EMULATORS.md
-│   └── ADRs/
-├── .github/
-│   ├── workflows/            # CI/CD (analyze, test, deploy)
-│   └── ISSUE_TEMPLATE/       # Story, bug, tech-task templates
-├── firebase.json             # Emulators & hosting
-├── firestore.rules           # Security rules (deny-by-default)
-├── firestore.indexes.json    # Database indexes
-└── storage.rules             # Storage rules
-🛡️ Security
-Firestore Rules (deny-by-default) — excerpt:
+│   │   ├── leads/            # Lead management functions
+│   │   ├── pdf/              # PDF generation
+│   │   ├── payments/         # Payment processing
+│   │   └── tests/            # Functions and rules tests
+├── docs/                     # Canonical documentation
+│   ├── ARCHITECTURE.md       # System architecture
+│   ├── DEPLOYMENT.md         # Deployment procedures
+│   ├── SECURITY.md           # Security guide
+│   ├── DATABASE.md           # Schema and migrations
+│   ├── OPERATIONS.md         # Runbooks
+│   ├── DEVELOPMENT.md        # Developer guide
+│   ├── adrs/                 # Architecture decision records
+│   └── _archive/             # Historical documentation
+├── .github/workflows/        # CI/CD pipelines
+├── firebase.json             # Firebase configuration
+├── firestore.rules           # Deny-by-default security rules
+├── firestore.indexes.json    # Composite indexes
+└── storage.rules             # Storage security rules
+```
 
-javascript
+---
 
+## Security
+
+### Firestore Rules (Deny-by-Default)
+
+```javascript
+// Default: DENY ALL
 match /{document=**} {
   allow read, write: if false;
 }
 
+// Explicit grants with RBAC
 match /users/{userId} {
   allow read: if isOwner(userId) || isAdmin();
   allow update: if isOwner(userId) && !modifiesRole();
@@ -197,338 +146,132 @@ match /jobs/{jobId}/timeEntries/{entryId} {
   allow read: if isOwnEntry() || isAdmin();
   allow update, delete: if false; // Server-only
 }
-Principles
 
-Deny-by-default; org-scoped explicit allows
-
-Client cannot set invoice.paid / invoice.paidAt (server-only)
-
-App Check enforced on callable functions
-
-Audit logs for all payment operations
-
-See Security Architecture.
-
-🧪 Test, Lint & Analyze
-
-# Flutter tests
-flutter test
-
-# Flutter analyze
-flutter analyze
-
-# Cloud Functions tests
-cd functions
-npm test
-npm run test:rules       # requires emulators running
-npm run lint
-npm run typecheck
-cd ..
-Integration & E2E
-bash
-Copy code
-# Emulators
-firebase emulators:start
-
-# Functions integration tests
-cd functions
-npm run test:integration
-cd ..
-
-# Flutter E2E
-flutter test integration_test/
-## 🧰 Environment Setup
-
-### Environment Configuration
-
-Sierra Painting supports three environments:
-
-| Environment | Firebase Project | Purpose | Deployment |
-|-------------|-----------------|---------|------------|
-| **Development** | Emulators | Local development | Manual (local) |
-| **Staging** | `sierra-painting-staging` | Testing & validation | Auto on `main` |
-| **Production** | `sierra-painting-prod` | Live app | Manual approval on tags |
-
-### Setting Up Environments
-
-**1. Copy and configure .env file:**
-
-```bash
-cp .env.example .env
-# Edit .env with your Firebase project details
+match /invoices/{invoiceId} {
+  allow read: if isOrgMember();
+  allow create, update: if isAdmin();
+  // paid/paidAt fields are server-only (callable function)
+}
 ```
 
-**2. Configure Firebase projects:**
+**Security Principles**:
+- ✅ Deny-by-default; explicit org-scoped grants
+- ✅ Server-side authority for sensitive operations
+- ✅ App Check enforcement on callable functions
+- ✅ Immutable audit logs for payments/invoices
+- ✅ No secrets in code (GitHub secrets + OIDC)
+
+**See**: [docs/Security.md](docs/Security.md) for full threat model and test strategy.
+
+---
+
+## Deployment
+
+### Environments
+
+- **Dev**: Local emulators for development
+- **Staging**: `sierra-painting-staging` (auto-deploy on `main`)
+- **Production**: `sierra-painting-prod` (canary deployment on tags)
+
+### Canary Deployment (Production)
 
 ```bash
-# Development (uses emulators by default)
-firebase use default
-
-# Staging
-firebase use staging
-
-# Production  
-firebase use production
-```
-
-**3. Generate Firebase configuration:**
-
-```bash
-# Generates lib/firebase_options.dart with platform-specific config
-flutterfire configure
-```
-
-**4. Run with specific environment:**
-
-```bash
-# Development (with emulators)
-flutter run --dart-define=USE_EMULATORS=true
-
-# Staging
-flutter run --dart-define=ENVIRONMENT=staging
-
-# Production
-flutter run --dart-define=ENVIRONMENT=production --release
-```
-
-### App Check (Debug Mode)
-
-Run `flutter run` to get the debug token in logs
-
-Register it in Firebase Console → App Check → Debug tokens
-
-(Optional) Save locally:
-
-```bash
-echo "APP_CHECK_DEBUG_TOKEN=your-token-here" > .env.debug
-# .env.debug is gitignored.
-```
-
-### Feature Flags (Remote Config)
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `payments.stripeEnabled` | boolean | `false` | Enable Stripe payments |
-| `features.pdfGeneration` | boolean | `true` | Server-side PDF generation |
-| `features.offlineMode` | boolean | `true` | Offline queue & sync |
-
-**Example:**
-
-```dart
-final clockInEnabled = ref.watch(clockInEnabledProvider);
-return clockInEnabled ? const ClockInButton() : const ComingSoonBanner();
-```
-
-### Environment Variables Reference
-
-See [`.env.example`](.env.example) for complete list of available environment variables including:
-- Firebase configuration
-- API settings
-- Feature flag overrides
-- Stripe configuration (optional)
-- Observability settings
-- Testing credentials
-
-
-## 🚢 Deployment
-
-### CI/CD Pipeline
-
-Sierra Painting uses GitHub Actions for automated CI/CD with comprehensive testing, caching, and deployment automation.
-
-**Workflows:**
-- **[CI Pipeline](.github/workflows/ci.yml)** - Matrix builds, testing, size validation (runs on PRs)
-- **[Staging Pipeline](.github/workflows/staging.yml)** - Auto-deploys on push to `main`
-- **[Production Pipeline](.github/workflows/production.yml)** - Deploys on version tags with manual approval
-- **[CI Tests](.github/workflows/flutter_ci.yml)** - Runs on all PRs
-
-**Pipeline Stages:**
-1. **Setup** - Cache dependencies (Flutter, Node, Gradle)
-2. **Lint & Test** - Flutter analyze + test, Functions lint + test
-3. **Build Check** - Validate Flutter builds (APK for staging, release builds for production)
-4. **Emulator Smoke** - Run smoke tests against Firebase emulators
-5. **Deploy Indexes** - Deploy Firestore indexes
-6. **Deploy Functions** - Deploy Cloud Functions with authentication
-7. **Post Checks** - Print monitoring links and deployment status
-
-### Staging Deployment (Automatic)
-
-**Trigger:** Push to `main` branch
-
-```bash
-git checkout main
-git pull origin main
-git merge feature/my-feature
-git push origin main
+# Create version tag
+git tag v1.2.0 && git push origin v1.2.0
 
 # GitHub Actions automatically:
-# 1. Runs all tests
-# 2. Builds Flutter app
-# 3. Deploys to staging project
+# 1. Deploys at 10% traffic
+# 2. Monitors SLOs for 24h
+# 3. Gate: Promote to 50% (manual approval)
+# 4. Monitors SLOs for 6h
+# 5. Gate: Promote to 100% (manual approval)
+
+# Or use scripts directly
+./scripts/deploy_canary.sh --project sierra-painting-prod --tag v1.2.0
+./scripts/promote_canary.sh --project sierra-painting-prod --stage 50
 ```
 
-**Environment:** `sierra-painting-staging`
-
-**Manual staging deploy:**
-```bash
-firebase use staging
-firebase deploy
-```
-
-### Production Deployment (Manual Approval)
-
-**Trigger:** Version tag push (e.g., `v1.0.0`)
+### Rollback (< 1 minute)
 
 ```bash
-# After staging validation
-git tag -a v1.0.0 -m "Sprint V1 release"
-git push origin v1.0.0
+# Instant traffic routing rollback
+./scripts/rollback.sh --project sierra-painting-prod
 
-# GitHub Actions will:
-# 1. Run all tests
-# 2. Build release APK/AAB
-# 3. Wait for manual approval (required)
-# 4. Deploy to production after approval
-# 5. Create GitHub Release
+# Or feature flag killswitch
+firebase remoteconfig:get --project sierra-painting-prod
+# Set flag to false, publish
 ```
 
-**Environment:** `sierra-painting-prod`
-
-**Approval:** Required (configured in GitHub Environments)
-
-### GitHub Environments Setup
-
-**Required Configuration:**
-- `staging` environment - No approval needed
-- `production` environment - Requires 1 reviewer approval
-
-**Secrets:**
-- `FIREBASE_SERVICE_ACCOUNT` - Service account JSON for Firebase deployment
-
-See [GitHub Environments Setup Guide](docs/ops/github-environments.md) for detailed configuration.
-
-### Deployment Scripts
-
-**Helper scripts available:**
-- `scripts/ci/firebase-login.sh` - Validate Firebase authentication
-- `scripts/smoke/run.sh` - Run emulator smoke tests
-- `scripts/remote-config/manage-flags.sh` - Manage feature flags
-- `scripts/rollback/rollback-functions.sh` - Emergency rollback
-
-### Monitoring Post-Deployment
-
-**Staging:**
-- Firebase Console: https://console.firebase.google.com/project/sierra-painting-staging
-- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-staging
-
-**Production:**
-- Firebase Console: https://console.firebase.google.com/project/sierra-painting-prod
-- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-prod
-- Crashlytics: Monitor for 24 hours post-deployment
-
-See [Monitoring Guide](docs/ops/monitoring.md) for detailed monitoring procedures.
-
-### Rollback Procedures
-
-If issues are detected post-deployment:
-
-1. **Feature Flag Rollback** (fastest):
-   ```bash
-   scripts/remote-config/manage-flags.sh disable FEATURE_FLAG --project production
-   ```
-
-2. **Code Rollback** (requires redeployment):
-   ```bash
-   # Checkout previous version
-   git checkout v1.x.x
-   
-   # Deploy
-   cd functions && npm ci && npm run build
-   firebase deploy --only functions --project production
-   ```
-
-See [Rollback Procedures](docs/ui/ROLLBACK_PROCEDURES.md) for detailed rollback steps.
-
-📊 Performance Targets
-Operation	Target (P95)
-Sign-in	≤ 2.5s
-Clock-in (online)	≤ 2.5s
-Jobs Today load	≤ 2.0s
-Offline sync	≤ 5s per item
-PDF generation	≤ 10s
-
-Monitored via Firebase Performance & structured logs.
-
-🧑‍💻 Contributing
-Create a branch: git checkout -b feature/my-feature
-
-Use issue templates in .github/ISSUE_TEMPLATE/
-
-Follow CONTRIBUTING.md
-
-Run tests & lint before PR:
-flutter test && flutter analyze && (cd functions && npm test && npm run lint)
-
-Open a PR using the template
-
-🆘 Troubleshooting
-Emulators won’t start
-
-lsof -ti:4000,8080,9099,5001,9199 | xargs kill -9
-firebase emulators:start --clean
-Flutter build fails
-
-flutter clean
-flutter pub get
-flutter pub run build_runner build --delete-conflicting-outputs
-Functions deploy fails
-
-cd functions
-rm -rf node_modules lib
-npm ci
-npm run build
-firebase deploy --only functions
-More help: docs/EMULATORS.md · docs/APP_CHECK.md
+**See**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment procedures.
 
 ---
 
-## ⚡ Performance & Optimization
+## Testing & Validation
 
-Sierra Painting follows strict performance budgets and best practices:
-
-**📊 Key Metrics:**
-- Cold Start P90: < 2.0s
-- APK Size: < 50MB (enforced in CI)
-- Frame Rate: 60fps sustained
-- Crash-free Rate: ≥ 99.5%
-
-**🛠️ Tools & Infrastructure:**
-- Firebase Performance Monitoring (automatic tracking)
-- Firebase Crashlytics (error tracking)
-- CI performance budgets (APK size checks)
-- Pre-commit hooks (code quality)
-
-**📚 Documentation:**
-- [Performance Implementation Guide](docs/PERFORMANCE_IMPLEMENTATION.md) - Central guide
-- [Performance Budgets](docs/PERFORMANCE_BUDGETS.md) - Metrics and targets
-- [Backend Performance](docs/BACKEND_PERFORMANCE.md) - Cloud Functions optimization
-- [Firebase Setup](docs/FIREBASE_SETUP.md) - Monitoring setup
-- [Frontend Playbook](docs/perf-playbook-fe.md) - Best practices
-
-**🚀 Quick Start:**
 ```bash
-# Install pre-commit hooks
-./scripts/install-hooks.sh
+# Flutter tests
+flutter test --coverage
 
-# Measure app startup
-./scripts/measure_startup.sh
+# Functions tests
+cd functions && npm test
 
-# Use optimized widgets
-import 'package:sierra_painting/core/widgets/cached_image.dart';
-import 'package:sierra_painting/core/widgets/paginated_list_view.dart';
+# Firestore rules tests
+cd firestore-tests && npm test
+
+# Lint & analyze
+flutter analyze
+cd functions && npm run lint
+
+# Smoke tests (E2E)
+flutter test integration_test/app_smoke_test.dart
 ```
+
+**Coverage Targets**: 80%+ for services/repositories, 100% for security rules.
+
+**See**: [docs/Testing.md](docs/Testing.md) for detailed testing strategy.
 
 ---
 
-📄 License
-Copyright © 2024 Sierra Painting
+## Contributing
+
+We welcome contributions! Please:
+
+1. **Read**: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for setup and workflow
+2. **Follow**: Conventional Commits (`feat(scope): message`)
+3. **Test**: Ensure all tests pass (`flutter test`, `npm test`)
+4. **Document**: Update docs for breaking changes
+5. **Security**: Never commit secrets (see `.gitignore`)
+
+**Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+---
+
+## Security Disclosure
+
+If you discover a security vulnerability:
+
+1. **Do NOT** open a public issue
+2. Email maintainers directly: [contact info in docs/Security.md](docs/Security.md)
+3. Allow reasonable time for fix before disclosure
+
+We follow responsible disclosure practices and will credit security researchers.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Support & Contact
+
+- **Documentation**: Start with [docs/](docs/) directory
+- **Issues**: [GitHub Issues](https://github.com/juanvallejo97/Sierra-Painting-v1/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/juanvallejo97/Sierra-Painting-v1/discussions)
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: 2024  
+**Status**: Production-Ready
