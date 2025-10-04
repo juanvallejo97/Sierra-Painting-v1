@@ -31,6 +31,9 @@ Sierra Painting is a **production-ready mobile application** for painting contra
 - **Firebase CLI** — `npm install -g firebase-tools`
 
 ### Setup (3 commands)
+> **Automated Setup:** Use `./scripts/setup_env.sh` to automatically verify and install dependencies. See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for details.
+
+### 1) Clone & Install
 
 ```bash
 # 1. Clone and install dependencies
@@ -203,6 +206,110 @@ firebase remoteconfig:get --project sierra-painting-prod
 ```
 
 **See**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment procedures.
+**Environment:** `sierra-painting-prod`
+
+**Approval:** Required (configured in GitHub Environments)
+
+### GitHub Environments Setup
+
+**Required Configuration:**
+- `staging` environment - No approval needed
+- `production` environment - Requires 1 reviewer approval
+
+**Secrets:**
+- `FIREBASE_SERVICE_ACCOUNT` - Service account JSON for Firebase deployment
+
+See [GitHub Environments Setup Guide](docs/ops/github-environments.md) for detailed configuration.
+
+### Deployment Scripts
+
+**Environment Setup:**
+- `scripts/setup_env.sh` - Install and verify required dependencies
+- `scripts/configure_env.sh` - Configure .env file from template
+- `scripts/verify_config.sh` - Verify environment configuration
+
+**Helper scripts available:**
+- `scripts/ci/firebase-login.sh` - Validate Firebase authentication
+- `scripts/smoke/run.sh` - Run emulator smoke tests
+- `scripts/remote-config/manage-flags.sh` - Manage feature flags
+- `scripts/rollback/rollback-functions.sh` - Emergency rollback
+
+See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for comprehensive deployment guide.
+
+### Monitoring Post-Deployment
+
+**Staging:**
+- Firebase Console: https://console.firebase.google.com/project/sierra-painting-staging
+- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-staging
+
+**Production:**
+- Firebase Console: https://console.firebase.google.com/project/sierra-painting-prod
+- Cloud Functions Logs: https://console.cloud.google.com/logs/query?project=sierra-painting-prod
+- Crashlytics: Monitor for 24 hours post-deployment
+
+See [Monitoring Guide](docs/ops/monitoring.md) for detailed monitoring procedures.
+
+### Rollback Procedures
+
+If issues are detected post-deployment:
+
+1. **Feature Flag Rollback** (fastest):
+   ```bash
+   scripts/remote-config/manage-flags.sh disable FEATURE_FLAG --project production
+   ```
+
+2. **Code Rollback** (requires redeployment):
+   ```bash
+   # Checkout previous version
+   git checkout v1.x.x
+   
+   # Deploy
+   cd functions && npm ci && npm run build
+   firebase deploy --only functions --project production
+   ```
+
+See [Rollback Procedures](docs/ui/ROLLBACK_PROCEDURES.md) for detailed rollback steps.
+
+📊 Performance Targets
+Operation	Target (P95)
+Sign-in	≤ 2.5s
+Clock-in (online)	≤ 2.5s
+Jobs Today load	≤ 2.0s
+Offline sync	≤ 5s per item
+PDF generation	≤ 10s
+
+Monitored via Firebase Performance & structured logs.
+
+🧑‍💻 Contributing
+Create a branch: git checkout -b feature/my-feature
+
+Use issue templates in .github/ISSUE_TEMPLATE/
+
+Follow CONTRIBUTING.md
+
+Run tests & lint before PR:
+flutter test && flutter analyze && (cd functions && npm test && npm run lint)
+
+Open a PR using the template
+
+🆘 Troubleshooting
+Emulators won’t start
+
+lsof -ti:4000,8080,9099,5001,9199 | xargs kill -9
+firebase emulators:start --clean
+Flutter build fails
+
+flutter clean
+flutter pub get
+flutter pub run build_runner build --delete-conflicting-outputs
+Functions deploy fails
+
+cd functions
+rm -rf node_modules lib
+npm ci
+npm run build
+firebase deploy --only functions
+More help: docs/EMULATORS.md · docs/APP_CHECK.md
 
 ---
 

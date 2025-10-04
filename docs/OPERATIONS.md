@@ -25,6 +25,9 @@ This guide covers deployment, rollback procedures, monitoring, and operational r
 
 ## Deployment
 
+> **For comprehensive deployment instructions, see [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md)**  
+> **Environment setup scripts:** `./scripts/setup_env.sh`, `./scripts/configure_env.sh`, `./scripts/verify_config.sh`
+
 ### Prerequisites
 
 - GitHub Actions workflows configured
