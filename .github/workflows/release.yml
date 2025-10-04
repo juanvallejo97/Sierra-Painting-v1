@@ -395,7 +395,7 @@ jobs:
           path: ./deployment-history
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ./release-builds/app-release.apk
