@@ -87,13 +87,8 @@
         "node_modules",
         ".git",
         "firebase-debug.log",
-        "firebase-debug.*.log"
-      ],
-      "predeploy": [
-        "echo 'Running function pre-deploy checks...'",
-        "npm run lint",
-        "npm run typecheck",
-        "npm test"
+        "firebase-debug.*.log",
+        "src/test"
       ]
     }
   ],

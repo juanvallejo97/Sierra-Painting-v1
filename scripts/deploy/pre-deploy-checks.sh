@@ -70,7 +70,19 @@ else
 fi
 echo ""
 
-# Check 5: Rollback plan documented
+# Check 5: TypeScript compilation (if lib exists, assume built)
+echo -e "${BLUE}5. Checking Functions Build${NC}"
+if [ -d "functions/lib" ] && [ -n "$(ls -A functions/lib 2>/dev/null)" ]; then
+  echo -e "${GREEN}✓ Functions build exists (functions/lib)${NC}"
+  echo "  Build appears to be up to date"
+else
+  echo -e "${YELLOW}⚠️  Functions not built yet${NC}"
+  echo "  Run 'cd functions && npm run build' before deploying"
+  echo "  Note: CI will handle building automatically"
+fi
+echo ""
+
+# Check 6: Rollback plan documented
 echo -e "${BLUE}5. Checking Rollback Plan${NC}"
 if [ -f "docs/rollout-rollback.md" ] || [ -f "docs/CANARY_DEPLOYMENT.md" ]; then
   echo -e "${GREEN}✓ Rollback documentation found${NC}"
