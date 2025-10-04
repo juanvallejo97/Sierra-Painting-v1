@@ -6,7 +6,7 @@ This guide documents how to implement and test offline/weak-network states in th
 
 The app implements an **offline-first architecture** with local queue persistence and automatic sync when connectivity is restored.
 
-See: `docs/ADRs/0002-offline-first-architecture.md` for detailed design decisions.
+See: `docs/adrs/0002-offline-first-architecture.md` for detailed design decisions.
 
 ---
 
@@ -510,7 +510,7 @@ telemetryService.logEvent('SYNC_COMPLETED', {
 
 **Last Updated**: 2025-10-03  
 **See Also**:
-- `docs/ADRs/0002-offline-first-architecture.md`
+- `docs/adrs/0002-offline-first-architecture.md`
 - `lib/core/services/offline_service.dart`
 - `lib/core/services/queue_service.dart`
 - `lib/core/widgets/sync_status_chip.dart`

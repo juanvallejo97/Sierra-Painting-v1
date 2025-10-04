@@ -90,6 +90,32 @@ cd functions && npm run lint && npm run typecheck
 ### Current State
 - ✅ `.github/workflows/ci.yml` exists
 - ✅ Runs Flutter and Functions checks
+- ✅ `.github/workflows/governance.yml` - Project governance & PR conflict resolver
+
+### Project Governance Workflow
+
+The governance workflow (`.github/workflows/governance.yml`) automates conflict resolution and enforces quality standards for multiple PRs.
+
+**Usage:**
+1. Go to Actions → Project Governance & PR Conflict Resolver
+2. Click "Run workflow"
+3. Enter comma-separated PR numbers (e.g., `123,124,125`)
+4. Specify base branch (default: `main`)
+5. Click "Run workflow"
+
+**What it does:**
+- Runs quality gates (lint, typecheck, test, build)
+- Checks each PR for merge conflicts
+- Posts detailed comments on PRs with:
+  - ✅ Conflict status
+  - 📝 Resolution instructions
+  - 📊 Quality gate results
+- Generates summary report
+
+**Project Phases Enforced:**
+- **Phase 3:** Functional Hardening (>= 90% test coverage)
+- **Phase 4:** Final Documentation (README, CHANGELOG, ADRs)
+- **Phase 5:** CI/CD & Ship Checks (green CI, signed tags)
 
 ### Recommended Additions
 

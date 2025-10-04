@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Portable ./run launcher for Sierra Painting project
+# Auto-detects project type and starts the application
+
+# ------- helper print -------
+say() { printf "\n==> %s\n" "$*"; }
+error() { printf "ERROR: %s\n" "$*" >&2; }
+
+# ------- detect project type -------
+
+# This is a multi-component project (Flutter + Node.js Functions + Next.js Webapp)
+# Priority: Start the webapp since it's the main web interface
+
+if [ -f "webapp/package.json" ]; then
+  say "Detected Next.js webapp (primary interface)"
+  cd webapp
+  
+  command -v npm >/dev/null || { error "npm not found"; exit 1; }
+  
+  # Install dependencies if needed
+  if [ ! -d "node_modules" ]; then
+    say "Installing dependencies..."
+    npm ci || npm install || true
+  fi
+  
+  # Check if we have a complete build (prerender-manifest.json indicates successful build)
+  if [ ! -f ".next/prerender-manifest.json" ] && [ ! -f ".next/BUILD_ID" ]; then
+    say "No production build found, starting in development mode..."
+    if npm run | grep -qE "^  dev"; then
+      exec npm run dev
+    else
+      error "No dev script found in webapp/package.json"
+      exit 1
+    fi
+  fi
+  
+  # We have a build, try to start in production mode
+  if npm run | grep -qE "^  start"; then
+    say "Starting Next.js webapp in production mode..."
+    exec npm start
+  elif npm run | grep -qE "^  dev"; then
+    say "Starting Next.js webapp in development mode..."
+    exec npm run dev
+  else
+    error "No start or dev script found in webapp/package.json"
+    exit 1
+  fi
+
+elif [ -f "functions/package.json" ]; then
+  say "Detected Firebase Functions (Node.js)"
+  cd functions
+  
+  command -v npm >/dev/null || { error "npm not found"; exit 1; }
+  
+  # Install dependencies if needed
+  if [ ! -d "node_modules" ]; then
+    say "Installing dependencies..."
+    npm ci || npm install || true
+  fi
+  
+  # Build if needed
+  if [ ! -d "lib" ]; then
+    say "Building functions..."
+    npm run build || true
+  fi
+  
+  # Start the Firebase emulator
+  if npm run | grep -qE "^  server"; then
+    say "Starting Firebase Functions emulator..."
+    exec npm run server
+  elif command -v firebase >/dev/null; then
+    say "Starting Firebase emulator..."
+    npm run build || true
+    exec firebase emulators:start --only functions
+  else
+    error "No server script found and firebase CLI not available"
+    exit 1
+  fi
+
+elif [ -f "pubspec.yaml" ]; then
+  say "Detected Flutter project"
+  
+  command -v flutter >/dev/null || { error "Flutter not found"; exit 1; }
+  
+  # Get dependencies
+  say "Getting Flutter dependencies..."
+  flutter pub get || true
+  
+  # Check for web support
+  if flutter devices | grep -q "Chrome"; then
+    say "Starting Flutter web app..."
+    exec flutter run -d chrome
+  elif flutter devices | grep -q "Web Server"; then
+    say "Starting Flutter web server..."
+    exec flutter run -d web-server --web-port=8080
+  else
+    error "No web device available. Run 'flutter devices' to see available devices."
+    exit 1
+  fi
+
+elif [ -f "package.json" ]; then
+  say "Detected Node.js project"
+  cd "$(dirname "$0")"
+  
+  command -v npm >/dev/null || { error "npm not found"; exit 1; }
+  
+  npm ci || npm install || true
+  npm run build --if-present || true
+  
+  # Try to find a start script
+  if npm run | grep -qE "^  start"; then
+    exec npm start
+  elif [ -f "dist/index.js" ]; then
+    exec node dist/index.js
+  elif [ -f "src/index.js" ]; then
+    exec node src/index.js
+  elif [ -f "index.js" ]; then
+    exec node index.js
+  else
+    error "No start script or entrypoint found."
+    exit 1
+  fi
+
+elif [ -f "pyproject.toml" ] || ls *.py >/dev/null 2>&1; then
+  say "Detected Python project"
+  
+  if [ -f "requirements.txt" ]; then 
+    pip install -r requirements.txt || true
+  fi
+  if [ -f "pyproject.toml" ]; then 
+    pip install -e . || true
+  fi
+  
+  # Common entrypoints
+  if [ -f "app.py" ]; then 
+    exec python app.py
+  elif [ -f "main.py" ]; then 
+    exec python main.py
+  elif grep -R --include="*.py" -l "app\s*=" . | head -1 | grep -q .; then
+    say "Starting uvicorn server..."
+    exec python -m uvicorn app:app --host 0.0.0.0 --port 8000
+  else
+    error "No Python entrypoint found."
+    exit 1
+  fi
+
+elif [ -f "go.mod" ]; then
+  say "Detected Go project"
+  go mod download || true
+  go build -o ./bin/app ./... || { error "Go build failed"; exit 1; }
+  exec ./bin/app
+
+elif ls **/Cargo.toml >/dev/null 2>&1; then
+  say "Detected Rust project"
+  cargo build --release || { error "Rust build failed"; exit 1; }
+  
+  BIN=$(cargo metadata --no-deps --format-version=1 2>/dev/null | \
+        python3 -c "import sys,json; m=json.load(sys.stdin); \
+        print(next((t['name'] for p in m['packages'] for t in p.get('targets',[]) if 'bin' in t.get('kind',[])), ''))" 2>/dev/null || echo "")
+  
+  if [ -n "$BIN" ]; then
+    exec "target/release/$BIN"
+  else
+    error "Could not resolve Rust binary name"
+    exit 1
+  fi
+
+elif ls **/pom.xml >/dev/null 2>&1; then
+  say "Detected Java (Maven) project"
+  mvn -q -DskipTests package || { error "Maven build failed"; exit 1; }
+  
+  JAR=$(ls -1 target/*-with-dependencies.jar 2>/dev/null || ls -1 target/*.jar 2>/dev/null | head -n1)
+  
+  if [ -n "$JAR" ]; then
+    exec java -jar "$JAR"
+  else
+    error "No JAR produced"
+    exit 1
+  fi
+
+else
+  error "Unknown project type. Please add logic to ./run."
+  error "Supported types: Flutter, Node.js (Next.js, Firebase Functions), Python, Go, Rust, Java"
+  exit 1
+fi

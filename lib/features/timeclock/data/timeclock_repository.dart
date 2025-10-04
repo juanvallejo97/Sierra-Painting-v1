@@ -70,6 +70,12 @@ class TimeclockRepository {
   final QueueService? _queueService;
   final Uuid _uuid = const Uuid();
 
+  /// Default pagination limit to prevent unbounded queries
+  static const int defaultLimit = 50;
+
+  /// Maximum pagination limit
+  static const int maxLimit = 100;
+
   TimeclockRepository({
     required ApiClient apiClient,
     required FirebaseFirestore firestore,
@@ -146,14 +152,23 @@ class TimeclockRepository {
   }
 
   /// Get time entries for a user
+  /// 
+  /// PERFORMANCE: Always uses pagination with default limit of 50.
+  /// Use startAfterDoc for cursor-based pagination.
   Future<Result<List<TimeEntry>, String>> getTimeEntries({
     required String userId,
     String? jobId,
     DateTime? startDate,
     DateTime? endDate,
     int? limit,
+    DocumentSnapshot? startAfterDoc,
   }) async {
     try {
+      // Enforce pagination limits
+      final effectiveLimit = limit != null 
+          ? (limit > maxLimit ? maxLimit : limit)
+          : defaultLimit;
+
       Query query = _firestore
           .collectionGroup('timeEntries')
           .where('userId', isEqualTo: userId);
@@ -178,8 +193,12 @@ class TimeclockRepository {
 
       query = query.orderBy('clockIn', descending: true);
 
-      if (limit != null) {
-        query = query.limit(limit);
+      // Always apply limit for pagination
+      query = query.limit(effectiveLimit);
+
+      // Cursor-based pagination support
+      if (startAfterDoc != null) {
+        query = query.startAfterDocument(startAfterDoc);
       }
 
       final snapshot = await query.get();
@@ -209,15 +228,23 @@ class TimeclockRepository {
   }
 
   /// Get active (open) time entries for a user
+  /// 
+  /// PERFORMANCE: Limited to prevent unbounded queries.
+  /// Active entries should be rare (typically 0-1 per user).
   Future<Result<List<TimeEntry>, String>> getActiveEntries({
     required String userId,
     String? jobId,
+    int? limit,
   }) async {
     try {
+      // Limit active entries query (typically returns 0-1)
+      final effectiveLimit = limit ?? 10;
+
       Query query = _firestore
           .collectionGroup('timeEntries')
           .where('userId', isEqualTo: userId)
-          .where('clockOut', isEqualTo: null);
+          .where('clockOut', isEqualTo: null)
+          .limit(effectiveLimit);
 
       if (jobId != null) {
         query = query.where('jobId', isEqualTo: jobId);
