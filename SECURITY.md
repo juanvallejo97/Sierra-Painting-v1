@@ -57,9 +57,142 @@ permissions:
 ### Automated Checks
 
 The repository has automated security checks that run on every pull request:
+- **TruffleHog Secret Scanning**: Scans for verified secrets in commits (PR blocking)
+- **Pre-commit Hooks**: Detects secrets before they are committed
 - **JSON Credentials Check**: Prevents service account keys from being committed
 - **Firestore Rules Tests**: Validates security rules for proper access control
 - **Dependency Scanning**: Checks for known vulnerabilities in dependencies
+
+## Secret Rotation Procedures
+
+### If a Secret is Accidentally Committed
+
+**CRITICAL:** If you discover that a secret has been committed to the repository, follow this procedure immediately:
+
+#### 1. Rotate the Compromised Credential
+
+Take immediate action based on the type of secret:
+
+**For GCP/Firebase Service Account Keys:**
+```bash
+# 1. List service accounts
+gcloud iam service-accounts list --project=<PROJECT_ID>
+
+# 2. Find the compromised key
+gcloud iam service-accounts keys list \
+  --iam-account=<SERVICE_ACCOUNT_EMAIL>
+
+# 3. Delete the compromised key
+gcloud iam service-accounts keys delete <KEY_ID> \
+  --iam-account=<SERVICE_ACCOUNT_EMAIL>
+
+# 4. Create new key (if still needed - prefer Workload Identity)
+gcloud iam service-accounts keys create new-key.json \
+  --iam-account=<SERVICE_ACCOUNT_EMAIL>
+```
+
+**For Firebase API Keys:**
+- Go to [Firebase Console](https://console.firebase.google.com) → Project Settings → General
+- Under "Your apps" → Web App → Click the app
+- Regenerate the API key or restrict it immediately
+- Update App Check settings if needed
+
+**For GitHub Personal Access Tokens:**
+- Go to [GitHub Settings](https://github.com/settings/tokens) → Personal access tokens
+- Delete the compromised token immediately
+- Create a new token with minimum required scopes
+- Update any systems using the old token
+
+**For Third-Party API Keys (Stripe, etc.):**
+- Go to the service's dashboard
+- Revoke the compromised key
+- Generate a new key
+- Update all systems using the key
+
+#### 2. Remove Secret from Git History
+
+**WARNING:** This requires force-pushing and coordination with the team.
+
+```bash
+# Option A: Using git-filter-repo (recommended)
+# Install: pip install git-filter-repo
+git filter-repo --path <PATH_TO_SECRET_FILE> --invert-paths
+
+# Option B: Using BFG Repo-Cleaner
+# Download from: https://rtyley.github.io/bfg-repo-cleaner/
+java -jar bfg.jar --delete-files <SECRET_FILE>
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+
+# Force push (coordinate with team!)
+git push --force --all
+git push --force --tags
+```
+
+#### 3. Notify and Document
+
+1. **Notify the team** in Slack/Teams immediately
+2. **File an incident report** documenting:
+   - What secret was exposed
+   - When it was committed
+   - When it was discovered
+   - What actions were taken
+   - Impact assessment
+3. **Update this document** if new patterns need to be blocked
+
+#### 4. Post-Incident Review
+
+- Review why the secret was committed (human error, missing .gitignore, etc.)
+- Ensure pre-commit hooks are installed: `./scripts/install-hooks.sh`
+- Verify GitHub Secret Scanning is enabled
+- Consider additional tooling (git-secrets, detect-secrets)
+
+### Credential Monitoring
+
+**Daily:**
+- Monitor GitHub Secret Scanning alerts: Settings → Security → Secret scanning
+- Check for failed CI jobs related to secret detection
+
+**Weekly:**
+- Review GCP/Firebase audit logs for unauthorized access
+- Check for anomalous API usage patterns
+
+**Monthly:**
+- Rotate all development/staging credentials
+- Review and minimize service account permissions
+- Audit who has access to production credentials
+
+### Prevention Best Practices
+
+1. **Never store secrets in code or config files**
+   - Use environment variables
+   - Use GCP Secret Manager
+   - Use GitHub Actions secrets
+
+2. **Always use `.gitignore`**
+   ```gitignore
+   # Secrets (NEVER COMMIT)
+   **/*service-account*.json
+   **/*credentials.json
+   .env
+   .env.*
+   !.env.example
+   ```
+
+3. **Install and use pre-commit hooks**
+   ```bash
+   ./scripts/install-hooks.sh
+   ```
+
+4. **Enable GitHub security features**
+   - Secret scanning + Push protection
+   - Dependabot alerts
+   - Code scanning (if available)
+
+5. **Use Workload Identity Federation for CI/CD**
+   - No long-lived service account keys
+   - Automatic credential rotation
+   - See: [docs/ops/gcp-workload-identity-setup.md](docs/ops/gcp-workload-identity-setup.md)
 
 ## Reporting Security Issues
 
