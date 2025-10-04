@@ -6,6 +6,10 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "predeploy": [
+      "echo 'Running pre-deploy checks...'",
+      "bash scripts/deploy/pre-deploy-checks.sh"
+    ],
     "rewrites": [
       {
         "source": "/web/**",
@@ -84,6 +88,12 @@
         ".git",
         "firebase-debug.log",
         "firebase-debug.*.log"
+      ],
+      "predeploy": [
+        "echo 'Running function pre-deploy checks...'",
+        "npm run lint",
+        "npm run typecheck",
+        "npm test"
       ]
     }
   ],
