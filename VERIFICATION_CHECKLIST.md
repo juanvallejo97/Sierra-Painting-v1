@@ -10,7 +10,69 @@ This document provides a checklist to verify the implementation is working corre
 - [x] Existing tests still pass (31 tests, 3 suites)
 - [x] New test file compiles without errors
 
-### 2. Files Created/Modified
+### 2. Post-Deployment Verification
+
+Run the automated verification script after each deployment:
+
+```bash
+./scripts/deploy/verify.sh --env <environment>
+```
+
+#### SLO Probes
+
+**Error Rate:**
+- Staging: < 2%
+- Production: < 1%
+
+**P95 Latency:**
+- Staging: < 3s
+- Production: < 2s
+
+**Function Availability:**
+- Staging: > 99%
+- Production: > 99.9%
+
+**Cold Start Time:**
+- All environments: < 5s
+
+#### Key User Journeys
+
+**1. Login Journey:**
+- [ ] User can sign up with email/password
+- [ ] User can log in with email/password
+- [ ] User can log out successfully
+- [ ] Token refresh works correctly
+- [ ] Error messages display properly
+
+**2. Estimate Creation Journey:**
+- [ ] User can create new estimate
+- [ ] User can add line items to estimate
+- [ ] User can calculate estimate total
+- [ ] User can save estimate to Firestore
+- [ ] Estimate appears in estimate list
+
+**3. Invoice Export Journey:**
+- [ ] User can convert estimate to invoice
+- [ ] User can generate PDF export
+- [ ] PDF contains correct information
+- [ ] User can mark invoice as sent
+- [ ] User can record payment
+- [ ] Payment history displays correctly
+
+### 3. Monitoring Dashboards
+
+After deployment, verify these dashboards are accessible and showing data:
+
+- [ ] **Firebase Console**: https://console.firebase.google.com/project/{PROJECT_ID}
+- [ ] **Cloud Functions**: https://console.cloud.google.com/functions/list?project={PROJECT_ID}
+- [ ] **Logs**: https://console.cloud.google.com/logs/query?project={PROJECT_ID}
+- [ ] **Error Reporting**: https://console.cloud.google.com/errors?project={PROJECT_ID}
+- [ ] **Performance**: https://console.firebase.google.com/project/{PROJECT_ID}/performance
+- [ ] **Crashlytics**: https://console.firebase.google.com/project/{PROJECT_ID}/crashlytics
+
+Link to post-deploy dashboard included in deployment workflow outputs.
+
+### 4. Files Created/Modified
 
 **Modified Files:**
 - [x] `firestore.rules` - Added schema validation functions and owner-based access control
