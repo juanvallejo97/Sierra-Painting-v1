@@ -96,3 +96,8 @@ firestore-tests/node_modules/
 # Keep deployment history tracked for audit purposes
 # .deployment-history/
 
+# --- Documentation tooling ---
+.vale/styles/
+docs/api/
+unused-code-report.txt
+
