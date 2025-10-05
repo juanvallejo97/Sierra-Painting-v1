@@ -41,13 +41,13 @@ void main() {
       final startupMs = startupDuration.inMilliseconds;
 
       // Log the startup time for CI reporting
-      print('PERFORMANCE_METRIC: app_startup_ms=$startupMs');
+      debugPrint('PERFORMANCE_METRIC: app_startup_ms=$startupMs');
 
       // Budget: 500ms for first frame (relaxed for CI environment)
       // In CI, we allow up to 3000ms due to cold start overhead
       const budgetMs = 3000;
 
-      print('✅ App started in ${startupMs}ms (budget: ${budgetMs}ms)');
+      debugPrint('✅ App started in ${startupMs}ms (budget: ${budgetMs}ms)');
 
       // Verify we can find some UI element (app has rendered)
       expect(
@@ -85,19 +85,19 @@ void main() {
       // This is a smoke test, so we're flexible about what screens exist
       final bottomNavBar = find.byType(NavigationBar);
       if (bottomNavBar.evaluate().isNotEmpty) {
-        print('✅ Found NavigationBar, attempting navigation');
+        debugPrint('✅ Found NavigationBar, attempting navigation');
 
         // Tap second tab if it exists
         try {
           await tester.tap(bottomNavBar.first);
           await tester.pumpAndSettle();
-          print('✅ Successfully navigated to another screen');
+          debugPrint('✅ Successfully navigated to another screen');
         } catch (e) {
           // Navigation might not be fully implemented yet
-          print('⚠️  Navigation not fully implemented: $e');
+          debugPrint('⚠️  Navigation not fully implemented: $e');
         }
       } else {
-        print('⚠️  NavigationBar not found - app may be on login screen');
+        debugPrint('⚠️  NavigationBar not found - app may be on login screen');
       }
 
       // The key success is that the app didn't crash
@@ -120,7 +120,7 @@ void main() {
       final frameEnd = DateTime.now();
       final frameTimeMs = frameEnd.difference(frameStart).inMilliseconds;
 
-      print('PERFORMANCE_METRIC: frame_time_ms=$frameTimeMs');
+      debugPrint('PERFORMANCE_METRIC: frame_time_ms=$frameTimeMs');
 
       // Frame time should be < 16ms (60fps) but we allow 100ms in CI
       const frameBudgetMs = 100;
@@ -139,5 +139,5 @@ void main() {
 Future<void> _exportMetric(String name, int value) async {
   // In real CI, this would write to a file that gets uploaded as an artifact
   // For now, just print in a parseable format
-  print('EXPORT_METRIC: $name=$value');
+  debugPrint('EXPORT_METRIC: $name=$value');
 }
