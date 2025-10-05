@@ -18,10 +18,12 @@
 /// - retryCount: Number of failed sync attempts
 /// - error: Error message from last failed sync attempt (if any)
 import 'package:hive/hive.dart';
+import 'package:json_annotation/json_annotation.dart';
 
 part 'queue_item.g.dart';
 
 @HiveType(typeId: 0)
+@JsonSerializable()
 class QueueItem extends HiveObject {
   @HiveField(0)
   String id;
@@ -57,29 +59,8 @@ class QueueItem extends HiveObject {
   /// Legacy getter for backwards compatibility
   DateTime get createdAt => timestamp;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type,
-      'data': data,
-      'timestamp': timestamp.toIso8601String(),
-      'processed': processed,
-      'retryCount': retryCount,
-      'error': error,
-    };
-  }
+  Map<String, dynamic> toJson() => _$QueueItemToJson(this);
 
-  factory QueueItem.fromJson(Map<String, dynamic> json) {
-    return QueueItem(
-      id: json['id'] as String,
-      type: json['type'] as String,
-      data: json['data'] as Map<String, dynamic>,
-      timestamp: DateTime.parse(
-        json['timestamp'] as String? ?? json['createdAt'] as String,
-      ),
-      processed: json['processed'] as bool? ?? false,
-      retryCount: json['retryCount'] as int? ?? 0,
-      error: json['error'] as String?,
-    );
-  }
+  factory QueueItem.fromJson(Map<String, dynamic> json) =>
+      _$QueueItemFromJson(json);
 }
