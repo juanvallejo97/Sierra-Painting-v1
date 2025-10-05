@@ -19,9 +19,8 @@ function verifyCaptcha(token: string): boolean {
 
 export const createLead = onCall(
   {
-    ...getDeploymentConfig('createLead'),
-    enforceAppCheck: true,
-    consumeAppCheckToken: true,
+  ...getDeploymentConfig('createLead'),
+  consumeAppCheckToken: true,
   },
   async (req: CallableRequest) => {
     // --- App Check (defense-in-depth) ---------------------------------------

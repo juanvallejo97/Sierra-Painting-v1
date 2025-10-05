@@ -17,6 +17,11 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Polyfill __dirname for ESM
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 let testEnv: RulesTestEnvironment;
 
 beforeAll(async () => {
