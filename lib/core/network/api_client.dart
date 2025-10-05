@@ -14,7 +14,7 @@
 ///   functionName: 'clockIn',
 ///   data: { 'jobId': '123', 'at': DateTime.now().toIso8601String() },
 /// );
-/// 
+///
 /// // Or with explicit deserialization:
 /// final result = await apiClient.call<ClockInResponse>(
 ///   functionName: 'clockIn',
@@ -22,13 +22,14 @@
 ///   fromJson: ClockInResponse.fromJson,
 /// );
 /// ```
-library api_client;
+library;
 
 import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart' as cf;
-import 'package:uuid/uuid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/utils/result.dart' as core;
+import 'package:uuid/uuid.dart';
 
 /// Configuration for API calls
 class ApiConfig {
@@ -86,7 +87,7 @@ class ApiClient {
   final Uuid _uuid = const Uuid();
 
   ApiClient({cf.FirebaseFunctions? functions})
-      : _functions = functions ?? cf.FirebaseFunctions.instance;
+    : _functions = functions ?? cf.FirebaseFunctions.instance;
 
   /// Call a Cloud Function with timeout, retry, and requestId
   Future<core.Result<T, ApiError>> call<T>({
@@ -137,7 +138,8 @@ class ApiClient {
         // Do not retry client errors (4xx)
         if (!_shouldRetry(e)) {
           return core.Result.failure(
-              _mapFirebaseError(e, requestId, functionName));
+            _mapFirebaseError(e, requestId, functionName),
+          );
         }
 
         if (attempt < effectiveMaxRetries) {
@@ -146,7 +148,8 @@ class ApiClient {
         }
 
         return core.Result.failure(
-            _mapFirebaseError(e, requestId, functionName));
+          _mapFirebaseError(e, requestId, functionName),
+        );
       } catch (e) {
         if (attempt < effectiveMaxRetries) {
           await _delay(attempt);
@@ -189,11 +192,13 @@ class ApiClient {
     // The headers parameter is kept for future extensibility.
     final cf.HttpsCallable callable = _functions.httpsCallable(functionName);
 
-    final result = await callable.call(data).timeout(timeout);
+    final cf.HttpsCallableResult<Map<String, dynamic>> result = await callable
+        .call<Map<String, dynamic>>(data)
+        .timeout(timeout);
 
     // Use fromJson if provided, otherwise cast to T
-    if (fromJson != null && result.data is Map<String, dynamic>) {
-      return fromJson(result.data as Map<String, dynamic>);
+    if (fromJson != null) {
+      return fromJson(result.data);
     }
     return result.data as T;
   }
@@ -208,7 +213,7 @@ class ApiClient {
       ApiConfig.maxRetryDelay.inMilliseconds,
     );
 
-    await Future.delayed(Duration(milliseconds: delayMs));
+    await Future<void>.delayed(Duration(milliseconds: delayMs));
   }
 
   /// Check if error should be retried

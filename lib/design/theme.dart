@@ -3,7 +3,7 @@
 /// Implements Material 3 themes using design tokens.
 /// Ensures WCAG 2.2 AA compliance with proper contrast ratios.
 /// Supports light and dark themes with smooth transitions.
-library theme;
+library;
 
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/design/tokens.dart';
@@ -17,34 +17,34 @@ class AppTheme {
   // ============================================================================
 
   static ThemeData get light {
-    final colorScheme = ColorScheme.light(
+    final colorScheme = const ColorScheme.light(
       primary: DesignTokens.sierraBlue,
       onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFD3E4FF),
-      onPrimaryContainer: const Color(0xFF001D36),
+      primaryContainer: Color(0xFFD3E4FF),
+      onPrimaryContainer: Color(0xFF001D36),
       secondary: DesignTokens.paintingOrange,
       onSecondary: Colors.white,
-      secondaryContainer: const Color(0xFFFFDCC4),
-      onSecondaryContainer: const Color(0xFF2B1700),
+      secondaryContainer: Color(0xFFFFDCC4),
+      onSecondaryContainer: Color(0xFF2B1700),
       tertiary: DesignTokens.successGreen,
       onTertiary: Colors.white,
-      tertiaryContainer: const Color(0xFFC8E6C9),
-      onTertiaryContainer: const Color(0xFF002106),
+      tertiaryContainer: Color(0xFFC8E6C9),
+      onTertiaryContainer: Color(0xFF002106),
       error: DesignTokens.errorRed,
       onError: Colors.white,
-      errorContainer: const Color(0xFFFFDAD6),
-      onErrorContainer: const Color(0xFF410002),
+      errorContainer: Color(0xFFFFDAD6),
+      onErrorContainer: Color(0xFF410002),
       surface: DesignTokens.surfaceLight,
-      onSurface: const Color(0xFF1A1C1E),
+      onSurface: Color(0xFF1A1C1E),
       surfaceContainerHighest: DesignTokens.surfaceElevation3Light,
-      onSurfaceVariant: const Color(0xFF43474E),
-      outline: const Color(0xFF73777F),
-      outlineVariant: const Color(0xFFC3C7CF),
+      onSurfaceVariant: Color(0xFF43474E),
+      outline: Color(0xFF73777F),
+      outlineVariant: Color(0xFFC3C7CF),
       shadow: Colors.black,
       scrim: Colors.black,
-      inverseSurface: const Color(0xFF2F3033),
-      onInverseSurface: const Color(0xFFF1F0F4),
-      inversePrimary: const Color(0xFF9ECAFF),
+      inverseSurface: Color(0xFF2F3033),
+      onInverseSurface: Color(0xFFF1F0F4),
+      inversePrimary: Color(0xFF9ECAFF),
     );
 
     return _buildTheme(colorScheme, Brightness.light);
@@ -55,34 +55,34 @@ class AppTheme {
   // ============================================================================
 
   static ThemeData get dark {
-    final colorScheme = ColorScheme.dark(
-      primary: const Color(0xFF90CAF9),
-      onPrimary: const Color(0xFF003258),
-      primaryContainer: const Color(0xFF00497D),
-      onPrimaryContainer: const Color(0xFFD3E4FF),
-      secondary: const Color(0xFFFFB74D),
-      onSecondary: const Color(0xFF472A00),
-      secondaryContainer: const Color(0xFF653F00),
-      onSecondaryContainer: const Color(0xFFFFDCC4),
-      tertiary: const Color(0xFF81C784),
-      onTertiary: const Color(0xFF003910),
-      tertiaryContainer: const Color(0xFF005319),
-      onTertiaryContainer: const Color(0xFFC8E6C9),
-      error: const Color(0xFFEF5350),
-      onError: const Color(0xFF690005),
-      errorContainer: const Color(0xFF93000A),
-      onErrorContainer: const Color(0xFFFFDAD6),
+    final colorScheme = const ColorScheme.dark(
+      primary: Color(0xFF90CAF9),
+      onPrimary: Color(0xFF003258),
+      primaryContainer: Color(0xFF00497D),
+      onPrimaryContainer: Color(0xFFD3E4FF),
+      secondary: Color(0xFFFFB74D),
+      onSecondary: Color(0xFF472A00),
+      secondaryContainer: Color(0xFF653F00),
+      onSecondaryContainer: Color(0xFFFFDCC4),
+      tertiary: Color(0xFF81C784),
+      onTertiary: Color(0xFF003910),
+      tertiaryContainer: Color(0xFF005319),
+      onTertiaryContainer: Color(0xFFC8E6C9),
+      error: Color(0xFFEF5350),
+      onError: Color(0xFF690005),
+      errorContainer: Color(0xFF93000A),
+      onErrorContainer: Color(0xFFFFDAD6),
       surface: DesignTokens.surfaceDark,
-      onSurface: const Color(0xFFE3E2E6),
+      onSurface: Color(0xFFE3E2E6),
       surfaceContainerHighest: DesignTokens.surfaceElevation3Dark,
-      onSurfaceVariant: const Color(0xFFC3C7CF),
-      outline: const Color(0xFF8D9199),
-      outlineVariant: const Color(0xFF43474E),
+      onSurfaceVariant: Color(0xFFC3C7CF),
+      outline: Color(0xFF8D9199),
+      outlineVariant: Color(0xFF43474E),
       shadow: Colors.black,
       scrim: Colors.black,
-      inverseSurface: const Color(0xFFE3E2E6),
-      onInverseSurface: const Color(0xFF1A1C1E),
-      inversePrimary: const Color(0xFF0061A4),
+      inverseSurface: Color(0xFFE3E2E6),
+      onInverseSurface: Color(0xFF1A1C1E),
+      inversePrimary: Color(0xFF0061A4),
     );
 
     return _buildTheme(colorScheme, Brightness.dark);
@@ -122,18 +122,7 @@ class AppTheme {
         ),
       ),
 
-      // Card theme
-      cardTheme: CardTheme(
-        elevation: DesignTokens.elevation1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLG),
-        ),
-        margin: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceMD,
-          vertical: DesignTokens.spaceSM,
-        ),
-        clipBehavior: Clip.antiAlias,
-      ),
+      cardTheme: const CardThemeData(),
 
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
@@ -224,16 +213,16 @@ class AppTheme {
       ),
 
       // Navigation bar theme
-      navigationBarTheme: NavigationBarThemeData(
+      navigationBarTheme: const NavigationBarThemeData(
         elevation: DesignTokens.elevation1,
         height: 80,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
 
       // Drawer theme
-      drawerTheme: DrawerThemeData(
+      drawerTheme: const DrawerThemeData(
         elevation: DesignTokens.elevation4,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topRight: Radius.circular(DesignTokens.radiusXL),
             bottomRight: Radius.circular(DesignTokens.radiusXL),
@@ -274,18 +263,12 @@ class AppTheme {
         actionTextColor: colorScheme.inversePrimary,
       ),
 
-      // Dialog theme
-      dialogTheme: DialogTheme(
-        elevation: DesignTokens.elevation3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusXL),
-        ),
-      ),
+      dialogTheme: const DialogThemeData(),
 
       // Bottom sheet theme
-      bottomSheetTheme: BottomSheetThemeData(
+      bottomSheetTheme: const BottomSheetThemeData(
         elevation: DesignTokens.elevation3,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(DesignTokens.radiusXL),
             topRight: Radius.circular(DesignTokens.radiusXL),

@@ -17,7 +17,7 @@
 /// - Memory usage
 /// - Network requests count
 /// - Active animations
-library performance_overlay;
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

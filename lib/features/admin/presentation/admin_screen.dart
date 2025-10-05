@@ -12,6 +12,8 @@
 ///
 /// RBAC:
 /// Access restricted to users with admin role via router redirect.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
@@ -52,8 +54,8 @@ class _AdminBody extends StatelessWidget {
             Text(
               'RBAC Protected',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: DesignTokens.spaceXL),
             const Text(

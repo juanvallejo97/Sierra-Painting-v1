@@ -4,17 +4,27 @@
 /// Verify haptic feedback service behavior
 ///
 /// COVERAGE:
-/// - Enable/disable functionality via StateProvider<bool>
+/// - Enable/disable functionality via `StateProvider<bool>`
 /// - Different feedback intensities (light, medium, heavy, selection, vibrate)
 /// - State persistence across method calls
 /// - No-op behavior when disabled (acceptance criteria)
-/// - vibrate() specifically tested for enabled/disabled paths
+/// - `vibrate()` specifically tested for enabled/disabled paths
+library;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:sierra_painting/core/services/haptic_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (call) async => call.method.startsWith('HapticFeedback') ? null : null,
+  );
   group('HapticService', () {
     late ProviderContainer container;
     late HapticService service;
