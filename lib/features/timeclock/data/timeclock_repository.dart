@@ -13,6 +13,7 @@
 /// - Time entry queries
 /// - Offline queue management
 /// - Error mapping to domain
+library timeclock_repository;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
