@@ -112,7 +112,7 @@ class TimeclockRepository {
         await _queueService!.addToQueue(
           QueueItem(
             id: clientId,
-            operation: 'clockIn',
+            type: 'clockIn',
             data: request.toJson(),
             timestamp: DateTime.now(),
             processed: false,
