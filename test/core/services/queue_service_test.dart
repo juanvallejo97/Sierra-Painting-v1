@@ -12,12 +12,14 @@
 /// NOTE: This test assumes QueueItem uses the 'type' field for operation type.
 /// If the production code currently uses 'operation' instead of 'type' in the
 /// QueueItem constructor, that is a bug that needs to be fixed separately.
+library;
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
+import 'package:sierra_painting/core/models/queue_item.dart';
 import 'package:sierra_painting/core/network/api_client.dart';
 import 'package:sierra_painting/core/services/queue_service.dart';
-import 'package:sierra_painting/core/models/queue_item.dart';
 import 'package:sierra_painting/core/utils/result.dart';
 import 'package:sierra_painting/features/timeclock/data/timeclock_repository.dart';
 
@@ -63,16 +65,17 @@ class FakeQueueService implements QueueService {
 
   @override
   QueueStats getStats() => QueueStats(
-        total: 0,
-        pending: 0,
-        processed: 0,
-        failed: 0,
-        usagePercentage: 0.0,
-      );
+    total: 0,
+    pending: 0,
+    processed: 0,
+    failed: 0,
+    usagePercentage: 0.0,
+  );
 
-  // Hive box property - not used in our test
+  // Hive box property - not used in our test but must match the real signature
   @override
-  dynamic get box => null;
+  Box<QueueItem> get box =>
+      throw UnimplementedError('Not used in this test path');
 }
 
 /// Fake ApiClient for testing
@@ -87,7 +90,10 @@ class FakeApiClient implements ApiClient {
     T Function(Map<String, dynamic> json)? fromJson,
   }) async {
     // Return a trivial success for tests; adjust if a specific flow is asserted.
-    final responseData = <String, dynamic>{"ok": true};
+    final responseData = <String, dynamic>{
+      "success": true,
+      "entryId": "test-entry-id",
+    };
     if (fromJson != null) {
       return Result.success(fromJson(responseData));
     }
@@ -117,35 +123,34 @@ void main() {
       );
     });
 
-    test('repository enqueues clockIn operation via QueueService when offline',
-        () async {
-      // Arrange
-      const jobId = 'test-job-123';
+    test(
+      'repository enqueues clockIn operation via QueueService when offline',
+      () async {
+        // Arrange
+        const jobId = 'test-job-123';
 
-      // Act
-      final result = await repository.clockIn(
-        jobId: jobId,
-        isOnline: false, // Force offline mode
-      );
+        // Act
+        final result = await repository.clockIn(
+          jobId: jobId,
+          isOnline: false, // Force offline mode
+        );
 
-      // Assert - Verify QueueService.addToQueue was called
-      expect(result.isSuccess, isTrue);
-      expect(fakeQueueService.enqueuedItems.length, 1);
+        // Assert - Verify QueueService.addToQueue was called
+        expect(result.isSuccess, isTrue);
+        expect(fakeQueueService.enqueuedItems.length, 1);
 
-      final enqueuedItem = fakeQueueService.enqueuedItems.first;
-      // Verify operation type is 'clockIn'
-      expect(enqueuedItem.type, 'clockIn');
-    });
+        final enqueuedItem = fakeQueueService.enqueuedItems.first;
+        // Verify operation type is 'clockIn'
+        expect(enqueuedItem.type, 'clockIn');
+      },
+    );
 
     test('repository enqueues clientId in QueueItem data', () async {
       // Arrange
       const jobId = 'test-job-456';
 
       // Act
-      final result = await repository.clockIn(
-        jobId: jobId,
-        isOnline: false,
-      );
+      final result = await repository.clockIn(jobId: jobId, isOnline: false);
 
       // Assert - Verify clientId is captured in data
       expect(result.isSuccess, isTrue);
@@ -163,17 +168,14 @@ void main() {
     test('clockIn does not enqueue when online', () async {
       // Arrange
       const jobId = 'test-job-online';
-      
+
       // Act
-      final result = await repository.clockIn(
-        jobId: jobId,
-        isOnline: true,
-      );
-      
+      final result = await repository.clockIn(jobId: jobId, isOnline: true);
+
       // Assert - When online, ApiClient.call is invoked (returns success)
       // This confirms the offline queue path is not taken
       expect(result.isSuccess, isTrue);
-      
+
       // Verify queue was not used
       expect(fakeQueueService.enqueuedItems.length, 0);
     });

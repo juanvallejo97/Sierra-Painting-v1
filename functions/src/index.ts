@@ -14,12 +14,28 @@ export const healthCheck = onRequest((req: Request, res: Response) => {
 });
 
 // --- Auth triggers (v2) -----------------------------------------------------
-export const handleUserCreated = onUserCreated((event) => {
+interface UserCreatedEvent {
+  data: {
+    uid?: string;
+    email?: string;
+    [key: string]: any;
+  };
+}
+
+export const handleUserCreated = onUserCreated((event: UserCreatedEvent) => {
   const user = event.data;
   logger.info('Auth user created', { uid: user?.uid, email: user?.email });
 });
 
-export const handleUserDeleted = onUserDeleted((event) => {
+interface UserDeletedEvent {
+  data: {
+    uid?: string;
+    email?: string;
+    [key: string]: any;
+  };
+}
+
+export const handleUserDeleted = onUserDeleted((event: UserDeletedEvent) => {
   const user = event.data;
   logger.info('Auth user deleted', { uid: user?.uid, email: user?.email });
 });

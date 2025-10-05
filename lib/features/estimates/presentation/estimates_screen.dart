@@ -20,6 +20,8 @@
 /// - Implement estimate creation form
 /// - Add PDF generation integration
 /// - Add estimate filtering and search
+library;
+
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
@@ -81,6 +83,6 @@ class _EstimatesBody extends StatelessWidget {
     //   itemExtent: 80.0, // Set for fixed-height items for better performance
     // );
 
-    return const Center(child: Text('Estimates list will go here'));
+  // ...existing code...
   }
 }

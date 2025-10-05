@@ -17,6 +17,8 @@
 /// - processed: Whether item has been successfully synced
 /// - retryCount: Number of failed sync attempts
 /// - error: Error message from last failed sync attempt (if any)
+library;
+
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
 

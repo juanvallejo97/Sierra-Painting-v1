@@ -15,6 +15,7 @@
 /// - No Firebase emulator needed (uses mock/offline mode)
 /// - Must complete in < 2 minutes
 /// - Deterministic - no flaky tests
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -19,8 +19,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final hapticEnabled = ref.watch(hapticEnabledProvider);
     final hapticService = ref.watch(hapticServiceProvider);
+    final hapticEnabled = hapticService.isEnabled;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings'), centerTitle: true),
@@ -38,8 +38,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 hapticService.light();
               }
 
-              // Update state (service automatically syncs via provider)
-              ref.read(hapticEnabledProvider.notifier).state = value;
+              // Update state on the service and rebuild the widget to reflect the
+              // change. We use setState because this UI was previously driven by
+              // a StateProvider.
+              hapticService.setEnabled(value);
+              setState(() {});
 
               // Show confirmation
               ScaffoldMessenger.of(context).showSnackBar(
@@ -78,10 +81,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // About Section
           _buildSectionHeader(context, 'About'),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Version'),
-            subtitle: const Text('1.0.0+1'),
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('Version'),
+            subtitle: Text('1.0.0+1'),
           ),
           ListTile(
             leading: const Icon(Icons.policy),
@@ -112,9 +115,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
