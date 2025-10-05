@@ -28,8 +28,7 @@ class ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isNotFound =
-        error.toString().contains('not found') ||
+    final isNotFound = error.toString().contains('not found') ||
         error.toString().contains('404');
 
     return Scaffold(

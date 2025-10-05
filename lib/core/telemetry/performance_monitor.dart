@@ -49,10 +49,11 @@ class PerformanceTrace {
   final Trace? _firebaseTrace;
 
   PerformanceTrace(this.name)
-    : startTime = DateTime.now(),
-      attributes = {},
-      metrics = {},
-      _firebaseTrace = kReleaseMode ? FirebasePerformance.instance.newTrace(name) : null {
+      : startTime = DateTime.now(),
+        attributes = {},
+        metrics = {},
+        _firebaseTrace =
+            kReleaseMode ? FirebasePerformance.instance.newTrace(name) : null {
     // Start Firebase trace in release mode
     _firebaseTrace?.start();
   }
@@ -60,7 +61,7 @@ class PerformanceTrace {
   /// Stop the trace
   void stop() {
     endTime = DateTime.now();
-    
+
     // Stop Firebase trace and apply attributes/metrics
     if (_firebaseTrace != null) {
       for (final entry in attributes.entries) {
@@ -71,7 +72,7 @@ class PerformanceTrace {
       }
       _firebaseTrace!.stop();
     }
-    
+
     _logTrace();
   }
 
@@ -154,17 +155,19 @@ class PerformanceMonitor {
         debugPrint('  Response size: ${responseSize}B');
       }
     }
-    
+
     // Send to Firebase Performance Monitoring in release mode
     if (kReleaseMode) {
       final httpMetric = FirebasePerformance.instance.newHttpMetric(
         url,
         HttpMethod.values.firstWhere(
-          (m) => m.toString().split('.').last.toUpperCase() == method.toUpperCase(),
+          (m) =>
+              m.toString().split('.').last.toUpperCase() ==
+              method.toUpperCase(),
           orElse: () => HttpMethod.Get,
         ),
       );
-      
+
       // Set response details
       httpMetric.putAttribute('status_code', statusCode.toString());
       if (requestSize != null) {
@@ -174,7 +177,7 @@ class PerformanceMonitor {
         httpMetric.responsePayloadSize = responseSize;
       }
       httpMetric.httpResponseCode = statusCode;
-      
+
       // We can't retroactively start/stop, but we log the data
       // For real-time tracking, wrap HTTP calls with metric.start()/stop()
     }

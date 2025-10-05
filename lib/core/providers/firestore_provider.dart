@@ -20,13 +20,13 @@
 /// 2. Show cached data immediately with indicator
 /// 3. Refresh from server in background
 /// 4. Update UI when fresh data arrives
-/// 
+///
 /// Example:
 /// ```dart
 /// // Show cached data first
 /// final cachedSnapshot = await query.get(GetOptions(source: Source.cache));
 /// setState(() => data = cachedSnapshot.docs);
-/// 
+///
 /// // Refresh from server
 /// final freshSnapshot = await query.get(GetOptions(source: Source.server));
 /// setState(() => data = freshSnapshot.docs);

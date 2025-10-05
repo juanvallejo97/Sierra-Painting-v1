@@ -100,7 +100,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
     super.initState();
     _scrollController = widget.controller ?? ScrollController();
     _items = widget.initialItems ?? [];
-    
+
     // Add scroll listener for pagination
     _scrollController.addListener(_onScroll);
 
@@ -123,7 +123,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
-    
+
     // Load more when 80% scrolled
     if (currentScroll >= maxScroll * 0.8) {
       _loadMore();
@@ -140,7 +140,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
     try {
       final newItems = await widget.onLoadMore();
-      
+
       setState(() {
         _items.addAll(newItems);
         _isLoading = false;
@@ -160,7 +160,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
       _hasMore = true;
       _error = null;
     });
-    
+
     await _loadMore();
   }
 
@@ -330,7 +330,7 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
     super.initState();
     _scrollController = ScrollController();
     _items = widget.initialItems ?? [];
-    
+
     _scrollController.addListener(_onScroll);
 
     if (_items.isEmpty) {
@@ -349,7 +349,7 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final currentScroll = _scrollController.position.pixels;
-    
+
     if (currentScroll >= maxScroll * 0.8) {
       _loadMore();
     }
@@ -364,7 +364,7 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
 
     try {
       final newItems = await widget.onLoadMore();
-      
+
       setState(() {
         _items.addAll(newItems);
         _isLoading = false;
@@ -382,15 +382,15 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
       _items.clear();
       _hasMore = true;
     });
-    
+
     await _loadMore();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_items.isEmpty && !_isLoading) {
-      final emptyWidget = widget.emptyWidget ??
-          const Center(child: Text('No items found'));
+      final emptyWidget =
+          widget.emptyWidget ?? const Center(child: Text('No items found'));
 
       return widget.enableRefresh
           ? RefreshIndicator(

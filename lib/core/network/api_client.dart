@@ -79,7 +79,7 @@ class ApiClient {
   final Uuid _uuid = const Uuid();
 
   ApiClient({cf.FirebaseFunctions? functions})
-    : _functions = functions ?? cf.FirebaseFunctions.instance;
+      : _functions = functions ?? cf.FirebaseFunctions.instance;
 
   /// Call a Cloud Function with timeout, retry, and requestId
   Future<core.Result<T, ApiError>> call<T>({
@@ -126,7 +126,8 @@ class ApiClient {
       } on cf.FirebaseFunctionsException catch (e) {
         // Do not retry client errors (4xx)
         if (!_shouldRetry(e)) {
-          return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
+          return core.Result.failure(
+              _mapFirebaseError(e, requestId, functionName));
         }
 
         if (attempt < effectiveMaxRetries) {
@@ -134,7 +135,8 @@ class ApiClient {
           continue;
         }
 
-        return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
+        return core.Result.failure(
+            _mapFirebaseError(e, requestId, functionName));
       } catch (e) {
         if (attempt < effectiveMaxRetries) {
           await _delay(attempt);
