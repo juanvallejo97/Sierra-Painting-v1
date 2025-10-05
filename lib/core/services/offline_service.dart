@@ -10,7 +10,7 @@ class OfflineService {
   factory OfflineService() => _instance;
   OfflineService._internal();
 
-  Box? _cacheBox;
+  Box<dynamic>? _cacheBox;
   bool _isOnline = true;
   final Connectivity _connectivity = Connectivity();
 
@@ -91,7 +91,7 @@ class OfflineService {
   ) async {
     if (_cacheBox == null) return;
 
-    final pendingSyncs = getFromCache<List>('pending_syncs') ?? [];
+    final pendingSyncs = getFromCache<List<dynamic>>('pending_syncs') ?? [];
     pendingSyncs.add({
       'operation': operation,
       'data': data,
@@ -103,7 +103,7 @@ class OfflineService {
 
   /// Get all pending sync operations
   List<dynamic> getPendingSyncs() {
-    return getFromCache<List>('pending_syncs') ?? [];
+    return getFromCache<List<dynamic>>('pending_syncs') ?? [];
   }
 
   /// Clear pending sync operations
