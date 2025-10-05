@@ -1,9 +1,9 @@
-/// Minimal boot smoke test for CI
-///
-/// This is a fast, deterministic health check that verifies the app
-/// can launch and render its first frame without crashing.
-///
-/// Run with: flutter test integration_test/app_boot_smoke_test.dart
+// Minimal boot smoke test for CI
+//
+// This is a fast, deterministic health check that verifies the app
+// can launch and render its first frame without crashing.
+//
+// Run with: flutter test integration_test/app_boot_smoke_test.dart
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
