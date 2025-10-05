@@ -91,11 +91,27 @@ flutter test test/core/
 
 **Example**:
 ```dart
-testWidgets('TimeclockScreen shows clock in button', (tester) async {
-  await tester.pumpWidget(MyApp());
+Future<void> _pumpWithMaterial(
+  WidgetTester tester, {
+  required Widget child,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Scaffold(
+        body: Center(child: child),
+      ),
+    ),
+  );
+}
+
+testWidgets('Widget displays correctly', (tester) async {
+  await _pumpWithMaterial(
+    tester,
+    child: const MyWidget(),
+  );
   await tester.pumpAndSettle();
   
-  expect(find.text('Clock In'), findsOneWidget);
+  expect(find.text('Expected Text'), findsOneWidget);
 });
 ```
 
@@ -480,6 +496,52 @@ flutter test --verbose
 ---
 
 ## Common Testing Patterns
+
+### Widget Tests with MaterialApp+Scaffold
+
+**All widget tests must wrap widgets in a MaterialApp+Scaffold harness** to prevent context and theme lookup failures.
+
+**For standalone widgets (not full apps):**
+
+```dart
+Future<void> _pumpWithMaterial(
+  WidgetTester tester, {
+  required Widget child,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope( // if using Riverpod
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(child: child),
+        ),
+      ),
+    ),
+  );
+}
+
+testWidgets('SyncStatusChip renders correctly', (tester) async {
+  await _pumpWithMaterial(
+    tester,
+    child: const SyncStatusChip(status: SyncStatus.synced),
+  );
+  
+  expect(find.text('Synced'), findsOneWidget);
+});
+```
+
+**For full app tests:**
+
+```dart
+testWidgets('App builds without errors', (tester) async {
+  await tester.pumpWidget(
+    const ProviderScope(
+      child: SierraPaintingApp(), // Already contains MaterialApp
+    ),
+  );
+  
+  expect(find.text('Sierra Painting'), findsOneWidget);
+});
+```
 
 ### Testing Async Operations
 
