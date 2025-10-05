@@ -2,7 +2,7 @@
  * Unit tests for HTTP Client
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+ 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { httpClient } from '../httpClient';

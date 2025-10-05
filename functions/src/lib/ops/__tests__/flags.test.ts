@@ -2,7 +2,7 @@
  * Unit tests for Feature Flags
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import { getFlag, clearFlagCache, initializeFlags } from '../flags';
 

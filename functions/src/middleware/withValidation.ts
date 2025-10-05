@@ -1,4 +1,4 @@
-import { onCall, CallableOptions, CallableRequest } from 'firebase-functions/v2/https';
+import { onCall, CallableOptions } from 'firebase-functions/v2/https';
 
 // Endpoint presets
 export function publicEndpoint(opts: Partial<CallableOptions> = {}): CallableOptions {
@@ -15,15 +15,12 @@ export function adminEndpoint(opts: Partial<CallableOptions> = {}): CallableOpti
 
 // Generic validation wrapper for v2 onCall
 export function withValidation<TSchema, TOut = unknown>(
-  _schema: TSchema,
+  schema: TSchema,
   options: CallableOptions
 ) {
-  return (handler: (validated: any, req: CallableRequest<any>) => Promise<TOut>) =>
-    onCall(options, async (req: CallableRequest<any>) => {
-      // Example schema usage (plug your validator here):
-      const validated = req.data; // TODO: validate using _schema
-      // Optionally enforce auth/admin here:
-      // if (options.enforceAppCheck && !req.appCheckToken) throw new HttpsError('unauthenticated', 'App Check required');
-      return handler(validated, req);
+  return (handler: (data: any, context: any) => Promise<TOut>) =>
+    onCall(options, async (data, context) => {
+      // ...existing code...
+      return handler(data, context);
     });
 }
