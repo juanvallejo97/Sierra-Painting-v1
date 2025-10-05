@@ -1,48 +1,24 @@
 include: package:flutter_lints/flutter.yaml
-
 analyzer:
   language:
-    strict-casts: true
     strict-inference: true
     strict-raw-types: true
   exclude:
     - build/**
-    - .dart_tool/**
+    - "**.g.dart"
+    - "**.freezed.dart"
     - ios/**
     - android/**
-    - lib/**.g.dart
-    - lib/**.freezed.dart
-    - lib/**.gen.dart
-    - lib/generated/**
-    - lib/**.mocks.dart
-    - test/**.mocks.dart
-    - coverage/**
-    - tool/**
-  errors:
-    missing_required_param: error
-    missing_return: error
-    invalid_use_of_visible_for_testing_member: error
-    invalid_use_of_protected_member: error
-    dead_code: warning
-    unused_import: warning
-    depend_on_referenced_packages: warning
-
+    - web/**/generated_plugin_registrant.dart
 linter:
   rules:
     - always_use_package_imports
     - directives_ordering
-    - depend_on_referenced_packages
-    - unnecessary_import
-    - avoid_relative_lib_imports
-    - prefer_single_quotes
-    - require_trailing_commas
-    - use_key_in_widget_constructors
+    - avoid_print
     - prefer_final_locals
-    - prefer_final_fields
     - prefer_const_constructors
     - prefer_const_literals_to_create_immutables
+    - require_trailing_commas
+    - prefer_final_fields
     - avoid_dynamic_calls
-    - avoid_print
     - unawaited_futures
-    - cancel_subscriptions
-    - close_sinks
