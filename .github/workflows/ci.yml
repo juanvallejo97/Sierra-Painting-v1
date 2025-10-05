@@ -28,7 +28,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            pub-${{ runner.os }}-
+
       - name: Setup Java (Temurin 17)
+        if: github.actor != 'dependabot[bot]'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
