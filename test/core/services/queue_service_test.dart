@@ -18,6 +18,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sierra_painting/core/network/api_client.dart';
 import 'package:sierra_painting/core/services/queue_service.dart';
 import 'package:sierra_painting/core/models/queue_item.dart';
+import 'package:sierra_painting/core/utils/result.dart';
 import 'package:sierra_painting/features/timeclock/data/timeclock_repository.dart';
 
 /// Fake QueueService that captures enqueued items for testing
@@ -77,16 +78,16 @@ class FakeQueueService implements QueueService {
 /// Fake ApiClient for testing
 class FakeApiClient implements ApiClient {
   @override
-  Future<Result<T, ApiError>> call<T>({
+  Future<Result<Map<String, dynamic>, ApiError>> call({
     required String functionName,
-    required Map<String, dynamic> data,
+    Map<String, dynamic> data = const {},
+    Map<String, String>? headers,
+    int? maxRetries,
+    Duration? timeout,
   }) async {
-    // Not called in offline mode
-    throw UnimplementedError();
+    // Return a trivial success for tests; adjust if a specific flow is asserted.
+    return Result.success(<String, dynamic>{"ok": true});
   }
-  
-  @override
-  void dispose() {}
 }
 
 /// Fake Firestore for testing
@@ -157,16 +158,15 @@ void main() {
       // Arrange
       const jobId = 'test-job-online';
       
-      // Act & Assert
-      // When online, ApiClient.call would be invoked which will throw
-      // This confirms the offline queue path is not taken
-      expect(
-        () => repository.clockIn(
-          jobId: jobId,
-          isOnline: true,
-        ),
-        throwsA(isA<UnimplementedError>()),
+      // Act
+      final result = await repository.clockIn(
+        jobId: jobId,
+        isOnline: true,
       );
+      
+      // Assert - When online, ApiClient.call is invoked (returns success)
+      // This confirms the offline queue path is not taken
+      expect(result.isSuccess, isTrue);
       
       // Verify queue was not used
       expect(fakeQueueService.enqueuedItems.length, 0);
