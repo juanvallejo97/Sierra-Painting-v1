@@ -81,9 +81,9 @@ class TimeclockRepository {
     required ApiClient apiClient,
     required FirebaseFirestore firestore,
     QueueService? queueService,
-  }) : _apiClient = apiClient,
-       _firestore = firestore,
-       _queueService = queueService;
+  })  : _apiClient = apiClient,
+        _firestore = firestore,
+        _queueService = queueService;
 
   /// Clock in to a job
   ///
@@ -153,7 +153,7 @@ class TimeclockRepository {
   }
 
   /// Get time entries for a user
-  /// 
+  ///
   /// PERFORMANCE: Always uses pagination with default limit of 50.
   /// Use startAfterDoc for cursor-based pagination.
   Future<Result<List<TimeEntry>, String>> getTimeEntries({
@@ -166,9 +166,8 @@ class TimeclockRepository {
   }) async {
     try {
       // Enforce pagination limits
-      final effectiveLimit = limit != null 
-          ? (limit > maxLimit ? maxLimit : limit)
-          : defaultLimit;
+      final effectiveLimit =
+          limit != null ? (limit > maxLimit ? maxLimit : limit) : defaultLimit;
 
       Query query = _firestore
           .collectionGroup('timeEntries')
@@ -203,9 +202,8 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries = snapshot.docs
-          .map((doc) => TimeEntry.fromFirestore(doc))
-          .toList();
+      final entries =
+          snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
 
       return Result.success(entries);
     } catch (e) {
@@ -229,7 +227,7 @@ class TimeclockRepository {
   }
 
   /// Get active (open) time entries for a user
-  /// 
+  ///
   /// PERFORMANCE: Limited to prevent unbounded queries.
   /// Active entries should be rare (typically 0-1 per user).
   Future<Result<List<TimeEntry>, String>> getActiveEntries({
@@ -252,9 +250,8 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries = snapshot.docs
-          .map((doc) => TimeEntry.fromFirestore(doc))
-          .toList();
+      final entries =
+          snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
 
       return Result.success(entries);
     } catch (e) {

@@ -68,7 +68,7 @@ class _InvoicesBody extends StatelessWidget {
 
     // Performance-optimized list using PaginatedListView
     // When data is available, replace with:
-    // 
+    //
     // return PaginatedListView<Invoice>(
     //   itemBuilder: (context, invoice, index) => InvoiceListItem(invoice: invoice),
     //   onLoadMore: () async {
@@ -81,7 +81,7 @@ class _InvoicesBody extends StatelessWidget {
     //   ),
     //   itemExtent: 80.0, // Set for fixed-height items for better performance
     // );
-    
+
     return const Center(child: Text('Invoices list will go here'));
   }
 }

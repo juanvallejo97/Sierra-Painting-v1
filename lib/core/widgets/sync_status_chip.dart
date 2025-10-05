@@ -70,7 +70,6 @@ class SyncStatusChip extends StatelessWidget {
   }
 }
 
-
 /// Global sync status indicator for app bar
 ///
 /// Shows aggregate status of all pending sync operations:
