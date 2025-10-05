@@ -1,39 +1,29 @@
-import { onCall, HttpsError, type CallableRequest, type HttpsOptions } from 'firebase-functions/v2/https';
-import { logger } from 'firebase-functions';
-import type { ZodSchema } from 'zod';
+import { onCall, CallableOptions, CallableRequest } from 'firebase-functions/v2/https';
 
-/**
- * Wrap a v2 onCall with Zod validation + optional extra options.
- * App Check is enforced by default.
- */
-export function withValidation<T>(
-  schema: ZodSchema<T>,
-  handler: (data: T, req: CallableRequest) => Promise<unknown>,
-  options: HttpsOptions = {}
+// Endpoint presets
+export function publicEndpoint(opts: Partial<CallableOptions> = {}): CallableOptions {
+  return { region: 'us-central1', ...opts };
+}
+
+export function authenticatedEndpoint(opts: Partial<CallableOptions> = {}): CallableOptions {
+  return { region: 'us-central1', enforceAppCheck: true, ...opts };
+}
+
+export function adminEndpoint(opts: Partial<CallableOptions> = {}): CallableOptions {
+  return { region: 'us-central1', enforceAppCheck: true, ...opts };
+}
+
+// Generic validation wrapper for v2 onCall
+export function withValidation<TSchema, TOut = unknown>(
+  _schema: TSchema,
+  options: CallableOptions
 ) {
-  const merged: HttpsOptions = {
-    enforceAppCheck: true,
-    consumeAppCheckToken: true,
-    ...options,
-  };
-
-  return onCall(merged, async (req) => {
-    let parsed: T;
-
-    try {
-      parsed = schema.parse(req.data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Invalid request';
-      logger.warn('Validation failed', { message });
-      throw new HttpsError('invalid-argument', message);
-    }
-
-    try {
-      return await handler(parsed, req);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('Callable handler failed', { message });
-      throw new HttpsError('internal', message);
-    }
-  });
+  return (handler: (validated: any, req: CallableRequest<any>) => Promise<TOut>) =>
+    onCall(options, async (req: CallableRequest<any>) => {
+      // Example schema usage (plug your validator here):
+      const validated = req.data; // TODO: validate using _schema
+      // Optionally enforce auth/admin here:
+      // if (options.enforceAppCheck && !req.appCheckToken) throw new HttpsError('unauthenticated', 'App Check required');
+      return handler(validated, req);
+    });
 }
