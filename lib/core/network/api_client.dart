@@ -17,10 +17,10 @@
 /// ```
 
 import 'dart:async';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_functions/cloud_functions.dart' as cf;
 import 'package:uuid/uuid.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sierra_painting/core/utils/result.dart';
+import 'package:sierra_painting/core/utils/result.dart' as core;
 
 /// Configuration for API calls
 class ApiConfig {
@@ -74,14 +74,14 @@ class ApiError {
 
 /// API Client for Cloud Functions
 class ApiClient {
-  final FirebaseFunctions _functions;
+  final cf.FirebaseFunctions _functions;
   final Uuid _uuid = const Uuid();
 
-  ApiClient({FirebaseFunctions? functions})
-    : _functions = functions ?? FirebaseFunctions.instance;
+  ApiClient({cf.FirebaseFunctions? functions})
+    : _functions = functions ?? cf.FirebaseFunctions.instance;
 
   /// Call a Cloud Function with timeout, retry, and requestId
-  Future<Result<T, ApiError>> call<T>({
+  Future<core.Result<T, ApiError>> call<T>({
     required String functionName,
     Map<String, dynamic>? data,
     Duration? timeout,
@@ -107,13 +107,13 @@ class ApiClient {
           timeout: effectiveTimeout,
         );
 
-        return Result.success(result);
+        return core.Result.success(result);
       } on TimeoutException catch (e) {
         if (attempt < effectiveMaxRetries) {
           await _delay(attempt);
           continue;
         }
-        return Result.failure(
+        return core.Result.failure(
           ApiError(
             type: ApiErrorType.timeout,
             message: 'Request timed out after ${effectiveTimeout.inSeconds}s',
@@ -122,10 +122,10 @@ class ApiClient {
             originalError: e,
           ),
         );
-      } on FirebaseFunctionsException catch (e) {
+      } on cf.FirebaseFunctionsException catch (e) {
         // Do not retry client errors (4xx)
         if (!_shouldRetry(e)) {
-          return Result.failure(_mapFirebaseError(e, requestId, functionName));
+          return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
         }
 
         if (attempt < effectiveMaxRetries) {
@@ -133,14 +133,14 @@ class ApiClient {
           continue;
         }
 
-        return Result.failure(_mapFirebaseError(e, requestId, functionName));
+        return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
       } catch (e) {
         if (attempt < effectiveMaxRetries) {
           await _delay(attempt);
           continue;
         }
 
-        return Result.failure(
+        return core.Result.failure(
           ApiError(
             type: ApiErrorType.unknown,
             message: 'Unknown error: $e',
@@ -153,7 +153,7 @@ class ApiClient {
     }
 
     // Should never reach here
-    return Result.failure(
+    return core.Result.failure(
       ApiError(
         type: ApiErrorType.unknown,
         message: 'Unexpected error',
@@ -169,7 +169,7 @@ class ApiClient {
     required Map<String, dynamic> data,
     required Duration timeout,
   }) async {
-    final callable = _functions.httpsCallable(functionName);
+    final cf.HttpsCallable callable = _functions.httpsCallable(functionName);
 
     final result = await callable.call(data).timeout(timeout);
 
@@ -190,7 +190,7 @@ class ApiClient {
   }
 
   /// Check if error should be retried
-  bool _shouldRetry(FirebaseFunctionsException e) {
+  bool _shouldRetry(cf.FirebaseFunctionsException e) {
     // Retry on server errors (5xx) and rate limiting
     switch (e.code) {
       case 'deadline-exceeded':
@@ -206,7 +206,7 @@ class ApiClient {
 
   /// Map Firebase error to ApiError
   ApiError _mapFirebaseError(
-    FirebaseFunctionsException e,
+    cf.FirebaseFunctionsException e,
     String requestId,
     String functionName,
   ) {
