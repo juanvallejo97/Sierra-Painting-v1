@@ -37,8 +37,8 @@
 /// final db = ref.watch(firestoreProvider);
 /// final invoices = ref.watch(invoicesCollectionProvider);
 /// ```
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for Firestore instance with offline persistence
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
