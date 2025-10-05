@@ -14,6 +14,13 @@
 ///   functionName: 'clockIn',
 ///   data: { 'jobId': '123', 'at': DateTime.now().toIso8601String() },
 /// );
+/// 
+/// // Or with explicit deserialization:
+/// final result = await apiClient.call<ClockInResponse>(
+///   functionName: 'clockIn',
+///   data: { 'jobId': '123', 'at': DateTime.now().toIso8601String() },
+///   fromJson: ClockInResponse.fromJson,
+/// );
 /// ```
 library api_client;
 
@@ -88,6 +95,7 @@ class ApiClient {
     Duration? timeout,
     int? maxRetries,
     Map<String, String>? headers,
+    T Function(Map<String, dynamic> json)? fromJson,
   }) async {
     final requestId = _uuid.v4();
     final effectiveTimeout = timeout ?? ApiConfig.defaultTimeout;
@@ -106,6 +114,8 @@ class ApiClient {
           functionName: functionName,
           data: dataWithRequestId,
           timeout: effectiveTimeout,
+          headers: effectiveHeaders,
+          fromJson: fromJson,
         );
 
         return core.Result.success(result);
@@ -171,11 +181,20 @@ class ApiClient {
     required String functionName,
     required Map<String, dynamic> data,
     required Duration timeout,
+    required Map<String, String> headers,
+    T Function(Map<String, dynamic> json)? fromJson,
   }) async {
+    // Note: Firebase Callable Functions don't support custom headers in the call itself.
+    // Headers like X-Request-Id are passed via the data payload instead.
+    // The headers parameter is kept for future extensibility.
     final cf.HttpsCallable callable = _functions.httpsCallable(functionName);
 
     final result = await callable.call(data).timeout(timeout);
 
+    // Use fromJson if provided, otherwise cast to T
+    if (fromJson != null && result.data is Map<String, dynamic>) {
+      return fromJson(result.data as Map<String, dynamic>);
+    }
     return result.data as T;
   }
 

@@ -134,20 +134,14 @@ class TimeclockRepository {
     }
 
     // Online: Call Cloud Function
-    final result = await _apiClient.call<Map<String, dynamic>>(
+    final result = await _apiClient.call<ClockInResponse>(
       functionName: 'clockIn',
       data: request.toJson(),
+      fromJson: ClockInResponse.fromJson,
     );
 
     return result.when(
-      success: (data) {
-        try {
-          final response = ClockInResponse.fromJson(data);
-          return Result.success(response);
-        } catch (e) {
-          return Result.failure('Failed to parse response: $e');
-        }
-      },
+      success: (response) => Result.success(response),
       failure: (error) => Result.failure(_mapApiError(error)),
     );
   }
