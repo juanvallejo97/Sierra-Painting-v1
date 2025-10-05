@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:sierra_painting/core/models/sync_status.dart' as models;
-
 /// A tiny status chip that shows the current [models.SyncStatus].
 ///
 /// IMPORTANT: This widget does not define its own enum. It imports the one
 /// from core/models/sync_status.dart to avoid type conflicts in tests and
 /// call sites.
+library sync_status_chip;
+
+import 'package:flutter/material.dart';
+import 'package:sierra_painting/core/models/sync_status.dart' as models;
+
 class SyncStatusChip extends StatelessWidget {
   const SyncStatusChip({
     super.key,

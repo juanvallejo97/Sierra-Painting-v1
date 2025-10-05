@@ -15,6 +15,7 @@
 ///   data: { 'jobId': '123', 'at': DateTime.now().toIso8601String() },
 /// );
 /// ```
+library api_client;
 
 import 'dart:async';
 import 'package:cloud_functions/cloud_functions.dart' as cf;

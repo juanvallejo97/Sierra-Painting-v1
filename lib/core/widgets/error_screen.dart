@@ -13,6 +13,8 @@
 /// USAGE:
 /// Automatically displayed by GoRouter when navigation errors occur.
 /// Can also be shown programmatically for error states.
+library error_screen;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sierra_painting/design/design.dart';
