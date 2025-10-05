@@ -14,8 +14,10 @@ export function initializeTracer(): void {
   // Optional real tracer init (OTel), or keep as no-op for cold-start savings
 }
 
-export function startChildSpan(): SpanLike {
-  // If you wire real OTel later, return real span here; keep fallback:
+export function startChildSpan(name?: string): SpanLike {
+  // If you wire real OTel later, you can use `name` to name the span.
+  // Keep a minimal no-op span for cold-start savings.
+  void name; // currently unused in the no-op implementation
   return noopSpan;
 }
 
