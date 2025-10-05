@@ -46,7 +46,7 @@
  */
 
 import * as admin from 'firebase-admin';
-import { log } from './logger';
+import { log } from './logger.js';
 
 // ============================================================
 // TYPES
@@ -86,25 +86,7 @@ const CACHE_TTL_MS = 30 * 1000; // 30 seconds
  * @param defaultValue - Default value if flag not found
  * @returns Boolean flag value
  */
-export async function getFlag(flagName: string, defaultValue: boolean): Promise<boolean>;
-
-/**
- * Get a numeric feature flag value
- * 
- * @param flagName - Flag name (e.g., 'tracing.sample')
- * @param defaultValue - Default value if flag not found
- * @returns Numeric flag value
- */
-export async function getFlag(flagName: string, defaultValue: number): Promise<number>;
-
-/**
- * Get a string feature flag value
- * 
- * @param flagName - Flag name (e.g., 'feature.mode')
- * @param defaultValue - Default value if flag not found
- * @returns String flag value
- */
-export async function getFlag(flagName: string, defaultValue: string): Promise<string>;
+// Removed duplicate getFlag overloads and unused variables
 
 /**
  * Implementation of getFlag
