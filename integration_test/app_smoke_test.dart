@@ -22,7 +22,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:sierra_painting/main.dart' as app;
 
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Smoke Tests', () {
     testWidgets('App launches and renders first frame within budget', (
