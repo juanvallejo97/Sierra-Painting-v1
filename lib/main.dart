@@ -39,19 +39,17 @@ void main() async {
 
   // Initialize Firebase App Check
   // Use dart-define flag to enable/disable: --dart-define=ENABLE_APP_CHECK=true
-  const enableAppCheck = String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
+  const enableAppCheck =
+      String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
   final shouldEnableAppCheck = enableAppCheck == 'true' || kReleaseMode;
-  
+
   if (shouldEnableAppCheck) {
     await FirebaseAppCheck.instance.activate(
       // Android: Play Integrity API for production
-      androidProvider: kDebugMode 
-        ? AndroidProvider.debug 
-        : AndroidProvider.playIntegrity,
+      androidProvider:
+          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
       // iOS: App Attest for iOS 14+ (falls back to DeviceCheck for older versions)
-      appleProvider: kDebugMode 
-        ? AppleProvider.debug 
-        : AppleProvider.appAttest,
+      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
       // Web: ReCaptcha v3 (placeholder - replace with actual site key)
       webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     );
@@ -59,7 +57,7 @@ void main() async {
 
   // Initialize Firebase Performance Monitoring
   final performance = FirebasePerformance.instance;
-  
+
   // Enable performance monitoring in release mode only
   if (kReleaseMode) {
     await performance.setPerformanceCollectionEnabled(true);
@@ -67,7 +65,7 @@ void main() async {
 
   // Initialize Firebase Crashlytics
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  
+
   // Pass all uncaught asynchronous errors to Crashlytics
   PlatformDispatcher.instance.onError = (error, stack) {
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

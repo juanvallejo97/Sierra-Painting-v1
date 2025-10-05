@@ -23,52 +23,52 @@ import 'package:sierra_painting/features/timeclock/data/timeclock_repository.dar
 /// Fake QueueService that captures enqueued items for testing
 class FakeQueueService implements QueueService {
   final List<QueueItem> enqueuedItems = [];
-  
+
   @override
   Future<void> addToQueue(QueueItem item) async {
     enqueuedItems.add(item);
   }
-  
+
   // Implement other required methods as no-ops for testing
   @override
   List<QueueItem> getPendingItems() => enqueuedItems;
-  
+
   @override
   int getPendingCount() => enqueuedItems.length;
-  
+
   @override
   bool shouldShowWarning() => false;
-  
+
   @override
   bool isFull() => false;
-  
+
   @override
   double getQueueUsagePercentage() => 0.0;
-  
+
   @override
   Future<void> markAsProcessed(int index) async {}
-  
+
   @override
   Future<void> removeItem(int index) async {}
-  
+
   @override
   Future<void> retryFailed() async {}
-  
+
   @override
   Future<int> cleanupOldItems() async => 0;
-  
+
   @override
   Future<int> clearProcessed() async => 0;
-  
+
   @override
   QueueStats getStats() => QueueStats(
-    total: 0,
-    pending: 0,
-    processed: 0,
-    failed: 0,
-    usagePercentage: 0.0,
-  );
-  
+        total: 0,
+        pending: 0,
+        processed: 0,
+        failed: 0,
+        usagePercentage: 0.0,
+      );
+
   // Hive box property - not used in our test
   @override
   dynamic get box => null;
@@ -84,7 +84,7 @@ class FakeApiClient implements ApiClient {
     // Not called in offline mode
     throw UnimplementedError();
   }
-  
+
   @override
   void dispose() {}
 }
@@ -103,7 +103,7 @@ void main() {
       fakeQueueService = FakeQueueService();
       fakeApiClient = FakeApiClient();
       fakeFirestore = FakeFirestore();
-      
+
       repository = TimeclockRepository(
         apiClient: fakeApiClient,
         firestore: fakeFirestore,
@@ -111,20 +111,21 @@ void main() {
       );
     });
 
-    test('repository enqueues clockIn operation via QueueService when offline', () async {
+    test('repository enqueues clockIn operation via QueueService when offline',
+        () async {
       // Arrange
       const jobId = 'test-job-123';
-      
+
       // Act
       final result = await repository.clockIn(
         jobId: jobId,
         isOnline: false, // Force offline mode
       );
-      
+
       // Assert - Verify QueueService.addToQueue was called
       expect(result.isSuccess, isTrue);
       expect(fakeQueueService.enqueuedItems.length, 1);
-      
+
       final enqueuedItem = fakeQueueService.enqueuedItems.first;
       // Verify operation type is 'clockIn'
       expect(enqueuedItem.type, 'clockIn');
@@ -133,22 +134,22 @@ void main() {
     test('repository enqueues clientId in QueueItem data', () async {
       // Arrange
       const jobId = 'test-job-456';
-      
+
       // Act
       final result = await repository.clockIn(
         jobId: jobId,
         isOnline: false,
       );
-      
+
       // Assert - Verify clientId is captured in data
       expect(result.isSuccess, isTrue);
       expect(fakeQueueService.enqueuedItems.length, 1);
-      
+
       final enqueuedItem = fakeQueueService.enqueuedItems.first;
       expect(enqueuedItem.data, contains('clientId'));
       expect(enqueuedItem.data['clientId'], isNotEmpty);
       expect(enqueuedItem.data['clientId'], isA<String>());
-      
+
       // Verify clientId matches the QueueItem id
       expect(enqueuedItem.id, enqueuedItem.data['clientId']);
     });
@@ -156,7 +157,7 @@ void main() {
     test('clockIn does not enqueue when online', () async {
       // Arrange
       const jobId = 'test-job-online';
-      
+
       // Act & Assert
       // When online, ApiClient.call would be invoked which will throw
       // This confirms the offline queue path is not taken
@@ -167,7 +168,7 @@ void main() {
         ),
         throwsA(isA<UnimplementedError>()),
       );
-      
+
       // Verify queue was not used
       expect(fakeQueueService.enqueuedItems.length, 0);
     });
