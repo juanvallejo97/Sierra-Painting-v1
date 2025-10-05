@@ -8,6 +8,7 @@
 /// - Uses const constructor where possible
 /// - Minimal rebuilds (only active tab changes)
 /// - Cached navigation items
+library app_navigation;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

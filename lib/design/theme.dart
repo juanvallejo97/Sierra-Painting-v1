@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:sierra_painting/design/tokens.dart';
-
 /// Sierra Painting theme configuration
 ///
 /// Implements Material 3 themes using design tokens.
 /// Ensures WCAG 2.2 AA compliance with proper contrast ratios.
 /// Supports light and dark themes with smooth transitions.
+library theme;
+
+import 'package:flutter/material.dart';
+import 'package:sierra_painting/design/tokens.dart';
+
 class AppTheme {
   // Private constructor to prevent instantiation
   AppTheme._();
