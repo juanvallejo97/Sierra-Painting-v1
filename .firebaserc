@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "YOUR_PROJECT_ID",
+    "default": "to-do-app-ac602",
     "dev": "sierra-painting-dev",
     "staging": "sierra-painting-staging",
     "production": "sierra-painting-prod"
