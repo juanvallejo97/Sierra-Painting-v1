@@ -36,7 +36,7 @@ export const stripeWebhook = onRequest(
   let event: Stripe.Event;
     try {
       // In Cloud Functions, raw body is exposed as Buffer on req.rawBody
-      const raw = (req as any).rawBody as Buffer;
+  const raw = (req as unknown as { rawBody: Buffer }).rawBody;
       event = stripe.webhooks.constructEvent(raw, sig, STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       logger.warn('Invalid Stripe signature', { message: (err as Error).message });

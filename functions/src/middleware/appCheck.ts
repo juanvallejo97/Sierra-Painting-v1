@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * App Check Middleware for HTTP Functions
  * 
@@ -47,6 +48,6 @@ export const requireAppCheck = (handler: HttpHandler): HttpHandler => {
       return;
     }
     
-    return handler(req, res);
+  return handler(req, res);
   };
 };

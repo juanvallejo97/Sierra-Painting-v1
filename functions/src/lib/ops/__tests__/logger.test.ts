@@ -2,7 +2,7 @@
  * Unit tests for Logger
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import { Logger, log, getOrCreateRequestId } from '../logger';
 

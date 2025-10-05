@@ -22,7 +22,7 @@ const InitializeFlagsSchema = z.object({}).strict();
 export const initializeFlagsFunction = withValidation(
   InitializeFlagsSchema,
   adminEndpoint({ /* functionName?: 'initializeFlags' */ })
-)(async (validated, req) => {
+)(async () => {
   await initializeFlags();
   return {
     success: true,
