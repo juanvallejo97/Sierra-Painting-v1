@@ -21,11 +21,9 @@ const InitializeFlagsSchema = z.object({}).strict();
 
 export const initializeFlagsFunction = withValidation(
   InitializeFlagsSchema,
-  adminEndpoint()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-)(async (_data, _context) => {
+  adminEndpoint({ /* functionName?: 'initializeFlags' */ })
+)(async (validated, req) => {
   await initializeFlags();
-  
   return {
     success: true,
     message: 'Feature flags initialized successfully',

@@ -259,8 +259,8 @@ export const AuditLogEntrySchema = z.object({
   timestamp: ISODateString,
   ipAddress: z.string().trim().optional(),
   userAgent: z.string().trim().optional(),
-  changes: z.record(z.unknown()).optional(), // Old/new values for updates
-  metadata: z.record(z.unknown()).optional(), // Additional context
+  changes: z.record(z.string(), z.unknown()).optional(), // Old/new values for updates
+  metadata: z.record(z.string(), z.unknown()).optional(), // Additional context
 }).strict();
 
 export type AuditLogEntry = z.infer<typeof AuditLogEntrySchema>;

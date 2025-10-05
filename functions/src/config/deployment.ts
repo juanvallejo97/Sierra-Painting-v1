@@ -9,7 +9,7 @@ export interface FunctionDeploymentConfig {
   minInstances: number;
   maxInstances: number;
   region: string;
-  memory?: '128MB' | '256MB' | '512MB' | '1GB' | '2GB' | '4GB' | '8GB';
+  memory?: '128MiB' | '256MiB' | '512MiB' | '1GiB' | '2GiB' | '4GiB' | '8GiB';
   timeoutSeconds?: number;
 }
 
@@ -19,21 +19,21 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
     minInstances: 1,
     maxInstances: 20,
     region: 'us-central1',
-    memory: '256MB',
+    memory: '256MiB',
     timeoutSeconds: 30,
   },
   createLead: {
     minInstances: 1,
     maxInstances: 10,
     region: 'us-central1',
-    memory: '256MB',
+    memory: '256MiB',
     timeoutSeconds: 30,
   },
   markPaidManual: {
     minInstances: 1,
     maxInstances: 10,
     region: 'us-central1',
-    memory: '256MB',
+    memory: '256MiB',
     timeoutSeconds: 30,
   },
   
@@ -42,14 +42,14 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
     minInstances: 0,
     maxInstances: 5,
     region: 'us-central1',
-    memory: '256MB',
+  memory: '256MiB',
     timeoutSeconds: 60,
   },
   onUserDelete: {
     minInstances: 0,
     maxInstances: 5,
     region: 'us-central1',
-    memory: '256MB',
+  memory: '256MiB',
     timeoutSeconds: 60,
   },
   
@@ -58,7 +58,7 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
     minInstances: 0,
     maxInstances: 10,
     region: 'us-central1',
-    memory: '256MB',
+  memory: '256MiB',
     timeoutSeconds: 30,
   },
   
@@ -67,7 +67,7 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
     minInstances: 0,
     maxInstances: 5,
     region: 'us-central1',
-    memory: '128MB',
+  memory: '128MiB',
     timeoutSeconds: 10,
   },
 };

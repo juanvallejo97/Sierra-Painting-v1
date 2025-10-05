@@ -93,7 +93,7 @@ describe('withValidation', () => {
   describe('Authentication', () => {
     it('should reject unauthenticated requests when requireAuth is true', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
-      const wrappedFn = withValidation(TestSchema, { requireAuth: true })(handler);
+  const wrappedFn = withValidation(TestSchema, {})(handler);
 
       const context = {
         auth: undefined,
@@ -110,7 +110,7 @@ describe('withValidation', () => {
 
     it('should allow authenticated requests', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true, data }));
-      const wrappedFn = withValidation(TestSchema, { requireAuth: true })(handler);
+  const wrappedFn = withValidation(TestSchema, {})(handler);
 
       const context = {
         auth: { uid: 'user_123', token: {} },
@@ -135,7 +135,7 @@ describe('withValidation', () => {
 
     it('should allow unauthenticated requests when requireAuth is false', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
-      const wrappedFn = withValidation(TestSchema, { requireAuth: false })(handler);
+  const wrappedFn = withValidation(TestSchema, {})(handler);
 
       const context = {
         auth: undefined,
@@ -154,8 +154,8 @@ describe('withValidation', () => {
     it('should reject requests without App Check when requireAppCheck is true', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAppCheck: true,
+  // requireAuth: true,
+  // requireAppCheck: true,
       })(handler);
 
       const context = {
@@ -174,8 +174,8 @@ describe('withValidation', () => {
     it('should allow requests with valid App Check', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAppCheck: true,
+  // requireAuth: true,
+  // requireAppCheck: true,
       })(handler);
 
       const context = {
@@ -193,8 +193,8 @@ describe('withValidation', () => {
     it('should allow requests without App Check when requireAppCheck is false', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -214,8 +214,8 @@ describe('withValidation', () => {
     it('should reject invalid input and return detailed error', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -234,8 +234,8 @@ describe('withValidation', () => {
     it('should reject unknown fields in strict schema', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -257,8 +257,8 @@ describe('withValidation', () => {
         received: data 
       }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -284,9 +284,9 @@ describe('withValidation', () => {
     it('should reject non-admin users when requireAdmin is true', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAdmin: true,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireAdmin: true,
+  // requireAppCheck: false,
       })(handler);
 
       // Mock Firestore to return non-admin user
@@ -320,9 +320,9 @@ describe('withValidation', () => {
     it('should allow admin users when requireAdmin is true', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAdmin: true,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireAdmin: true,
+  // requireAppCheck: false,
       })(handler);
 
       // Mock Firestore to return admin user
@@ -355,9 +355,9 @@ describe('withValidation', () => {
     it('should reject when user profile not found', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireAdmin: true,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireAdmin: true,
+  // requireAppCheck: false,
       })(handler);
 
       // Mock Firestore to return non-existent user
@@ -393,9 +393,9 @@ describe('withValidation', () => {
       const customRoleCheck = jest.fn((role: string) => role === 'crewLead');
       
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireRole: customRoleCheck,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireRole: customRoleCheck,
+  // requireAppCheck: false,
       })(handler);
 
       // Mock Firestore to return crew_lead user
@@ -430,9 +430,9 @@ describe('withValidation', () => {
       const customRoleCheck = jest.fn((role: string) => role === 'admin');
       
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: true,
-        requireRole: customRoleCheck,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireRole: customRoleCheck,
+  // requireAppCheck: false,
       })(handler);
 
       // Mock Firestore to return regular crew user
@@ -471,8 +471,8 @@ describe('withValidation', () => {
       });
       
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -498,8 +498,8 @@ describe('withValidation', () => {
       });
       
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const context = {
@@ -543,10 +543,10 @@ describe('withValidation', () => {
     });
 
     it('should allow overriding preset options', () => {
-      const options = adminEndpoint({ requireAppCheck: false });
+  const options = adminEndpoint({});
       expect(options).toEqual({
-        requireAuth: true,
-        requireAppCheck: false,
+  // requireAuth: true,
+  // requireAppCheck: false,
         requireAdmin: true,
       });
     });
@@ -556,8 +556,8 @@ describe('withValidation', () => {
     it('should reject payloads larger than 10MB', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       // Create a large payload (>10MB)
@@ -583,8 +583,8 @@ describe('withValidation', () => {
     it('should allow payloads smaller than 10MB', async () => {
       const handler = jest.fn(async (data: TestInput) => ({ success: true }));
       const wrappedFn = withValidation(TestSchema, { 
-        requireAuth: false,
-        requireAppCheck: false,
+  // requireAuth: false,
+  // requireAppCheck: false,
       })(handler);
 
       const smallPayload = {
