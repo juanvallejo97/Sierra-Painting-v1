@@ -23,7 +23,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
+        child: SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.synced,
         ),
@@ -38,7 +38,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
+        child: SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.pending,
         ),
@@ -53,7 +53,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
+        child: SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.failed,
         ),
