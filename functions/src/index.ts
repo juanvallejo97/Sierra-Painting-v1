@@ -38,6 +38,10 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
+// Explicit types for handlers
+import type { Request, Response } from "express";
+import type { UserRecord } from "firebase-admin/auth";
+
 // Schemas (from schemas/)
 import { TimeInSchema, ManualPaymentSchema } from "./schemas";
 
@@ -60,6 +64,12 @@ initializeTracer();
 // Export shared instances for use in other modules
 export const db = admin.firestore();
 export const auth = admin.auth();
+
+// Narrowed context type used by our withValidation middleware
+type RequestContext = {
+  auth: { uid: string } | null;
+  requestId: string;
+};
 
 // ============================================================
 // OPS FUNCTIONS
@@ -96,58 +106,50 @@ export { markPaidManual } from "./payments/markPaidManual";
 
 /**
  * Create user profile on authentication
- *
- * Triggered when a new user signs up via Firebase Auth.
- * Creates a corresponding user document in Firestore with default role.
  */
 export const onUserCreate = functions
-  .runWith(getDeploymentConfig('onUserCreate'))
-  .auth.user().onCreate(async (user) => {
-  try {
-    await db.collection("users").doc(user.uid).set({
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName || null,
-      photoURL: user.photoURL || null,
-      role: "crew", // Default role (matches story A2)
-      orgId: null, // Set by admin via role/org assignment
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+  .auth.user()
+  .onCreate(async (user: UserRecord) => {
+    try {
+      await db.collection("users").doc(user.uid).set({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || null,
+        photoURL: user.photoURL || null,
+        role: "crew", // Default role (matches story A2)
+        orgId: null, // Set by admin via role/org assignment
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-    functions.logger.info("User profile created", { uid: user.uid, email: user.email });
-  } catch (error) {
-    functions.logger.error("Error creating user profile", { uid: user.uid, error });
-    throw error;
-  }
-});
+      functions.logger.info("User profile created", { uid: user.uid, email: user.email });
+    } catch (error) {
+      functions.logger.error("Error creating user profile", { uid: user.uid, error });
+      throw error;
+    }
+  });
 
 /**
  * Clean up user data on account deletion
- *
- * Triggered when a user account is deleted from Firebase Auth.
- * Deletes the corresponding user document from Firestore.
- *
- * TODO: Implement cascading deletes/anonymization for related data.
  */
 export const onUserDelete = functions
-  .runWith(getDeploymentConfig('onUserDelete'))
-  .auth.user().onDelete(async (user) => {
-  try {
-    // Delete user profile
-    await db.collection("users").doc(user.uid).delete();
+  .auth.user()
+  .onDelete(async (user: UserRecord) => {
+    try {
+      // Delete user profile
+      await db.collection("users").doc(user.uid).delete();
 
-    // TODO: Delete or anonymize related data:
-    // - Time entries (anonymize userId)
-    // - Audit logs (keep for compliance, but anonymize actor)
-    // - Payments (keep for accounting)
+      // TODO: Delete or anonymize related data:
+      // - Time entries (anonymize userId)
+      // - Audit logs (keep for compliance, but anonymize actor)
+      // - Payments (keep for accounting)
 
-    functions.logger.info("User data deleted", { uid: user.uid });
-  } catch (error) {
-    functions.logger.error("Error deleting user data", { uid: user.uid, error });
-    throw error;
-  }
-});
+      functions.logger.info("User data deleted", { uid: user.uid });
+    } catch (error) {
+      functions.logger.error("Error deleting user data", { uid: user.uid, error });
+      throw error;
+    }
+  });
 
 // ============================================================
 // LEGACY/TRANSITIONAL ENDPOINTS (TO BE MIGRATED)
@@ -155,172 +157,176 @@ export const onUserDelete = functions
 
 /**
  * Stripe webhook handler (legacy path)
- *
- * TODO: Replace with payments/stripeWebhook.ts after migration.
  */
-export const stripeWebhook = functions
-  .runWith(getDeploymentConfig('stripeWebhook'))
-  .https.onRequest(async (req, res) => {
-  try {
-    // Cast res to expected type for webhook handler
-    await handleStripeWebhook(req, res as functions.Response<{received: boolean; note?: string} | {error: string}>);
-  } catch (error: unknown) {
-    functions.logger.error("Stripe webhook error", error);
-    res.status(500).json({ error: "Webhook handler failed" });
+export const stripeWebhook = functions.https.onRequest(
+  async (req: Request, res: Response) => {
+    try {
+      await handleStripeWebhook(
+        req,
+        res as Response<{ received: boolean; note?: string } | { error: string }>
+      );
+    } catch (error: unknown) {
+      functions.logger.error("Stripe webhook error", error);
+      res.status(500).json({ error: "Webhook handler failed" });
+    }
   }
-});
+);
 
 /**
  * Health check endpoint
  */
-export const healthCheck = functions
-  .runWith(getDeploymentConfig('healthCheck'))
-  .https.onRequest((req, res) => {
-  res.status(200).json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    version: "2.0.0-refactor",
-  });
-});
+export const healthCheck = functions.https.onRequest(
+  (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      version: "2.0.0-refactor",
+    });
+  }
+);
 
 // ============================================================
 // B1: Clock-in (offline + GPS + idempotent)
 // ============================================================
 
-/**
- * Accepts clock-in from authenticated users with:
- * - Offline queue support via clientId
- * - Optional GPS location
- * - Idempotency via clientId
- * - Prevents duplicate open entries
- */
 export const clockIn = withValidation(
   TimeInSchema,
-  authenticatedEndpoint({ functionName: 'clockIn' })
-)(async (validated, context) => {
-  const userId = context.auth.uid;
+  authenticatedEndpoint({ functionName: "clockIn" })
+)(async (validated, context: RequestContext) => {
+  const userId = context.auth?.uid as string;
   const requestId = context.requestId;
   const startTime = Date.now();
 
-  return withSpan('clockIn', async (span) => {
+  return withSpan("clockIn", async (span) => {
     const logger = log.child({ requestId, userId });
-    
-    span.setAttribute('userId', userId);
-    span.setAttribute('jobId', validated.jobId);
-    
-    logger.info('clock_in_initiated', { 
+
+    span.setAttribute("userId", userId);
+    span.setAttribute("jobId", validated.jobId);
+
+    logger.info("clock_in_initiated", {
       jobId: validated.jobId,
-      hasGeo: !!validated.geo 
+      hasGeo: !!validated.geo,
     });
 
-      // 3) Check idempotency (prevent duplicate from offline queue)
-      const idempotencyKey = `clock_in:${validated.jobId}:${validated.clientId}`;
-      const idempotencyDocRef = db.collection("idempotency").doc(idempotencyKey);
-      const idempotencyDoc = await idempotencyDocRef.get();
+    // 3) Check idempotency (prevent duplicate from offline queue)
+    const idempotencyKey = `clock_in:${validated.jobId}:${validated.clientId}`;
+    const idempotencyDocRef = db.collection("idempotency").doc(idempotencyKey);
+    const idempotencyDoc = await idempotencyDocRef.get();
 
-      if (idempotencyDoc.exists) {
-        logger.info('clock_in_idempotent', { idempotencyKey });
-        const data = idempotencyDoc.data();
-        return data?.result as Record<string, unknown>;
-      }
+    if (idempotencyDoc.exists) {
+      logger.info("clock_in_idempotent", { idempotencyKey });
+      const data = idempotencyDoc.data();
+      return data?.result as Record<string, unknown>;
+    }
 
-      // 4) Get user profile for org scope
-      const userDoc = await db.collection("users").doc(userId).get();
-      if (!userDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "User profile not found");
-      }
-      const userData = userDoc.data();
-      const userOrgId = userData?.orgId as string | undefined;
-      
-      // Add orgId to logger context
-      const orgLogger = logger.child({ orgId: userOrgId });
+    // 4) Get user profile for org scope
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "User profile not found");
+    }
+    const userData = userDoc.data();
+    const userOrgId = (userData?.orgId as string | undefined) ?? null;
 
-      // 5) Verify job exists & assignment
-      const jobDoc = await db.collection("jobs").doc(validated.jobId).get();
-      if (!jobDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Job not found");
-      }
+    // Add orgId to logger context
+    const orgLogger = logger.child({ orgId: userOrgId });
 
-      const jobData = jobDoc.data();
-      if (jobData?.orgId !== userOrgId) {
-        throw new functions.https.HttpsError("permission-denied", "Job not in your organization");
-      }
+    // 5) Verify job exists & assignment
+    const jobDoc = await db.collection("jobs").doc(validated.jobId).get();
+    if (!jobDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Job not found");
+    }
 
-      if (!Array.isArray(jobData?.crewIds) || !(jobData.crewIds as string[]).includes(userId)) {
-        throw new functions.https.HttpsError("permission-denied", "Not assigned to this job");
-      }
+    const jobData = jobDoc.data();
+    if (jobData?.orgId !== userOrgId) {
+      throw new functions.https.HttpsError("permission-denied", "Job not in your organization");
+    }
 
-      // 6) Prevent overlap (no open entry for this job)
-      const openEntries = await db
-        .collectionGroup("timeEntries")
-        .where("userId", "==", userId)
-        .where("jobId", "==", validated.jobId)
-        .where("clockOut", "==", null)
-        .limit(1)
-        .get();
+    if (
+      !Array.isArray(jobData?.crewIds) ||
+      !(jobData.crewIds as string[]).includes(userId)
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not assigned to this job"
+      );
+    }
 
-      if (!openEntries.empty) {
-        orgLogger.warn('clock_in_overlap_blocked', {
-          jobId: validated.jobId,
-          existingEntryId: openEntries.docs[0].id,
-        });
-        throw new functions.https.HttpsError("failed-precondition", "You have an open shift for this job");
-      }
+    // 6) Prevent overlap (no open entry for this job)
+    const openEntries = await db
+      .collectionGroup("timeEntries")
+      .where("userId", "==", userId)
+      .where("jobId", "==", validated.jobId)
+      .where("clockOut", "==", null)
+      .limit(1)
+      .get();
 
-      // 7) Create time entry
-      const entryRef = await db
-        .collection("jobs")
-        .doc(validated.jobId)
-        .collection("timeEntries")
-        .add({
-          orgId: userOrgId,
-          userId: userId,
-          jobId: validated.jobId,
-          clockIn: validated.at,
-          clockOut: null,
-          geo: validated.geo || null,
-          gpsMissing: !validated.geo,
-          clientId: validated.clientId,
-          source: "mobile",
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+    if (!openEntries.empty) {
+      orgLogger.warn("clock_in_overlap_blocked", {
+        jobId: validated.jobId,
+        existingEntryId: openEntries.docs[0].id,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "You have an open shift for this job"
+      );
+    }
 
-      // 8) Activity log
-      await db.collection("activity_logs").add({
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-        entity: "time_entry",
-        action: "TIME_IN",
-        actorUid: userId,
+    // 7) Create time entry
+    const entryRef = await db
+      .collection("jobs")
+      .doc(validated.jobId)
+      .collection("timeEntries")
+      .add({
         orgId: userOrgId,
-        details: {
-          jobId: validated.jobId,
-          entryId: entryRef.id,
-          hasGeo: !!validated.geo,
-          source: "mobile",
-        },
+        userId: userId,
+        jobId: validated.jobId,
+        clockIn: validated.at,
+        clockOut: null,
+        geo: validated.geo || null,
+        gpsMissing: !validated.geo,
+        clientId: validated.clientId,
+        source: "mobile",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // 9) Store idempotency record (48-hour TTL)
-      const result = { success: true, entryId: entryRef.id };
-      await idempotencyDocRef.set({
-        key: idempotencyKey,
-        operation: "clock_in",
-        resourceId: entryRef.id,
-        result,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
-        expiresAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 48 * 60 * 60 * 1000)),
-      });
-
-      // 10) Telemetry
-      const latencyMs = Date.now() - startTime;
-      orgLogger.perf('clockIn', latencyMs, {
-        firestoreReads: 3,
-        firestoreWrites: 3,
+    // 8) Activity log
+    await db.collection("activity_logs").add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      entity: "time_entry",
+      action: "TIME_IN",
+      actorUid: userId,
+      orgId: userOrgId,
+      details: {
+        jobId: validated.jobId,
+        entryId: entryRef.id,
         hasGeo: !!validated.geo,
-      });
-      
-    orgLogger.info('clock_in_success', {
+        source: "mobile",
+      },
+    });
+
+    // 9) Store idempotency record (48-hour TTL)
+    const result = { success: true, entryId: entryRef.id };
+    await idempotencyDocRef.set({
+      key: idempotencyKey,
+      operation: "clock_in",
+      resourceId: entryRef.id,
+      result,
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      expiresAt: admin.firestore.Timestamp.fromDate(
+        new Date(Date.now() + 48 * 60 * 60 * 1000)
+      ),
+    });
+
+    // 10) Telemetry
+    const latencyMs = Date.now() - startTime;
+    orgLogger.perf("clockIn", latencyMs, {
+      firestoreReads: 3,
+      firestoreWrites: 3,
+      hasGeo: !!validated.geo,
+    });
+
+    orgLogger.info("clock_in_success", {
       jobId: validated.jobId,
       hasGeo: !!validated.geo,
       entryId: entryRef.id,
@@ -334,45 +340,47 @@ export const clockIn = withValidation(
 // Legacy markPaymentPaid (compat; prefer payments/markPaidManual)
 // ============================================================
 
-/**
- * C3: Mark payment as paid (Manual payment - check/cash)
- * Legacy callable maintained temporarily for backward compatibility.
- * Prefer using payments/markPaidManual.
- */
 export const markPaymentPaid = withValidation(
   ManualPaymentSchema,
-  adminEndpoint({ functionName: 'markPaidManual' })
-)(async (validatedData, context) => {
-  const userId = context.auth.uid;
+  adminEndpoint({ functionName: "markPaidManual" })
+)(async (validatedData, context: RequestContext) => {
+  const userId = context.auth?.uid as string;
   const requestId = context.requestId;
   const startTime = Date.now();
-  
-  return withSpan('markPaymentPaid', async (span) => {
+
+  return withSpan("markPaymentPaid", async (span) => {
     const logger = log.child({ requestId, userId });
-    
-    span.setAttribute('userId', userId);
-    span.setAttribute('invoiceId', validatedData.invoiceId);
-    span.setAttribute('paymentMethod', validatedData.method);
-    
-    logger.info('mark_paid_initiated', {
+
+    span.setAttribute("userId", userId);
+    span.setAttribute("invoiceId", validatedData.invoiceId);
+    span.setAttribute("paymentMethod", validatedData.method);
+
+    logger.info("mark_paid_initiated", {
       invoiceId: validatedData.invoiceId,
       method: validatedData.method,
     });
 
     // Idempotency
     const idempotencyKey =
-      validatedData.idempotencyKey || `markPaid:${validatedData.invoiceId}:${Date.now()}`;
+      validatedData.idempotencyKey ||
+      `markPaid:${validatedData.invoiceId}:${Date.now()}`;
     const idempotencyDocRef = db.collection("idempotency").doc(idempotencyKey);
 
     const already = await idempotencyDocRef.get();
     if (already.exists) {
       functions.logger.info("Idempotent request detected", { idempotencyKey });
-      const storedResult = already.data()?.result as { success: boolean; paymentId: string };
+      const storedResult = already.data()?.result as {
+        success: boolean;
+        paymentId: string;
+      };
       return storedResult;
     }
 
     // Fetch invoice
-    const invoiceDoc = await db.collection("invoices").doc(validatedData.invoiceId).get();
+    const invoiceDoc = await db
+      .collection("invoices")
+      .doc(validatedData.invoiceId)
+      .get();
     if (!invoiceDoc.exists) {
       throw new functions.https.HttpsError("not-found", "Invoice not found");
     }
@@ -384,13 +392,16 @@ export const markPaymentPaid = withValidation(
       orgId?: string;
     } | undefined;
     if (invoiceData?.paid) {
-      throw new functions.https.HttpsError("failed-precondition", "Invoice already paid");
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Invoice already paid"
+      );
     }
 
     // Validate payment amount if provided in the request
     const invoiceTotal = invoiceData?.total ?? invoiceData?.amount ?? 0;
     if (validatedData.amount && validatedData.amount !== invoiceTotal) {
-      logger.warn('payment_amount_mismatch', {
+      logger.warn("payment_amount_mismatch", {
         invoiceId: validatedData.invoiceId,
         providedAmount: validatedData.amount,
         invoiceTotal,
@@ -462,18 +473,18 @@ export const markPaymentPaid = withValidation(
     });
 
     const latencyMs = Date.now() - startTime;
-    logger.perf('markPaymentPaid', latencyMs, {
+    logger.perf("markPaymentPaid", latencyMs, {
       firestoreReads: 2,
       firestoreWrites: 5,
       amount: invoiceData?.total ?? 0,
     });
-    
-    logger.info('payment_marked_paid', { 
+
+    logger.info("payment_marked_paid", {
       paymentId: paymentRef.id,
       invoiceId: validatedData.invoiceId,
       amount: invoiceData?.total ?? 0,
     });
-    
+
     return result;
   });
 });
