@@ -27,10 +27,7 @@ export 'package:sierra_painting/core/providers/firestore_provider.dart';
 
 // Haptic service providers (from haptic_service.dart)
 export 'package:sierra_painting/core/services/haptic_service.dart'
-    show
-        hapticEnabledProvider,
-        hapticServiceProvider,
-        HapticService;
+    show hapticEnabledProvider, hapticServiceProvider, HapticService;
 
 // Feature flag service providers
 export 'package:sierra_painting/core/services/feature_flag_service.dart'

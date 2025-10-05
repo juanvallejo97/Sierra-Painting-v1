@@ -68,9 +68,8 @@ class AppNavigationBar extends ConsumerWidget {
     final hapticService = ref.read(hapticServiceProvider);
 
     // Filter items based on admin status
-    final visibleItems = _navigationItems
-        .where((item) => !item.adminOnly || isAdmin)
-        .toList();
+    final visibleItems =
+        _navigationItems.where((item) => !item.adminOnly || isAdmin).toList();
 
     // Find current index
     final currentIndex = visibleItems.indexWhere(
@@ -137,9 +136,7 @@ class AppDrawer extends ConsumerWidget {
               ],
             ),
           ),
-          ..._navigationItems
-              .where((item) => !item.adminOnly || isAdmin)
-              .map(
+          ..._navigationItems.where((item) => !item.adminOnly || isAdmin).map(
                 (item) => ListTile(
                   leading: Icon(item.icon),
                   title: Text(item.label),

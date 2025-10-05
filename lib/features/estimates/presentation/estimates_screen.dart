@@ -67,7 +67,7 @@ class _EstimatesBody extends StatelessWidget {
 
     // Performance-optimized list using PaginatedListView
     // When data is available, replace with:
-    // 
+    //
     // return PaginatedListView<Estimate>(
     //   itemBuilder: (context, estimate, index) => EstimateListItem(estimate: estimate),
     //   onLoadMore: () async {
@@ -80,7 +80,7 @@ class _EstimatesBody extends StatelessWidget {
     //   ),
     //   itemExtent: 80.0, // Set for fixed-height items for better performance
     // );
-    
+
     return const Center(child: Text('Estimates list will go here'));
   }
 }

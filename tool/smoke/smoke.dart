@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 /// Smoke test results generator
-/// 
+///
 /// Creates a JSON artifact for CI to track smoke test results
 void main() async {
   final result = {

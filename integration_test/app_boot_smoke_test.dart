@@ -30,7 +30,7 @@ void main() {
       // Verify app has rendered (find MaterialApp or Scaffold)
       final hasMaterialApp = find.byType(MaterialApp).evaluate().isNotEmpty;
       final hasScaffold = find.byType(Scaffold).evaluate().isNotEmpty;
-      
+
       expect(
         hasMaterialApp || hasScaffold,
         true,
