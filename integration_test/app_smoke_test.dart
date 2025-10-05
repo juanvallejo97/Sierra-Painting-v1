@@ -16,19 +16,18 @@
 /// - Must complete in < 2 minutes
 /// - Deterministic - no flaky tests
 
-import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:sierra_painting/main.dart' as app;
 
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Smoke Tests', () {
-    testWidgets('App launches and renders first frame within budget',
-        (tester) async {
+    testWidgets('App launches and renders first frame within budget', (
+      tester,
+    ) async {
       // Start timing
       final startTime = DateTime.now();
 
@@ -51,12 +50,18 @@ void main() {
       debugPrint('✅ App started in ${startupMs}ms (budget: ${budgetMs}ms)');
 
       // Verify we can find some UI element (app has rendered)
-      expect(find.byType(MaterialApp), findsOneWidget,
-          reason: 'App should render MaterialApp');
+      expect(
+        find.byType(MaterialApp),
+        findsOneWidget,
+        reason: 'App should render MaterialApp',
+      );
 
       // Verify startup is within budget
-      expect(startupMs, lessThan(budgetMs),
-          reason: 'App startup time exceeds budget');
+      expect(
+        startupMs,
+        lessThan(budgetMs),
+        reason: 'App startup time exceeds budget',
+      );
 
       // Export metrics for artifact
       await _exportMetric('app_startup_ms', startupMs);
@@ -70,10 +75,11 @@ void main() {
 
       // Verify app is running (has a Scaffold or MaterialApp)
       expect(
-          find.byType(MaterialApp).evaluate().isNotEmpty ||
-              find.byType(Scaffold).evaluate().isNotEmpty,
-          true,
-          reason: 'App should have rendered basic UI');
+        find.byType(MaterialApp).evaluate().isNotEmpty ||
+            find.byType(Scaffold).evaluate().isNotEmpty,
+        true,
+        reason: 'App should have rendered basic UI',
+      );
 
       // Try to find and tap bottom navigation if it exists
       // This is a smoke test, so we're flexible about what screens exist
@@ -96,10 +102,11 @@ void main() {
 
       // The key success is that the app didn't crash
       expect(
-          find.byType(MaterialApp).evaluate().isNotEmpty ||
-              find.byType(Scaffold).evaluate().isNotEmpty,
-          true,
-          reason: 'App should still be running after navigation attempt');
+        find.byType(MaterialApp).evaluate().isNotEmpty ||
+            find.byType(Scaffold).evaluate().isNotEmpty,
+        true,
+        reason: 'App should still be running after navigation attempt',
+      );
     });
 
     testWidgets('Frame rendering performance check', (tester) async {
@@ -117,8 +124,11 @@ void main() {
 
       // Frame time should be < 16ms (60fps) but we allow 100ms in CI
       const frameBudgetMs = 100;
-      expect(frameTimeMs, lessThan(frameBudgetMs),
-          reason: 'Frame rendering time exceeds budget');
+      expect(
+        frameTimeMs,
+        lessThan(frameBudgetMs),
+        reason: 'Frame rendering time exceeds budget',
+      );
 
       await _exportMetric('frame_time_ms', frameTimeMs);
     });
