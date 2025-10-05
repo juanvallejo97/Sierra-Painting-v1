@@ -24,7 +24,7 @@ class OfflineService {
 
     // Check initial connectivity
     final connectivityResult = await instance._connectivity.checkConnectivity();
-    instance._isOnline = connectivityResult != ConnectivityResult.none;
+    instance._isOnline = !connectivityResult.contains(ConnectivityResult.none);
 
     // Listen to connectivity changes
     instance._connectivity.onConnectivityChanged.listen((
