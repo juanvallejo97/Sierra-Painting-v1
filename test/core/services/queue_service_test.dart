@@ -78,15 +78,20 @@ class FakeQueueService implements QueueService {
 /// Fake ApiClient for testing
 class FakeApiClient implements ApiClient {
   @override
-  Future<Result<Map<String, dynamic>, ApiError>> call({
+  Future<Result<T, ApiError>> call<T>({
     required String functionName,
-    Map<String, dynamic> data = const {},
+    Map<String, dynamic>? data,
     Map<String, String>? headers,
     int? maxRetries,
     Duration? timeout,
+    T Function(Map<String, dynamic> json)? fromJson,
   }) async {
     // Return a trivial success for tests; adjust if a specific flow is asserted.
-    return Result.success(<String, dynamic>{"ok": true});
+    final responseData = <String, dynamic>{"ok": true};
+    if (fromJson != null) {
+      return Result.success(fromJson(responseData));
+    }
+    return Result.success(responseData as T);
   }
 }
 
