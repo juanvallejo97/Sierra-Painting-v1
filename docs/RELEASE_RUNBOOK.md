@@ -6,6 +6,10 @@
 ## Staging
 - Build locally: `flutter build web --release`
 - Deploy with scripts using `--project` and `--site`.
+- **Code Generation:** If dependencies changed, run:
+  ```bash
+  flutter pub run build_runner build --delete-conflicting-outputs
+  ```
 ## Production
 - Actions → **Release V1 (Manual)** → `tag = v1.0.0`, `build_android_aab = true|false`
 ## Verification
