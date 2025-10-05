@@ -5,6 +5,7 @@
 ///
 /// Run with: flutter test integration_test/app_boot_smoke_test.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -25,7 +26,7 @@ void main() {
       final startupMs = endTime.difference(startTime).inMilliseconds;
 
       // Log startup time
-      print('PERFORMANCE_METRIC: app_startup_ms=$startupMs');
+      debugPrint('PERFORMANCE_METRIC: app_startup_ms=$startupMs');
 
       // Verify app has rendered (find MaterialApp or Scaffold)
       final hasMaterialApp = find.byType(MaterialApp).evaluate().isNotEmpty;
@@ -44,7 +45,7 @@ void main() {
         reason: 'App startup exceeds budget',
       );
 
-      print('✅ App started successfully in ${startupMs}ms');
+      debugPrint('✅ App started successfully in ${startupMs}ms');
     });
   });
 }
