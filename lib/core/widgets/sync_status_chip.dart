@@ -1,92 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:sierra_painting/core/models/sync_status.dart' as models;
 
-/// Status of a sync operation
-enum SyncStatus { pending, synced, error }
-
-/// Sync status chip to show sync state of offline operations
+/// A tiny status chip that shows the current [models.SyncStatus].
 ///
-/// Color-coded:
-/// - Yellow: pending sync (waiting for network)
-/// - Green: synced successfully
-/// - Red: sync error (tap to retry)
-///
-/// Used in:
-/// - Time clock entries
-/// - Invoice list items
-/// - Estimate list items
-/// - Any offline-queueable operation
+/// IMPORTANT: This widget does not define its own enum. It imports the one
+/// from core/models/sync_status.dart to avoid type conflicts in tests and
+/// call sites.
 class SyncStatusChip extends StatelessWidget {
-  final SyncStatus status;
-  final VoidCallback? onRetry;
-  final String? errorMessage;
-
   const SyncStatusChip({
     super.key,
     required this.status,
-    this.onRetry,
-    this.errorMessage,
   });
+
+  final models.SyncStatus status;
+
+  Color _bg(BuildContext context) {
+    switch (status) {
+      case models.SyncStatus.synced:
+        return Colors.green.shade100;
+      case models.SyncStatus.pending:
+        return Colors.amber.shade100;
+      case models.SyncStatus.failed:
+        return Colors.red.shade100;
+    }
+  }
+
+  Color _fg(BuildContext context) {
+    switch (status) {
+      case models.SyncStatus.synced:
+        return Colors.green.shade900;
+      case models.SyncStatus.pending:
+        return Colors.amber.shade900;
+      case models.SyncStatus.failed:
+        return Colors.red.shade900;
+    }
+  }
+
+  IconData _icon() {
+    switch (status) {
+      case models.SyncStatus.synced:
+        return Icons.check_circle_rounded;
+      case models.SyncStatus.pending:
+        return Icons.sync_rounded;
+      case models.SyncStatus.failed:
+        return Icons.error_rounded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Color backgroundColor;
-    Color foregroundColor;
-    IconData icon;
-    String label;
-
-    switch (status) {
-      case SyncStatus.pending:
-        backgroundColor = Colors.amber.shade100;
-        foregroundColor = Colors.amber.shade900;
-        icon = Icons.sync;
-        label = 'Syncing...';
-        break;
-      case SyncStatus.synced:
-        backgroundColor = Colors.green.shade100;
-        foregroundColor = Colors.green.shade900;
-        icon = Icons.check_circle;
-        label = 'Synced';
-        break;
-      case SyncStatus.error:
-        backgroundColor = Colors.red.shade100;
-        foregroundColor = Colors.red.shade900;
-        icon = Icons.error;
-        label = 'Error';
-        break;
-    }
-
-    final chip = Chip(
-      avatar: Icon(icon, size: 16, color: foregroundColor),
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: foregroundColor,
+    return Semantics(
+      label: 'sync-status-${status.name}',
+      child: Chip(
+        backgroundColor: _bg(context),
+        avatar: Icon(_icon(), size: 18, color: _fg(context)),
+        label: Text(
+          status.label,
+          style: TextStyle(
+            color: _fg(context),
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       ),
-      backgroundColor: backgroundColor,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      visualDensity: VisualDensity.compact,
     );
-
-    // For error status, wrap in InkWell for retry
-    if (status == SyncStatus.error && onRetry != null) {
-      return Tooltip(
-        message: errorMessage ?? 'Tap to retry',
-        child: InkWell(
-          onTap: onRetry,
-          borderRadius: BorderRadius.circular(16),
-          child: chip,
-        ),
-      );
-    }
-
-    return chip;
   }
 }
+
 
 /// Global sync status indicator for app bar
 ///
