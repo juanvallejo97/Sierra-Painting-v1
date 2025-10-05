@@ -5,7 +5,6 @@
 //
 // Run with: flutter test integration_test/app_boot_smoke_test.dart
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -39,11 +38,7 @@ void main() {
       );
 
       // Budget: 3000ms for CI environment
-      expect(
-        startupMs,
-        lessThan(3000),
-        reason: 'App startup exceeds budget',
-      );
+      expect(startupMs, lessThan(3000), reason: 'App startup exceeds budget');
 
       debugPrint('✅ App started successfully in ${startupMs}ms');
     });

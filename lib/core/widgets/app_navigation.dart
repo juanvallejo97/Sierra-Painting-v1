@@ -8,7 +8,7 @@
 /// - Uses const constructor where possible
 /// - Minimal rebuilds (only active tab changes)
 /// - Cached navigation items
-library app_navigation;
+library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,8 +68,9 @@ class AppNavigationBar extends ConsumerWidget {
     final hapticService = ref.read(hapticServiceProvider);
 
     // Filter items based on admin status
-    final visibleItems =
-        _navigationItems.where((item) => !item.adminOnly || isAdmin).toList();
+    final visibleItems = _navigationItems
+        .where((item) => !item.adminOnly || isAdmin)
+        .toList();
 
     // Find current index
     final currentIndex = visibleItems.indexWhere(
@@ -81,6 +82,7 @@ class AppNavigationBar extends ConsumerWidget {
       onTap: (index) async {
         // Selection haptic feedback on tab change
         await hapticService.selection();
+        if (!context.mounted) return;
         final route = visibleItems[index].route;
         context.go(route);
       },
@@ -136,7 +138,9 @@ class AppDrawer extends ConsumerWidget {
               ],
             ),
           ),
-          ..._navigationItems.where((item) => !item.adminOnly || isAdmin).map(
+          ..._navigationItems
+              .where((item) => !item.adminOnly || isAdmin)
+              .map(
                 (item) => ListTile(
                   leading: Icon(item.icon),
                   title: Text(item.label),

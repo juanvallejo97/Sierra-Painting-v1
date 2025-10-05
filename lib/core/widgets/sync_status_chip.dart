@@ -3,16 +3,13 @@
 /// IMPORTANT: This widget does not define its own enum. It imports the one
 /// from core/models/sync_status.dart to avoid type conflicts in tests and
 /// call sites.
-library sync_status_chip;
+library;
 
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/models/sync_status.dart' as models;
 
 class SyncStatusChip extends StatelessWidget {
-  const SyncStatusChip({
-    super.key,
-    required this.status,
-  });
+  const SyncStatusChip({super.key, required this.status});
 
   final models.SyncStatus status;
 
@@ -58,10 +55,7 @@ class SyncStatusChip extends StatelessWidget {
         avatar: Icon(_icon(), size: 18, color: _fg(context)),
         label: Text(
           status.label,
-          style: TextStyle(
-            color: _fg(context),
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: _fg(context), fontWeight: FontWeight.w600),
         ),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

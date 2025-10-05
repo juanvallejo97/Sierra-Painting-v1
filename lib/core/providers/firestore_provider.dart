@@ -37,6 +37,8 @@
 /// final db = ref.watch(firestoreProvider);
 /// final invoices = ref.watch(invoicesCollectionProvider);
 /// ```
+library;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

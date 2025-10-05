@@ -6,6 +6,7 @@
 /// - Retry logic with exponential backoff
 /// - Error mapping
 /// - RequestId propagation
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sierra_painting/core/network/api_client.dart';

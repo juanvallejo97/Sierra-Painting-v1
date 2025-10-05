@@ -1,16 +1,17 @@
-import 'dart:ui';
-
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/app/app.dart';
-import 'package:sierra_painting/firebase_options.dart';
 import 'package:sierra_painting/core/services/feature_flag_service.dart';
 import 'package:sierra_painting/core/services/offline_service.dart';
+import 'package:sierra_painting/firebase_options.dart';
+
+// Re-export app widget for tests that import main.dart
+export 'package:sierra_painting/app/app.dart' show SierraPaintingApp;
 
 /// Sierra Painting Flutter Application
 ///
@@ -33,25 +34,26 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Initialize Firebase App Check
   // Use dart-define flag to enable/disable: --dart-define=ENABLE_APP_CHECK=true
-  const enableAppCheck =
-      String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
+  const enableAppCheck = String.fromEnvironment(
+    'ENABLE_APP_CHECK',
+    defaultValue: 'false',
+  );
   final shouldEnableAppCheck = enableAppCheck == 'true' || kReleaseMode;
 
   if (shouldEnableAppCheck) {
     await FirebaseAppCheck.instance.activate(
       // Android: Play Integrity API for production
-      androidProvider:
-          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      androidProvider: kDebugMode
+          ? AndroidProvider.debug
+          : AndroidProvider.playIntegrity,
       // iOS: App Attest for iOS 14+ (falls back to DeviceCheck for older versions)
       appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
       // Web: ReCaptcha v3 (placeholder - replace with actual site key)
-      webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+      providerWeb: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     );
   }
 
@@ -82,11 +84,7 @@ void main() async {
   final trace = performance.newTrace('app_startup');
   await trace.start();
 
-  runApp(
-    const ProviderScope(
-      child: SierraPaintingApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: SierraPaintingApp()));
 
   // Stop startup trace after first frame
   WidgetsBinding.instance.addPostFrameCallback((_) {

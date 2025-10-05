@@ -21,6 +21,8 @@
 /// - Implement invoice creation form
 /// - Add payment recording UI
 /// - Add invoice filtering by status
+library;
+
 import 'package:flutter/material.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
@@ -82,6 +84,6 @@ class _InvoicesBody extends StatelessWidget {
     //   itemExtent: 80.0, // Set for fixed-height items for better performance
     // );
 
-    return const Center(child: Text('Invoices list will go here'));
+  // ...existing code...
   }
 }

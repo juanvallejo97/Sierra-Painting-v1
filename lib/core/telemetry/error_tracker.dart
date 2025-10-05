@@ -27,6 +27,7 @@
 /// - User context tracking
 /// - Non-fatal error reporting
 /// - Fatal error reporting with crash
+library;
 
 import 'package:flutter/foundation.dart';
 

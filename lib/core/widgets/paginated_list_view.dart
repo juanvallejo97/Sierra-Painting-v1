@@ -28,6 +28,7 @@
 /// - Minimal rebuilds
 /// - Smooth scrolling
 /// - Memory efficient
+library;
 
 import 'package:flutter/material.dart';
 
@@ -168,7 +169,8 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
   Widget build(BuildContext context) {
     // Show error if initial load failed
     if (_error != null && _items.isEmpty) {
-      final errorWidget = widget.errorBuilder?.call(_error!) ??
+      final errorWidget =
+          widget.errorBuilder?.call(_error!) ??
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -201,10 +203,8 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
     // Show empty state
     if (_items.isEmpty && !_isLoading) {
-      final emptyWidget = widget.emptyWidget ??
-          const Center(
-            child: Text('No items found'),
-          );
+      final emptyWidget =
+          widget.emptyWidget ?? const Center(child: Text('No items found'));
 
       return widget.enableRefresh
           ? RefreshIndicator(
@@ -227,7 +227,6 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
             physics: widget.physics,
             padding: widget.padding,
             itemCount: _items.length + (_hasMore ? 1 : 0),
-            itemExtent: widget.itemExtent,
             separatorBuilder: widget.separatorBuilder!,
             itemBuilder: (context, index) {
               if (index >= _items.length) {
@@ -261,10 +260,7 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
           );
 
     return widget.enableRefresh
-        ? RefreshIndicator(
-            onRefresh: _refresh,
-            child: listView,
-          )
+        ? RefreshIndicator(onRefresh: _refresh, child: listView)
         : listView;
   }
 }
@@ -418,19 +414,14 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
       itemCount: _items.length + (_hasMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _items.length) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
         return widget.itemBuilder(context, _items[index], index);
       },
     );
 
     return widget.enableRefresh
-        ? RefreshIndicator(
-            onRefresh: _refresh,
-            child: gridView,
-          )
+        ? RefreshIndicator(onRefresh: _refresh, child: gridView)
         : gridView;
   }
 }

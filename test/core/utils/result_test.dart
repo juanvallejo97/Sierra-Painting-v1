@@ -2,6 +2,7 @@
 ///
 /// PURPOSE:
 /// Verify Result type behavior for type-safe error handling
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sierra_painting/core/utils/result.dart';
@@ -73,11 +74,11 @@ void main() {
 
     test('flatMap() chains operations', () {
       final result = Result<int, String>.success(42);
-      final chained = result.flatMap((value) {
+      final chained = result.flatMap<String>((value) {
         if (value > 40) {
-          return Result.success('Large');
+          return Result<String, String>.success('Large');
         } else {
-          return Result.failure('Too small');
+          return Result<String, String>.failure('Too small');
         }
       });
 

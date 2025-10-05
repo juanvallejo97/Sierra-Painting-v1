@@ -3,6 +3,7 @@
 /// PURPOSE:
 /// Type-safe domain entity for time clock entries.
 /// Separates domain logic from data layer representation.
+library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 

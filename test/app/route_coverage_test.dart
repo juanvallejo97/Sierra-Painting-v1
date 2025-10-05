@@ -9,6 +9,7 @@
 /// - Admin routes (admin panel)
 /// - Route guards and redirects
 /// - Deep linking configuration
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 

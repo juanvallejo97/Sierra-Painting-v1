@@ -1,7 +1,7 @@
 /// Result type for type-safe error handling
 ///
 /// PURPOSE:
-/// Provides a Rust-inspired Result<T, E> type for explicit error handling
+/// Provides a Rust-inspired `Result<T, E>` type for explicit error handling
 /// without throwing exceptions. Encourages explicit error handling at call sites.
 ///
 /// USAGE:
@@ -28,6 +28,7 @@
 /// - Type-safe success and failure paths
 /// - No hidden exceptions
 /// - Composable with map/flatMap
+library;
 
 sealed class Result<T, E> {
   const Result();
@@ -110,6 +111,7 @@ sealed class Result<T, E> {
 
 /// Successful result
 final class Success<T, E> extends Result<T, E> {
+  @override
   final T value;
   const Success(this.value);
 
@@ -146,7 +148,7 @@ final class Failure<T, E> extends Result<T, E> {
   int get hashCode => error.hashCode;
 }
 
-/// Convenience extension for Future<Result<T, E>>
+/// Convenience extension for `Future<Result<T, E>>`
 extension ResultFuture<T, E> on Future<Result<T, E>> {
   /// Unwrap the future result
   Future<T> unwrap() async {
