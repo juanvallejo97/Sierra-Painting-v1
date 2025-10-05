@@ -2,6 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import type { Request, Response } from 'express';
 import * as admin from 'firebase-admin';
+import type { Stripe } from 'stripe';
 import { getStripe } from '../lib/stripe';
 
 // Ensure Admin initialized
@@ -32,10 +33,10 @@ export const stripeWebhook = onRequest(
       return;
     }
 
-    let event: Stripe.Event;
+  let event: Stripe.Event;
     try {
       // In Cloud Functions, raw body is exposed as Buffer on req.rawBody
-      const raw = (req as any).rawBody as Buffer;
+  const raw = (req as unknown as { rawBody: Buffer }).rawBody;
       event = stripe.webhooks.constructEvent(raw, sig, STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       logger.warn('Invalid Stripe signature', { message: (err as Error).message });

@@ -127,7 +127,7 @@ export const AuditLogSchema = z.object({
   action: z.string(),           // 'TIME_IN', 'INVOICE_MARK_PAID', etc.
   actorUid: z.string(),
   orgId: z.string(),
-  details: z.record(z.any()),   // Flexible details object
+  details: z.record(z.string(), z.any()),   // Flexible details object
 });
 
 // ============================================================================

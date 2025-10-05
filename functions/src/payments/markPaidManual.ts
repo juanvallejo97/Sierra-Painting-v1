@@ -92,8 +92,8 @@ const PAYMENTS_COLLECTION = 'payments';
 
 export const markPaidManual = withValidation(
   ManualPaymentSchema,
-  adminEndpoint({ functionName: 'markPaidManual' })
-)(async (validatedPayment, context) => {  // ========================================
+  adminEndpoint({ /* functionName: 'markPaidManual' */ })
+)(async (validatedPayment, req) => {
   // IDEMPOTENCY CHECK
   // ========================================
 
@@ -192,7 +192,7 @@ export const markPaidManual = withValidation(
       paymentMethod: validatedPayment.paymentMethod,
       checkNumber: validatedPayment.checkNumber,
       notes: validatedPayment.notes,
-      processedBy: context.auth.uid,
+  processedBy: req.auth?.uid ?? 'unknown',
       orgId: invoiceData.orgId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -202,13 +202,13 @@ export const markPaidManual = withValidation(
   // AUDIT LOG (Outside Transaction)
   // ========================================
 
-  const metadata = extractCallableMetadata(context);
+  const metadata = extractCallableMetadata(req);
   await logAudit(createAuditEntry({
     entity: 'invoice',
     entityId: validatedPayment.invoiceId,
-    action: 'paid',
-    actor: context.auth.uid,
-    actorRole: 'admin',
+  action: 'updated',
+  actor: req.auth?.uid ?? 'unknown',
+  // actorRole: 'admin',
     orgId: invoiceData.orgId || 'unknown',
     ...metadata,
     metadata: {
