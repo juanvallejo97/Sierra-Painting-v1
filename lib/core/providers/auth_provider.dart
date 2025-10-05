@@ -20,8 +20,8 @@
 /// ARCHITECTURE:
 /// All auth state is managed through Riverpod for reactive updates.
 /// Components watch these providers to rebuild on auth changes.
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for Firebase Auth instance
 final firebaseAuthProvider = Provider<FirebaseAuth>((ref) {
