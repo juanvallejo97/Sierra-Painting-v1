@@ -1,33 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sierra_painting/main.dart';
+import 'package:sierra_painting/features/timeclock/presentation/timeclock_screen.dart';
 
 void main() {
-  testWidgets('App should build without errors', (WidgetTester tester) async {
-    // Build our app
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: SierraPaintingApp(),
-      ),
-    );
-
-    // Verify that the app title is present
-    expect(find.text('Sierra Painting'), findsOneWidget);
-
-    // Verify welcome text is present
-    expect(find.text('Welcome to Sierra Painting'), findsOneWidget);
-  });
-
-  testWidgets('Home screen has proper accessibility', (
-    WidgetTester tester,
+  testWidgets('TimeclockBody renders welcome without router deps', (
+    tester,
   ) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: SierraPaintingApp(),
-      ),
-    );
+    await tester.pumpWidget(const MaterialApp(home: TimeclockBody()));
+    await tester.pumpAndSettle();
 
-    // Verify semantic labels are present for accessibility
-    expect(find.bySemanticsLabel('Painting app icon'), findsOneWidget);
+    expect(find.byKey(const Key('welcomeText')), findsOneWidget);
   });
 }

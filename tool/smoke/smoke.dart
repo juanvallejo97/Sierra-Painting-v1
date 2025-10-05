@@ -10,10 +10,7 @@ void main() async {
     'status': 'ok',
     'timestamp': DateTime.now().toUtc().toIso8601String(),
     'notes': 'Boot smoke completed successfully',
-    'metrics': {
-      'test_duration_ms': 0,
-      'startup_time_ms': 0,
-    }
+    'metrics': {'test_duration_ms': 0, 'startup_time_ms': 0},
   };
 
   // Create build/smoke directory if it doesn't exist

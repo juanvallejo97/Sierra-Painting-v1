@@ -21,24 +21,24 @@ class AppBadge extends StatelessWidget {
   });
 
   const AppBadge.success({super.key, required this.label, this.icon})
-      : backgroundColor = DesignTokens.successGreen,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.success;
+    : backgroundColor = DesignTokens.successGreen,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.success;
 
   const AppBadge.warning({super.key, required this.label, this.icon})
-      : backgroundColor = DesignTokens.warningAmber,
-        foregroundColor = Colors.black87,
-        variant = BadgeVariant.warning;
+    : backgroundColor = DesignTokens.warningAmber,
+      foregroundColor = Colors.black87,
+      variant = BadgeVariant.warning;
 
   const AppBadge.error({super.key, required this.label, this.icon})
-      : backgroundColor = DesignTokens.errorRed,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.error;
+    : backgroundColor = DesignTokens.errorRed,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.error;
 
   const AppBadge.info({super.key, required this.label, this.icon})
-      : backgroundColor = DesignTokens.infoBlue,
-        foregroundColor = Colors.white,
-        variant = BadgeVariant.info;
+    : backgroundColor = DesignTokens.infoBlue,
+      foregroundColor = Colors.white,
+      variant = BadgeVariant.info;
 
   @override
   Widget build(BuildContext context) {

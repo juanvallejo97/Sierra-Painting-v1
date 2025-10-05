@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:sierra_painting/core/models/queue_item.dart';
+import 'package:sierra_painting/core/models/queue_item_adapter.dart';
 
 /// Maximum number of items allowed in offline queue
 const int maxQueueSize = 100;
@@ -106,7 +107,7 @@ class QueueService {
   /// Automatically called before adding new items
   Future<int> _cleanupOldItems() async {
     final now = DateTime.now();
-    final expiryDate = now.subtract(Duration(days: queueItemExpiryDays));
+    final expiryDate = now.subtract(const Duration(days: queueItemExpiryDays));
 
     int removedCount = 0;
     final itemsToRemove = <int>[];
@@ -204,6 +205,6 @@ final queueServiceProvider = Provider<QueueService?>((ref) {
   return boxAsync.when(
     data: (box) => QueueService(box),
     loading: () => null,
-    error: (_, __) => null,
+  error: (_, _) => null,
   );
 });

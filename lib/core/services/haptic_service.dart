@@ -1,11 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Haptic enabled state provider
-///
-/// Used for settings toggle and to control haptic feedback globally
-final hapticEnabledProvider = StateProvider<bool>((ref) => true);
-
 /// Haptic feedback service
 ///
 /// Provides tactile confirmation for user interactions.
@@ -17,16 +12,18 @@ final hapticEnabledProvider = StateProvider<bool>((ref) => true);
 /// - Heavy: Errors, warnings, critical feedback
 /// - Selection: Tab/item selection, checkboxes
 class HapticService {
-  HapticService(this.ref);
+  HapticService(this.ref) : _enabled = true;
 
   final Ref ref;
 
+  bool _enabled;
+
   /// Check if haptics are enabled
-  bool get isEnabled => ref.read(hapticEnabledProvider);
+  bool get isEnabled => _enabled;
 
   /// Enable or disable haptic feedback
   void setEnabled(bool enabled) {
-    ref.read(hapticEnabledProvider.notifier).state = enabled;
+    _enabled = enabled;
   }
 
   /// Light haptic feedback

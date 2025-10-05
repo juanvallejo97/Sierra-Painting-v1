@@ -34,6 +34,7 @@
 /// - Interaction latency (button tap to response)
 /// - Network request duration
 /// - Custom metrics per screen
+library;
 
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/foundation.dart';
@@ -49,11 +50,12 @@ class PerformanceTrace {
   final Trace? _firebaseTrace;
 
   PerformanceTrace(this.name)
-      : startTime = DateTime.now(),
-        attributes = {},
-        metrics = {},
-        _firebaseTrace =
-            kReleaseMode ? FirebasePerformance.instance.newTrace(name) : null {
+    : startTime = DateTime.now(),
+      attributes = {},
+      metrics = {},
+      _firebaseTrace = kReleaseMode
+          ? FirebasePerformance.instance.newTrace(name)
+          : null {
     // Start Firebase trace in release mode
     _firebaseTrace?.start();
   }
@@ -65,12 +67,12 @@ class PerformanceTrace {
     // Stop Firebase trace and apply attributes/metrics
     if (_firebaseTrace != null) {
       for (final entry in attributes.entries) {
-        _firebaseTrace!.putAttribute(entry.key, entry.value.toString());
+        _firebaseTrace.putAttribute(entry.key, entry.value.toString());
       }
       for (final entry in metrics.entries) {
-        _firebaseTrace!.setMetric(entry.key, entry.value.toInt());
+        _firebaseTrace.setMetric(entry.key, entry.value.toInt());
       }
-      _firebaseTrace!.stop();
+      _firebaseTrace.stop();
     }
 
     _logTrace();

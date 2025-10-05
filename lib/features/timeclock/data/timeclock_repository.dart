@@ -13,17 +13,17 @@
 /// - Time entry queries
 /// - Offline queue management
 /// - Error mapping to domain
-library timeclock_repository;
+library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
+import 'package:sierra_painting/core/models/queue_item.dart';
 import 'package:sierra_painting/core/network/api_client.dart';
 import 'package:sierra_painting/core/providers/firestore_provider.dart';
 import 'package:sierra_painting/core/services/queue_service.dart';
-import 'package:sierra_painting/core/models/queue_item.dart';
 import 'package:sierra_painting/core/utils/result.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
+import 'package:uuid/uuid.dart';
 
 /// Clock in request
 class ClockInRequest {
@@ -58,7 +58,7 @@ class ClockInResponse {
 
   factory ClockInResponse.fromJson(Map<String, dynamic> json) {
     return ClockInResponse(
-      success: json['success'] as bool,
+      success: (json['success'] as bool?) ?? false,
       entryId: json['entryId'] as String,
     );
   }
@@ -81,9 +81,9 @@ class TimeclockRepository {
     required ApiClient apiClient,
     required FirebaseFirestore firestore,
     QueueService? queueService,
-  })  : _apiClient = apiClient,
-        _firestore = firestore,
-        _queueService = queueService;
+  }) : _apiClient = apiClient,
+       _firestore = firestore,
+       _queueService = queueService;
 
   /// Clock in to a job
   ///
@@ -109,7 +109,7 @@ class TimeclockRepository {
     if (!online && _queueService != null) {
       // Queue for offline sync
       try {
-        await _queueService!.addToQueue(
+        await _queueService.addToQueue(
           QueueItem(
             id: clientId,
             type: 'clockIn',
@@ -160,8 +160,9 @@ class TimeclockRepository {
   }) async {
     try {
       // Enforce pagination limits
-      final effectiveLimit =
-          limit != null ? (limit > maxLimit ? maxLimit : limit) : defaultLimit;
+      final effectiveLimit = limit != null
+          ? (limit > maxLimit ? maxLimit : limit)
+          : defaultLimit;
 
       Query query = _firestore
           .collectionGroup('timeEntries')
@@ -196,8 +197,9 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries =
-          snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
+      final entries = snapshot.docs
+          .map((doc) => TimeEntry.fromFirestore(doc))
+          .toList();
 
       return Result.success(entries);
     } catch (e) {
@@ -244,8 +246,9 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries =
-          snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
+      final entries = snapshot.docs
+          .map((doc) => TimeEntry.fromFirestore(doc))
+          .toList();
 
       return Result.success(entries);
     } catch (e) {

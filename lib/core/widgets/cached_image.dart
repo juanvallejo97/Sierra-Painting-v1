@@ -24,6 +24,7 @@
 /// - Cache hit: ~1-5ms
 /// - Cache miss: ~100-500ms (network)
 /// - Memory cached images: instant
+library;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -78,19 +79,13 @@ class CachedImage extends StatelessWidget {
         width: width,
         height: height,
         color: placeholderColor ?? Colors.grey[200],
-        child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
       errorWidget: (context, url, error) => Container(
         width: width,
         height: height,
         color: Colors.grey[300],
-        child: Icon(
-          errorIcon,
-          color: Colors.grey[600],
-          size: 48,
-        ),
+        child: Icon(errorIcon, color: Colors.grey[600], size: 48),
       ),
       // Performance optimizations
       memCacheWidth: width?.toInt(),
@@ -145,16 +140,10 @@ class CachedCircleImage extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          placeholder: (context, url) => Icon(
-            errorIcon,
-            size: radius,
-            color: Colors.grey[600],
-          ),
-          errorWidget: (context, url, error) => Icon(
-            errorIcon,
-            size: radius,
-            color: Colors.grey[600],
-          ),
+          placeholder: (context, url) =>
+              Icon(errorIcon, size: radius, color: Colors.grey[600]),
+          errorWidget: (context, url, error) =>
+              Icon(errorIcon, size: radius, color: Colors.grey[600]),
           // Optimize for small avatars
           memCacheWidth: (radius * 2 * 2).toInt(), // 2x for retina
           memCacheHeight: (radius * 2 * 2).toInt(),
@@ -198,12 +187,9 @@ class CachedBackgroundImage extends StatelessWidget {
             child: CachedNetworkImage(
               imageUrl: imageUrl,
               fit: fit,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[200],
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[300],
-              ),
+              placeholder: (context, url) => Container(color: Colors.grey[200]),
+              errorWidget: (context, url, error) =>
+                  Container(color: Colors.grey[300]),
             ),
           ),
         ),

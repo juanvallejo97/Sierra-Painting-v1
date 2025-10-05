@@ -1,9 +1,9 @@
 /// Service for managing offline-first functionality
 /// Uses Hive for local storage and monitors network connectivity
-library offline_service;
+library;
 
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class OfflineService {
   static final OfflineService _instance = OfflineService._internal();

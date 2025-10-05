@@ -5,15 +5,19 @@
 *.temp
 *.swp
 
-# --- Dart/Flutter ---
-.dart_tool/
-.packages
-.pub-cache/
+/.dart_tool/
 build/
-# Generated code
-*.g.dart
-*.freezed.dart
-lib/generated_plugin_registrant.dart
+.flutter-plugins-dependencies
+.packages
+.firebase/
+storage_debug.log
+
+node_modules/
+functions/node_modules/
+pnpm-lock.yaml
+
+.vscode/
+.idea/
 
 # --- IDEs ---
 .vscode/
@@ -101,3 +105,15 @@ firestore-tests/node_modules/
 docs/api/
 unused-code-report.txt
 .reports/
+.dart_tool/
+
+build/
+.flutter-plugins-dependencies
+.packages
+.firebase/
+storage_debug.log
+node_modules/
+functions/node_modules/
+pnpm-lock.yaml
+.vscode/
+.idea/

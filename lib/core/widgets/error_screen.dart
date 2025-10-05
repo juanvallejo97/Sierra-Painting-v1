@@ -13,7 +13,7 @@
 /// USAGE:
 /// Automatically displayed by GoRouter when navigation errors occur.
 /// Can also be shown programmatically for error states.
-library error_screen;
+library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -28,7 +28,8 @@ class ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isNotFound = error.toString().contains('not found') ||
+    final isNotFound =
+        error.toString().contains('not found') ||
         error.toString().contains('404');
 
     return Scaffold(
@@ -42,7 +43,7 @@ class ErrorScreen extends StatelessWidget {
               Icon(
                 isNotFound ? Icons.search_off : Icons.error_outline,
                 size: 120,
-                color: theme.colorScheme.error.withOpacity(0.7),
+                color: theme.colorScheme.error.withValues(alpha: 0.7),
               ),
               const SizedBox(height: DesignTokens.spaceLG),
               Text(
@@ -86,7 +87,7 @@ class ErrorScreen extends StatelessWidget {
                 Text(
                   error.toString(),
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,

@@ -29,6 +29,7 @@
 /// - No PII in standard logs
 /// - User IDs are hashed for analytics
 /// - Opt-out supported via Remote Config
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ✅ moved to the top (before declarations)

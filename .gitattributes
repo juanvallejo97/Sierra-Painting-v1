@@ -1,43 +1,22 @@
-# .gitattributes for Sierra Painting
-# Normalize line endings, guide merges, and mark binaries appropriately.
-
-# Auto-detect text files and normalize to LF
+# Normalize text to LF in repo; Git will convert to CRLF in working tree on Windows.
 * text=auto eol=lf
 
-# Enforce LF for common text/config files
-*.sh    text eol=lf
-*.yml   text eol=lf
+# Explicit text (common project files)
+*.dart  text eol=lf
 *.yaml  text eol=lf
+*.yml   text eol=lf
+*.ts    text eol=lf
+*.js    text eol=lf
 *.json  text eol=lf
 *.md    text eol=lf
 
-# Language-specific (text + helpful diff drivers)
-*.dart  text eol=lf diff=dart
-*.ts    text eol=lf diff=typescript
-*.js    text eol=lf diff=javascript
-
-# Generated Dart files (exclude from stats)
-*.g.dart       linguist-generated=true
-*.freezed.dart linguist-generated=true
-
-# Union merge strategy for files that should combine changes
-.gitignore       merge=union
-*.md             merge=union
-package-lock.json merge=union
-yarn.lock         merge=union
-pubspec.lock      merge=union
-
-# Binary assets (no diffs)
-*.png  binary
-*.jpg  binary
-*.jpeg binary
-*.gif  binary
-*.ico  binary
-*.pdf  binary
-*.apk  binary
-*.aab  binary
-
-# Archives (binary)
+# Binary (never tamper with line endings)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
 *.7z  binary
 *.gz  binary
 *.jar binary

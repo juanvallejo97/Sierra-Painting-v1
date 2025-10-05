@@ -9,9 +9,7 @@ Future<void> _pumpWithMaterial(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      home: Scaffold(
-        body: Center(child: child),
-      ),
+      home: Scaffold(body: Center(child: child)),
     ),
   );
 }
@@ -23,7 +21,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: SyncStatusChip(
+        child: const SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.synced,
         ),
@@ -38,7 +36,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: SyncStatusChip(
+        child: const SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.pending,
         ),
@@ -53,7 +51,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: SyncStatusChip(
+        child: const SyncStatusChip(
           key: chipKey,
           status: models.SyncStatus.failed,
         ),

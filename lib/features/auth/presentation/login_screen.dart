@@ -14,6 +14,8 @@
 /// NAVIGATION:
 /// - On successful login: redirects to /timeclock
 /// - On failed login: shows error message
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers/auth_provider.dart';
@@ -53,7 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(firebaseAuthProvider).signInWithEmailAndPassword(
+      await ref
+          .read(firebaseAuthProvider)
+          .signInWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
@@ -105,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Professional painting services',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
