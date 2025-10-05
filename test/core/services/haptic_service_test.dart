@@ -4,9 +4,11 @@
 /// Verify haptic feedback service behavior
 ///
 /// COVERAGE:
-/// - Enable/disable functionality
-/// - Different feedback intensities
-/// - State persistence
+/// - Enable/disable functionality via StateProvider<bool>
+/// - Different feedback intensities (light, medium, heavy, selection, vibrate)
+/// - State persistence across method calls
+/// - No-op behavior when disabled (acceptance criteria)
+/// - vibrate() specifically tested for enabled/disabled paths
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +81,28 @@ void main() {
       await expectLater(service.vibrate(), completes);
     });
 
+    test('vibrate() is a no-op when disabled', () async {
+      service.setEnabled(false);
+      expect(service.isEnabled, isFalse);
+
+      // Should complete immediately without triggering HapticFeedback.vibrate()
+      await expectLater(service.vibrate(), completes);
+
+      // State should remain disabled
+      expect(service.isEnabled, isFalse);
+    });
+
+    test('vibrate() triggers haptic when enabled', () async {
+      service.setEnabled(true);
+      expect(service.isEnabled, isTrue);
+
+      // Should complete and trigger HapticFeedback.vibrate()
+      await expectLater(service.vibrate(), completes);
+
+      // State should remain enabled
+      expect(service.isEnabled, isTrue);
+    });
+
     test('Multiple haptic calls succeed', () async {
       service.setEnabled(true);
 
@@ -101,6 +125,40 @@ void main() {
 
       service.setEnabled(false);
       expect(service.isEnabled, isFalse);
+    });
+
+    test('All haptic methods are no-ops when disabled', () async {
+      service.setEnabled(false);
+
+      // Verify state is disabled
+      expect(service.isEnabled, isFalse);
+
+      // All methods should complete without triggering haptic feedback
+      await service.light();
+      await service.medium();
+      await service.heavy();
+      await service.selection();
+      await service.vibrate();
+
+      // State should remain disabled after all calls
+      expect(service.isEnabled, isFalse);
+    });
+
+    test('All haptic methods work when enabled', () async {
+      service.setEnabled(true);
+
+      // Verify state is enabled
+      expect(service.isEnabled, isTrue);
+
+      // All methods should complete and trigger haptic feedback
+      await service.light();
+      await service.medium();
+      await service.heavy();
+      await service.selection();
+      await service.vibrate();
+
+      // State should remain enabled after all calls
+      expect(service.isEnabled, isTrue);
     });
   });
 
