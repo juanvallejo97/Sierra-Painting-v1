@@ -1,3 +1,19 @@
+/// Application Router Configuration
+///
+/// PURPOSE:
+/// Centralized routing configuration using GoRouter with:
+/// - Declarative route definitions
+/// - Authentication-based redirects
+/// - Role-based access control (RBAC)
+/// - Custom error handling
+///
+/// FEATURES:
+/// - Automatic redirect to /login for unauthenticated users
+/// - Automatic redirect to /timeclock after login
+/// - Admin-only routes with guard
+/// - Custom error screen for 404 and navigation errors
+library router;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
