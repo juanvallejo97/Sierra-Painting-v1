@@ -25,6 +25,9 @@ jobs:
           APP_CHECK_DEBUG_TOKEN: ${{ secrets.APP_CHECK_DEBUG_TOKEN }}
         run: node scripts/validate_runner.js --headless=new --debug=true
         continue-on-error: false
+      - name: Check validation result
+        run: |
+          node -e "const fs=require('fs');const p='logs/token_validation_log.txt'; if(!fs.existsSync(p)){console.error('Missing validation log at',p); process.exit(1);} const j=JSON.parse(fs.readFileSync(p,'utf8')); if(!j.id || !j.app){ console.error('Validator failed: id=' + j.id + ' app=' + j.app); console.error(j); process.exit(2);} console.log('Validator passed: id=' + j.id + ' app=' + j.app);"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
