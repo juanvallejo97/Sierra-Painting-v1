@@ -48,5 +48,26 @@
 </head>
 <body>
   <script src="main.dart.js" type="application/javascript"></script>
+  <div id="flutter-init-error" style="display:none;position:fixed;inset:0;z-index:9999;background:#111;color:#fff;align-items:center;justify-content:center;">
+    <div style="max-width:720px;margin:0 auto;padding:24px;text-align:center;">
+      <h2 style="color:#ff6b6b">App failed to initialize</h2>
+      <p>The app failed to start correctly. This can happen when Firebase initialization or App Check fails, or when an older cached bundle is running. Try a hard refresh (Ctrl+F5) or clear site data.</p>
+      <p><button onclick="location.reload();" style="padding:8px 16px">Reload</button></p>
+      <pre id="flutter-init-error-details" style="text-align:left;background:#222;padding:12px;border-radius:6px;margin-top:12px;white-space:pre-wrap;max-height:240px;overflow:auto;font-size:12px"></pre>
+    </div>
+  </div>
+  <script>
+    // Show error overlay if Flutter does not set window.flutterReady within 5s.
+    setTimeout(function(){
+      try{
+        if(!window.flutterReady){
+          var el = document.getElementById('flutter-init-error');
+          var details = document.getElementById('flutter-init-error-details');
+          el.style.display = 'flex';
+          details.textContent = 'No readiness signal from Flutter (window.flutterReady not set). Check console for errors.';
+        }
+      }catch(e){/* ignore */}
+    },5000);
+  </script>
 </body>
 </html>
