@@ -96,6 +96,14 @@ firestore-tests/node_modules/
 **/*credentials.json
 **/.runtimeconfig.json
 
+# Generated firebase config used only for local testing
+firebase_config.json
+scripts/firebase_config.json
+
+# Local validator outputs and artifacts
+logs/
+reports/
+
 # --- Deployment History (tracked in git) ---
 # Keep deployment history tracked for audit purposes
 # .deployment-history/
