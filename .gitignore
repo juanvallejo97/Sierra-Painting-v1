@@ -125,3 +125,4 @@ functions/node_modules/
 pnpm-lock.yaml
 .vscode/
 .idea/
+# Ignore local secret JSONs\nsecrets/*.json
