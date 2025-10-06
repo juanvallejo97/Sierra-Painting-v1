@@ -1,0 +1,39 @@
+name: validator-ci
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install
+        run: npm ci
+      - name: Generate firebase config
+        run: node scripts/generate_firebase_config.js
+      - name: Run validator
+        env:
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASS: ${{ secrets.TEST_PASS }}
+          APP_CHECK_DEBUG_TOKEN: ${{ secrets.APP_CHECK_DEBUG_TOKEN }}
+        run: node scripts/validate_runner.js --headless=new --debug=true
+        continue-on-error: false
+      - name: Check validation result
+        run: |
+          node -e "const fs=require('fs');const p='logs/token_validation_log.txt'; if(!fs.existsSync(p)){console.error('Missing validation log at',p); fs.writeFileSync('logs/validation_status.txt','FAIL'); process.exit(1);} const j=JSON.parse(fs.readFileSync(p,'utf8')); if(!j.id || !j.app){ console.error('Validator failed: id=' + j.id + ' app=' + j.app); fs.writeFileSync('logs/validation_status.txt','FAIL'); console.error(j); process.exit(2);} console.log('Validator passed: id=' + j.id + ' app=' + j.app); fs.writeFileSync('logs/validation_status.txt','PASS');"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-validation-artifacts
+          path: |
+            logs/token_validation_log.txt
+            logs/validation_status.txt
+            reports/firebase_validation_capture.png
+            reports/firebase_validation_summary.html

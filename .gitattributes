@@ -1,3 +1,8 @@
+docs_archive/** linguist-documentation
+*.png -diff
+*.jpg -diff
+*.jpeg -diff
+*.mp4 -diff
 # Normalize text to LF in repo; Git will convert to CRLF in working tree on Windows.
 * text=auto eol=lf
 

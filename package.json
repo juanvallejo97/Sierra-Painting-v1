@@ -2,16 +2,27 @@
   "name": "sierra-painting-ci",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Root package for CI testing infrastructure including Firestore rules tests",
   "scripts": {
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
-    "smoke": "dart run tool/smoke/smoke.dart"
+    "smoke": "dart run tool/smoke/smoke.dart",
+    "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
+    "validate:e2e": "node scripts/validate_runner.js",
+    "validate:generate-config": "node scripts/generate_firebase_config.js",
+    "validate:create-user": "node scripts/create_user.js",
+    "validate:run": "node scripts/validate_runner.js",
+    "validate:local": "node scripts/local_validate.js",
+    "clean:reset": "git clean -xdf -e node_modules"
   },
   "devDependencies": {
+    "dotenv": "^16.3.1",
     "firebase-tools": "^13.9.1",
+    "puppeteer": "^21.6.0",
     "vitest": "^2.1.3"
   },
   "dependencies": {
+    "dotenv": "16.4.5",
     "firebase-functions": "^6.4.0"
   }
 }
