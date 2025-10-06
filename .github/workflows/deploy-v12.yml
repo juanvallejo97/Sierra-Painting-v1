@@ -1,7 +1,7 @@
 name: deploy-v12
 on:
   workflow_run:
-    workflows: [ "validator-v12" ]
+    workflows: [ "validator-v12", "validator-ci" ]
     types: [ completed ]
     branches: [ main ]
 jobs:
