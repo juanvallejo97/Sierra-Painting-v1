@@ -9,6 +9,9 @@
     "smoke": "dart run tool/smoke/smoke.dart",
     "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
     "validate:e2e": "node scripts/validate_runner.js",
+    "validate:generate-config": "node scripts/generate_firebase_config.js",
+    "validate:create-user": "node scripts/create_user.js",
+    "validate:run": "node scripts/validate_runner.js",
     "clean:reset": "git clean -xdf -e node_modules"
   },
   "devDependencies": {
