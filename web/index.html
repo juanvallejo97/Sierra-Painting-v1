@@ -27,9 +27,22 @@
     }
 
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('flutter_service_worker.js');
-      });
+      // Attempt to unregister any existing service workers first. Some clients
+      // can be stuck serving an old cached bundle which leads to a blank/black
+      // screen. Unregistering forces the browser to load the latest files.
+      try {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (const reg of registrations) {
+            try { reg.unregister(); } catch (e) { /* ignore */ }
+          }
+        }).catch(function() { /* ignore */ });
+      } catch (e) {
+        // noop
+      }
+
+      // NOTE: we intentionally do not register a new service worker here to
+      // avoid immediately caching potentially stale assets. You can re-enable
+      // registration later after confirming clients are loading the new bundle.
     }
   </script>
 </head>
