@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/app/app.dart';
 import 'package:sierra_painting/core/services/feature_flag_service.dart';
 import 'package:sierra_painting/core/services/offline_service.dart';
-import 'package:sierra_painting/firebase_options.dart';
 
 // Re-export app widget for tests that import main.dart
 export 'package:sierra_painting/app/app.dart' show SierraPaintingApp;
