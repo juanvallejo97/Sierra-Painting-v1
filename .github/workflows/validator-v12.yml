@@ -1,0 +1,34 @@
+name: validator-v12
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      CI_HEADLESS: new
+      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+      TEST_PASS: ${{ secrets.TEST_PASS }}
+      RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install
+        run: npm ci
+      - name: Run validator
+        run: node scripts/validate_runner.js --port=3000 --email="$TEST_EMAIL" --pass="$TEST_PASS" --recaptcha="$RECAPTCHA_SITE_KEY" --headless=new
+      - name: Generate summary
+        run: node scripts/generate_summary.js
+      - name: Gate on tokens
+        run: |
+          node -e "const j=require('fs').readFileSync('logs/token_validation_log.txt','utf8');const o=JSON.parse(j);if(!(o.id&&o.app)){console.error(o);process.exit(2)}"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-validation
+          path: |
+            logs/token_validation_log.txt
+            reports/firebase_validation_capture.png
+            reports/firebase_validation_summary.html

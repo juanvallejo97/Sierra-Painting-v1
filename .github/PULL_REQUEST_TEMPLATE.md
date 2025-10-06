@@ -1,3 +1,13 @@
+<!-- Please describe the change and why it was made -->
+
+Checklist
+- [ ] I ran npm ci and verified the project builds
+- [ ] Validator passed locally (validator-v12)
+- [ ] Artifacts (logs/report) attached if relevant
+- [ ] Conventional commit message used
+
+What I changed
+- ...
 ## Pull Request
 
 ### Description

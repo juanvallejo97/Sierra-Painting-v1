@@ -5,7 +5,10 @@
   "description": "Root package for CI testing infrastructure including Firestore rules tests",
   "scripts": {
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
-    "smoke": "dart run tool/smoke/smoke.dart"
+    "smoke": "dart run tool/smoke/smoke.dart",
+    "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
+    "validate:e2e": "node scripts/validate_runner.js",
+    "clean:reset": "git clean -xdf -e node_modules"
   },
   "devDependencies": {
     "firebase-tools": "^13.9.1",

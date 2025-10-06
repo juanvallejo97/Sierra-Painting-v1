@@ -1,0 +1,21 @@
+name: deploy-v12
+on:
+  workflow_run:
+    workflows: [ "validator-v12" ]
+    types: [ completed ]
+    branches: [ main ]
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT: ${{ secrets.FIREBASE_PROJECT }}
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools
+      - name: Deploy (Hosting/Functions as configured)
+        run: firebase deploy --project "$FIREBASE_PROJECT" --non-interactive --token "$FIREBASE_TOKEN"
