@@ -17,5 +17,30 @@ jobs:
         with: { node-version: '20' }
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
+      - name: Download validator artifacts from triggering workflow run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -e
+          echo "Looking up artifacts for run $RUN_ID in $REPO"
+          OWNER=${REPO%/*}
+          REPO_NAME=${REPO#*/}
+          API_URL="https://api.github.com/repos/$OWNER/$REPO_NAME/actions/runs/$RUN_ID/artifacts"
+          echo "API: $API_URL"
+          resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "$API_URL")
+          artifact_url=$(echo "$resp" | jq -r '.artifacts[] | select(.name=="firebase-validation-artifacts") | .archive_download_url')
+          if [ -z "$artifact_url" ] || [ "$artifact_url" = "null" ]; then
+            echo "No validator artifact found for run $RUN_ID"; exit 3;
+          fi
+          echo "Downloading artifact from $artifact_url"
+          curl -L -H "Authorization: token $GITHUB_TOKEN" -o artifact.zip "$artifact_url"
+          mkdir -p validator_artifacts
+          unzip -q artifact.zip -d validator_artifacts
+          # Move logs/reports into workspace root so gate script can find them
+          if [ -d validator_artifacts/logs ]; then cp -r validator_artifacts/logs .; fi
+          if [ -d validator_artifacts/reports ]; then cp -r validator_artifacts/reports .; fi
+          if [ -f logs/validation_status.txt ]; then echo "Validation status:"; cat logs/validation_status.txt; else echo "validation_status.txt not found"; fi
       - name: Gate and Deploy
         run: node scripts/gate_and_deploy.js
