@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@opentelemetry/resources": "^2.1.0",
-    "@opentelemetry/sdk-trace-node": "^1",
+    "@opentelemetry/sdk-trace-node": "^2",
     "@opentelemetry/semantic-conventions": "^1",
     "@types/stripe": "^8.0.416",
     "firebase-admin": "^13.5.0",
