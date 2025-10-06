@@ -12,6 +12,7 @@
     "validate:generate-config": "node scripts/generate_firebase_config.js",
     "validate:create-user": "node scripts/create_user.js",
     "validate:run": "node scripts/validate_runner.js",
+    "validate:local": "node scripts/local_validate.js",
     "clean:reset": "git clean -xdf -e node_modules"
   },
   "devDependencies": {
