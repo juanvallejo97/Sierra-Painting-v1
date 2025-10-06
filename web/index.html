@@ -58,13 +58,50 @@
   </div>
   <script>
     // Show error overlay if Flutter does not set window.flutterReady within 5s.
+    function showFlutterInitError(msg){
+      try{
+        var el = document.getElementById('flutter-init-error');
+        var details = document.getElementById('flutter-init-error-details');
+        if(el){ el.style.display = 'flex'; }
+        if(details){
+          if(typeof msg === 'string') details.textContent = msg;
+          else details.textContent = JSON.stringify(msg);
+        }
+      }catch(e){/* ignore */}
+    }
+
+    // Capture global errors and unhandled promise rejections and surface them
+    // in the overlay so debugging is easier for clients.
+    window.addEventListener('error', function(evt){
+      var m = evt.message || (evt.error && evt.error.message) || String(evt);
+      var s = evt.filename ? (evt.filename + ':' + evt.lineno + ':' + evt.colno) : '';
+      showFlutterInitError('Uncaught error: ' + m + '\n' + s + '\n' + (evt.error && evt.error.stack ? evt.error.stack : ''));
+    });
+    window.addEventListener('unhandledrejection', function(evt){
+      try{
+        var reason = evt.reason || 'Unhandled rejection';
+        showFlutterInitError('Unhandled promise rejection: ' + (reason.stack || reason));
+      }catch(e){}
+    });
+
+    // Override console.error to also surface messages in the overlay (non-invasive)
+    (function(){
+      var orig = console.error;
+      console.error = function(){
+        try{
+          var args = Array.prototype.slice.call(arguments).map(function(a){
+            try{ return (typeof a === 'string') ? a : JSON.stringify(a); }catch(e){ return String(a); }
+          }).join(' ');
+          showFlutterInitError('Console.error: ' + args);
+        }catch(e){}
+        if(orig) orig.apply(console, arguments);
+      };
+    })();
+
     setTimeout(function(){
       try{
         if(!window.flutterReady){
-          var el = document.getElementById('flutter-init-error');
-          var details = document.getElementById('flutter-init-error-details');
-          el.style.display = 'flex';
-          details.textContent = 'No readiness signal from Flutter (window.flutterReady not set). Check console for errors.';
+          showFlutterInitError('No readiness signal from Flutter (window.flutterReady not set). Check console for errors.');
         }
       }catch(e){/* ignore */}
     },5000);
