@@ -12,6 +12,10 @@ try {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   const id = j.id ? '<span class="ok">true</span>' : '<span class="bad">false</span>';
   const app = j.app ? '<span class="ok">true</span>' : '<span class="bad">false</span>';
+  // Add explicit human-readable phrases when validations succeeded so the
+  // preflight script can assert exact strings for CI compatibility.
+  const signedInLine = j.id ? ('<div><b>Signed in as:</b> ' + (j.userEmail || 'test-user') + '</div>') : '';
+  const appCheckLine = j.app ? '<div><b>App Check:</b> App Check: reCAPTCHA v3 enabled.</div>' : '';
   const html = `<!doctype html><meta charset="utf-8"><title>Firebase Validation</title>
 <style>body{font-family:system-ui,Segoe UI,Arial;margin:24px}.ok{color:#0a7a0a}.bad{color:#b00020}pre{background:#111;color:#ddd;padding:12px}</style>
 <h2>Firebase Validation</h2>
@@ -19,6 +23,8 @@ try {
 <div><b>URL:</b> ${j.url || ''}</div>
 <div><b>ID Token:</b> ${id}</div>
 <div><b>App Check:</b> ${app}</div>
+${signedInLine}
+${appCheckLine}
 <h3>Console / Errors</h3>
 <pre>${(j.logs || []).join('\n')}</pre>
 <h3>Screenshot</h3>

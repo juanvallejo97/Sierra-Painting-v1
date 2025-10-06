@@ -1,0 +1,215 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CI_HEADLESS: new
+      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+      TEST_PASS: ${{ secrets.TEST_PASS }}
+      RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci || npm i
+
+      - name: Generate Firebase config
+        run: node scripts/generate_firebase_config.js
+
+      - name: Validate (pre-deploy)
+        run: |
+          node scripts/validate_runner.js --port=3000 --email="$TEST_EMAIL" --pass="$TEST_PASS" --recaptcha="$RECAPTCHA_SITE_KEY" --debug=true --headless=new
+          node scripts/generate_summary.js
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: predeploy-validation
+          path: |
+            logs/token_validation_log.txt
+            reports/firebase_validation_capture.png
+            reports/firebase_validation_summary.html
+
+      - name: Write service account key
+        id: sa
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $RUNNER_TEMP/sa.json
+
+      - name: Firebase CLI
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: npx firebase --version
+
+      - name: Build
+        run: |
+          npm run build --if-present
+
+      - name: Deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          npx firebase deploy \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --only hosting,functions \
+            --non-interactive
+name: Deploy (CI > Firebase)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target GitHub Environment (e.g., staging, production)"
+        required: true
+        default: production
+  push:
+    branches: [ main ]
+    paths:
+      - "functions/**"
+      - "web/**"
+      - "scripts/**"
+      - "firebase.json"
+      - ".firebaserc"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
+
+env:
+  NODE_VERSION: "20"
+  CI_HEADLESS: "new"             # modern Puppeteer headless
+  # Expected secret names (set under your chosen GitHub Environment):
+  # - FIREBASE_PROJECT_ID
+  # - FIREBASE_SERVICE_ACCOUNT  (JSON, NOT base64)
+  # - RECAPTCHA_SITE_KEY
+  # - TEST_EMAIL
+  # - TEST_PASS
+  # - APP_CHECK_DEBUG_TOKEN     (optional)
+  # - FIREBASE_AUTH_EMULATOR_HOST (optional; omit for real production deploy)
+
+jobs:
+  deploy:
+    name: Build, Validate, and Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: 🧾 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Preflight repo layout
+        run: |
+          test -f scripts/validate_runner.js
+          test -f scripts/validate_tokens.js
+          test -f scripts/generate_summary.js
+          test -f scripts/tokens.html
+          echo "Preflight OK"
+
+      - name: 🔐 Materialize environment (.env)
+        run: |
+          cat > .env <<'EOF'
+          RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}
+          TEST_EMAIL=${{ secrets.TEST_EMAIL }}
+          TEST_PASS=${{ secrets.TEST_PASS }}
+          APP_CHECK_DEBUG_TOKEN=${{ secrets.APP_CHECK_DEBUG_TOKEN }}
+          FIREBASE_AUTH_EMULATOR_HOST=${{ secrets.FIREBASE_AUTH_EMULATOR_HOST }}
+          CI_HEADLESS=${{ env.CI_HEADLESS }}
+          EOF
+          sed -e 's/=.*/=<redacted>/g' .env || true
+
+      - name: 🧭 Generate firebase_config.json (if your repo uses it)
+        run: node scripts/generate_firebase_config.js
+
+      - name: ✅ Local smoke validation (spawn > detect-port > puppeteer)
+        env:
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASS:  ${{ secrets.TEST_PASS }}
+          RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+          APP_CHECK_DEBUG_TOKEN: ${{ secrets.APP_CHECK_DEBUG_TOKEN }}
+          FIREBASE_AUTH_EMULATOR_HOST: ${{ secrets.FIREBASE_AUTH_EMULATOR_HOST }}
+          CI_HEADLESS: ${{ env.CI_HEADLESS }}
+        run: |
+          node scripts/validate_runner.js \
+            --port=3000 \
+            --email="$TEST_EMAIL" \
+            --pass="$TEST_PASS" \
+            --recaptcha="$RECAPTCHA_SITE_KEY" \
+            --debug=true \
+            --headless=$CI_HEADLESS
+
+      - name: 🧾 Generate HTML summary
+        run: node scripts/generate_summary.js
+
+      - name: 📎 Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-artifacts
+          path: |
+            logs/token_validation_log.txt
+            reports/firebase_validation_capture.png
+            reports/firebase_validation_summary.html
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: 🚀 Install Firebase CLI
+        run: npm i -g firebase-tools
+
+      - name: 🔑 Write service account to file
+        id: sa
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "${FIREBASE_SERVICE_ACCOUNT}" > "${RUNNER_TEMP}/sa.json"
+          test -s "${RUNNER_TEMP}/sa.json"
+
+      - name: 🔍 Firebase CLI whoami
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          firebase --version
+          firebase apps:list --project "${{ secrets.FIREBASE_PROJECT_ID }}" || true
+
+      - name: 🧱 Build app (adjust to your project)
+        run: |
+          npm run build --if-present
+          # add any framework-specific build here (e.g., web/ or functions/)
+
+      - name: 🔥 Deploy to Firebase (hosting + functions)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: |
+          firebase deploy \
+            --project "${{ secrets.FIREBASE_PROJECT_ID }}" \
+            --non-interactive \
+            --only hosting,functions
+
+      - name: ✅ Post-deploy summary
+        run: |
+          echo "Project: ${{ secrets.FIREBASE_PROJECT_ID }}"
+          echo "Environment: ${{ inputs.environment || 'production' }}"
+          echo "Deployment complete."

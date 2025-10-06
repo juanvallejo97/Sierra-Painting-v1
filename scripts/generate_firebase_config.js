@@ -10,11 +10,16 @@ const envPath = path.join(repoRoot, '.env');
 if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
 
 const cfg = {
-  apiKey: process.env.FIREBASE_API_KEY || process.env.FIREBASE_APIKEY || '',
+  apiKey: process.env.FIREBASE_API_KEY || '',
   authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-  projectId: process.env.FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT || '',
-  appId: process.env.FIREBASE_APP_ID || process.env.FIREBASE_APPID || '',
-  recaptcha: (process.env.RECAPTCHA_SITE_KEY || process.env.RECAPTCHA_KEY || '')
+  projectId: process.env.FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.FIREBASE_APP_ID || '',
+  useEmulators: (process.env.USE_EMULATORS || '').toLowerCase() === 'true',
+  emulatorPorts: {
+    auth: Number(process.env.AUTH_EMULATOR_PORT || 9099)
+  }
 };
 
 // Include emulator settings when requested

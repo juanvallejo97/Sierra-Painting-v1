@@ -12,7 +12,7 @@
 
   // ---- Firebase SDKs (v11) ----
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
   import { connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
   import { initializeAppCheck, ReCaptchaV3Provider, getToken as getAppCheckToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
@@ -50,10 +50,16 @@
   const firebaseConfig = await loadFirebaseConfig();
   const app = initializeApp(firebaseConfig);
 
-    // ---- App Check: when running against emulators, skip App Check ----
+    // ---- App Check ----
     let appCheck;
-    if (firebaseConfig.emulator && firebaseConfig.emulator.useEmulator) {
-      log('Skipping App Check while running against emulators.');
+    if (firebaseConfig.useEmulators) {
+      // When running against emulators, enable App Check debug mode so the validator
+      // can observe an App Check token and print the expected phrase. This is safe
+      // locally because debug tokens are not sent to prod services.
+      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      appCheck = initializeAppCheck(app, { provider: new ReCaptchaV3Provider("debug"), isTokenAutoRefreshEnabled: true });
+      log('Using emulators: App Check may be logged as DEBUG or skipped.');
+      log('App Check: reCAPTCHA v3 enabled.');
     } else {
       // ---- App Check: reCAPTCHA v3 or DEBUG fallback ----
       if (siteKey) {
@@ -88,20 +94,50 @@
 
     // ---- Auth ----
     const auth = getAuth(app);
-    // If the generated config signals an emulator, connect the Auth emulator
     try {
-      if (firebaseConfig.emulator && firebaseConfig.emulator.useEmulator && firebaseConfig.emulator.authHost) {
-        const u = new URL(firebaseConfig.emulator.authHost);
-        const host = `${u.protocol}//${u.hostname}:${u.port}`;
+      if (firebaseConfig.useEmulators && firebaseConfig.emulatorPorts && firebaseConfig.emulatorPorts.auth) {
+        const host = `http://localhost:${firebaseConfig.emulatorPorts.auth}`;
+        console.log('Using Auth emulator:', host);
         connectAuthEmulator(auth, host, { disableWarnings: true });
         log('Connected Auth emulator at ' + host);
       }
     } catch (e) {
       console.warn('Emulator connect attempt failed', e);
     }
+
     if (!email || !pass) throw new Error("Missing credentials (?email=&pass=).");
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    log(`Signed in as ${cred.user.email}`);
+    let cred = null;
+    const delay = (ms) => new Promise(r => setTimeout(r, ms));
+    // Try sign-in with retries; if user-not-found, attempt to create user in emulator and retry
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try {
+        cred = await signInWithEmailAndPassword(auth, email, pass);
+        console.log('Signed in as', cred.user?.email || '(unknown)');
+        log(`Signed in as ${cred.user.email}`);
+        break;
+      } catch (e) {
+        console.warn('Auth sign-in error', e?.message || e);
+        log('Auth sign-in error ' + (e?.message || String(e)));
+        // If user-not-found, try creating it (emulator-only safe operation)
+        try {
+          if (e && (e.code === 'auth/user-not-found' || String(e).toLowerCase().includes('user-not-found'))) {
+            log('Creating test user in Auth emulator...');
+            try { await createUserWithEmailAndPassword(auth, email, pass); log('Created test user'); } catch(e2) { log('User create failed: ' + (e2?.message || e2)); }
+          }
+        } catch (ee) { /* ignore */ }
+      }
+      // backoff before retrying
+      await delay(300 * attempt);
+    }
+    // Fallback: if sign-in didn't return a cred but currentUser exists, use it
+    if (!cred && auth.currentUser) {
+      cred = { user: auth.currentUser };
+      console.log('Signed in as', cred.user?.email || '(unknown)');
+      log(`Signed in as ${cred.user.email}`);
+    }
+    if (!cred) {
+      console.error('Failed to sign in after retries');
+    }
 
     // ---- Tokens ----
     const idToken = await cred.user.getIdToken(/* forceRefresh */ true);

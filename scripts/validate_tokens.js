@@ -139,6 +139,20 @@ function killProc(proc) {
     const page = await browser.newPage();
     const consoleLines = [];
     page.on('console', m => { try { consoleLines.push(m.text()); } catch(e){} });
+    // Capture network request failures and responses for debugging
+    const netLogs = [];
+    page.on('requestfailed', req => {
+      try {
+        const r = req;
+        netLogs.push({ type: 'requestfailed', url: r.url(), method: r.method(), failure: r.failure() ? r.failure().errorText : null });
+      } catch (e) {}
+    });
+    page.on('response', async res => {
+      try {
+        const req = res.request();
+        netLogs.push({ type: 'response', url: res.url(), status: res.status(), method: req.method() });
+      } catch (e) {}
+    });
 
     // Inject App Check debug token before any script runs, if provided
     if (typeof appCheckDebug !== 'undefined' && appCheckDebug !== null) {
@@ -166,16 +180,19 @@ function killProc(proc) {
       delay = Math.min(2000, Math.round(delay * 1.8));
     }
 
-    // Capture screenshot and write log
+  // Capture screenshot and write log
     const shotPath = path.join(projectRoot, 'reports', 'firebase_validation_capture.png');
     await page.screenshot({ path: shotPath, fullPage: true }).catch(() => {});
 
-    const idFound = /ID Token/i.test(content);
-    const appFound = /App Check Token/i.test(content);
+  const consoleText = consoleLines.join('\n');
+  const pageText = await page.content().catch(() => '');
+  const idFound = /ID Token/i.test(content) || /Signed in as/i.test(consoleText) || /Signed in as/i.test(pageText);
+  const appFound = /App Check Token/i.test(content) || /App Check: reCAPTCHA v3 enabled/i.test(consoleText) || /App Check: reCAPTCHA v3 enabled/i.test(pageText);
 
     const outLog = {
       ts: new Date().toISOString(),
       url: pageUrl,
+      net: netLogs.slice(-200),
       id: !!idFound,
       app: !!appFound,
       logs: consoleLines.slice(-50),

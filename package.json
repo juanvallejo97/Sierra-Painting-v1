@@ -16,12 +16,13 @@
     "clean:reset": "git clean -xdf -e node_modules"
   },
   "devDependencies": {
-    "firebase-tools": "^13.9.1",
     "dotenv": "^16.3.1",
+    "firebase-tools": "^13.9.1",
     "puppeteer": "^21.6.0",
     "vitest": "^2.1.3"
   },
   "dependencies": {
+    "dotenv": "16.4.5",
     "firebase-functions": "^6.4.0"
   }
 }
