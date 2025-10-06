@@ -77,6 +77,26 @@
       var s = evt.filename ? (evt.filename + ':' + evt.lineno + ':' + evt.colno) : '';
       showFlutterInitError('Uncaught error: ' + m + '\n' + s + '\n' + (evt.error && evt.error.stack ? evt.error.stack : ''));
     });
+      // Capture runtime errors so the overlay shows details automatically.
+      window.addEventListener('error', function(ev) {
+        try {
+          var el = document.getElementById('flutter-init-error');
+          var details = document.getElementById('flutter-init-error-details');
+          el.style.display = 'flex';
+          var msg = ev && ev.message ? ev.message : String(ev.error || ev);
+          var src = ev && ev.filename ? '\nSource: ' + ev.filename + ':' + ev.lineno + ':' + ev.colno : '';
+          details.textContent = msg + src + (ev && ev.error && ev.error.stack ? '\n\n' + ev.error.stack : '');
+        } catch (e) {}
+      });
+      window.addEventListener('unhandledrejection', function(ev) {
+        try {
+          var el = document.getElementById('flutter-init-error');
+          var details = document.getElementById('flutter-init-error-details');
+          el.style.display = 'flex';
+          var reason = ev && ev.reason ? ev.reason : String(ev);
+          details.textContent = 'Unhandled promise rejection: ' + (reason && reason.message ? reason.message : reason) + (reason && reason.stack ? '\n\n' + reason.stack : '');
+        } catch (e) {}
+      });
     window.addEventListener('unhandledrejection', function(evt){
       try{
         var reason = evt.reason || 'Unhandled rejection';
