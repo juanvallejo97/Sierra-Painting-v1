@@ -121,9 +121,12 @@ function killProc(proc) {
     // Append query parameters for credentials/recaptcha/debug
     const urlObj = new URL(pageUrl);
     const params = urlObj.searchParams;
-    if (process.env.TEST_EMAIL) params.set('email', process.env.TEST_EMAIL);
-    if (process.env.TEST_PASS) params.set('pass', process.env.TEST_PASS);
-    if (recaptcha) params.set('recaptcha', recaptcha);
+  if (process.env.TEST_EMAIL) params.set('email', normalize(process.env.TEST_EMAIL));
+  if (process.env.TEST_PASS) params.set('pass', normalize(process.env.TEST_PASS));
+  // Only pass a recaptcha site key to the page when not running emulators
+  // and when an explicit App Check debug token is NOT being injected.
+  const usingEmulator = (process.env.USE_EMULATORS || '').toLowerCase() === 'true' || false;
+  if (recaptcha && !usingEmulator && typeof appCheckDebug === 'undefined') params.set('recaptcha', recaptcha);
     if (getArg('debug') === 'true' || getArg('debug') === '1') params.set('debug', 'true');
     pageUrl = urlObj.toString();
     console.log('Resolved pageUrl=', pageUrl);

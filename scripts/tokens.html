@@ -13,6 +13,7 @@
   // ---- Firebase SDKs (v11) ----
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
   import { initializeAppCheck, ReCaptchaV3Provider, getToken as getAppCheckToken } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app-check.js";
 
   // TODO: fill in your real config
@@ -49,39 +50,55 @@
   const firebaseConfig = await loadFirebaseConfig();
   const app = initializeApp(firebaseConfig);
 
-    // ---- App Check: reCAPTCHA v3 or DEBUG fallback ----
+    // ---- App Check: when running against emulators, skip App Check ----
     let appCheck;
-    if (siteKey) {
-      appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(siteKey),
-        isTokenAutoRefreshEnabled: true
-      });
-      log("App Check: reCAPTCHA v3 enabled.");
-      // Try a grecaptcha.execute timing for v3/enterprise (best-effort)
-      try {
-        if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
-          log('Attempting grecaptcha.execute to prime App Check...');
-          window.grecaptcha.execute(siteKey, {action: 'validate'}).then(t => console.log('grecaptcha.execute token', t)).catch(e => console.warn('grecaptcha.execute failed', e));
-        }
-      } catch (e) { console.warn('grecaptcha.execute attempt error', e); }
+    if (firebaseConfig.emulator && firebaseConfig.emulator.useEmulator) {
+      log('Skipping App Check while running against emulators.');
     } else {
-      // Debug mode (no site key needed)
-      // If you want to register a debug token, open DevTools Console and copy the printed token.
-      // Set FIREBASE_APPCHECK_DEBUG_TOKEN to true to enable the SDK's debug behavior.
-      self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-      appCheck = initializeAppCheck(app, { provider: new ReCaptchaV3Provider("debug"), isTokenAutoRefreshEnabled: true });
-      log("App Check: DEBUG token mode.");
-      if (debugFlag) {
+      // ---- App Check: reCAPTCHA v3 or DEBUG fallback ----
+      if (siteKey) {
+        appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(siteKey),
+          isTokenAutoRefreshEnabled: true
+        });
+        log("App Check: reCAPTCHA v3 enabled.");
+        // Try a grecaptcha.execute timing for v3/enterprise (best-effort)
         try {
-          // The SDK prints the debug token to console; also print to #out for the validator to capture
-          const dbg = self.FIREBASE_APPCHECK_DEBUG_TOKEN || 'true';
-          log('App Check DEBUG token (SDK may print a real value in devtools): ' + String(dbg));
-        } catch (e) { console.warn('debug token print failed', e); }
+          if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
+            log('Attempting grecaptcha.execute to prime App Check...');
+            window.grecaptcha.execute(siteKey, {action: 'validate'}).then(t => console.log('grecaptcha.execute token', t)).catch(e => console.warn('grecaptcha.execute failed', e));
+          }
+        } catch (e) { console.warn('grecaptcha.execute attempt error', e); }
+      } else {
+        // Debug mode (no site key needed)
+        // If you want to register a debug token, open DevTools Console and copy the printed token.
+        // Set FIREBASE_APPCHECK_DEBUG_TOKEN to true to enable the SDK's debug behavior.
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        appCheck = initializeAppCheck(app, { provider: new ReCaptchaV3Provider("debug"), isTokenAutoRefreshEnabled: true });
+        log("App Check: DEBUG token mode.");
+        if (debugFlag) {
+          try {
+            // The SDK prints the debug token to console; also print to #out for the validator to capture
+            const dbg = self.FIREBASE_APPCHECK_DEBUG_TOKEN || 'true';
+            log('App Check DEBUG token (SDK may print a real value in devtools): ' + String(dbg));
+          } catch (e) { console.warn('debug token print failed', e); }
+        }
       }
     }
 
     // ---- Auth ----
     const auth = getAuth(app);
+    // If the generated config signals an emulator, connect the Auth emulator
+    try {
+      if (firebaseConfig.emulator && firebaseConfig.emulator.useEmulator && firebaseConfig.emulator.authHost) {
+        const u = new URL(firebaseConfig.emulator.authHost);
+        const host = `${u.protocol}//${u.hostname}:${u.port}`;
+        connectAuthEmulator(auth, host, { disableWarnings: true });
+        log('Connected Auth emulator at ' + host);
+      }
+    } catch (e) {
+      console.warn('Emulator connect attempt failed', e);
+    }
     if (!email || !pass) throw new Error("Missing credentials (?email=&pass=).");
     const cred = await signInWithEmailAndPassword(auth, email, pass);
     log(`Signed in as ${cred.user.email}`);
@@ -90,11 +107,19 @@
     const idToken = await cred.user.getIdToken(/* forceRefresh */ true);
     log(`ID Token (preview): ${idToken ? idToken.substring(0,24) + '…' : 'none'}`);
 
-  const appCheckToken = await getAppCheckToken(appCheck); // pass the appCheck instance
-  log(`AppCheck token (preview): ${appCheckToken?.token ? (appCheckToken.token.substring(0,24) + '…') : 'none'}`);
+    // Only attempt to fetch an App Check token when App Check was initialized
+    let appCheckToken = null;
+    if (typeof appCheck !== 'undefined' && appCheck) {
+      try {
+        appCheckToken = await getAppCheckToken(appCheck);
+      } catch (e) {
+        console.warn('getAppCheckToken failed', e);
+      }
+    }
+    log(`AppCheck token (preview): ${appCheckToken?.token ? (appCheckToken.token.substring(0,24) + '…') : 'none'}`);
 
-  // Final concise two-line output expected by the validator
-  out.textContent = `ID Token: ${!!idToken}\nApp Check Token: ${!!appCheckToken?.token}`;
+    // Final concise two-line output expected by the validator
+    out.textContent = `ID Token: ${!!idToken}\nApp Check Token: ${!!appCheckToken?.token}`;
   } catch (e) {
     console.error(e);
     out.textContent = `ERROR: ${e?.message || e}`;

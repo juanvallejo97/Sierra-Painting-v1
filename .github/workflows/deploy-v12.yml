@@ -17,5 +17,5 @@ jobs:
         with: { node-version: '20' }
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
-      - name: Deploy (Hosting/Functions as configured)
-        run: firebase deploy --project "$FIREBASE_PROJECT" --non-interactive --token "$FIREBASE_TOKEN"
+      - name: Gate and Deploy
+        run: node scripts/gate_and_deploy.js
