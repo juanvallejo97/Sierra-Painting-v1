@@ -2,6 +2,13 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import dotenv from 'dotenv';
+
+// Load .env when present so local runs pick up secrets from the file
+const __dirname = path.dirname('');
+const repoRoot = path.resolve(__dirname, '..');
+const envPath = path.join(repoRoot, '.env');
+if (fs.existsSync(envPath)) dotenv.config({ path: envPath });
 
 const projectRoot = path.resolve(path.dirname(''));
 const logPath = path.join(projectRoot, 'logs', 'token_validation_log.txt');
@@ -13,8 +20,9 @@ let j;
 try { j = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { fail(`Failed to parse ${logPath}: ${e}`, 5); }
 if (!(j.id && j.app)) { console.error('Token validation did not pass. Aborting deploy.'); process.exit(2); }
 
+// Allow FIREBASE_PROJECT or fallback to FIREBASE_PROJECT_ID from .env
 const token = process.env.FIREBASE_TOKEN;
-const proj = process.env.FIREBASE_PROJECT;
+const proj = process.env.FIREBASE_PROJECT || process.env.FIREBASE_PROJECT_ID;
 if (!token) fail('FIREBASE_TOKEN required', 3);
 if (!proj) fail('FIREBASE_PROJECT required', 3);
 
