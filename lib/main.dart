@@ -56,6 +56,14 @@ Future<void> _initializeApp() async {
     // Enable Performance Monitoring
     await perf.setPerformanceCollectionEnabled(kReleaseMode);
 
+    // Expose readiness signal earlier so the page can detect successful Firebase
+    // initialization even if later steps (e.g., App Check) fail.
+    if (kIsWeb) {
+      try {
+        js.context['flutterReady'] = true;
+      } catch (_) {}
+    }
+
     // Enable App Check (Play Integrity / App Attest / reCAPTCHA)
     final appCheckEnabled =
         dotenv.env['ENABLE_APP_CHECK']?.toLowerCase() == 'true';
@@ -63,11 +71,17 @@ Future<void> _initializeApp() async {
     if (appCheckEnabled || kReleaseMode) {
       if (kIsWeb) {
         final siteKey = dotenv.env['RECAPTCHA_V3_SITE_KEY'] ?? '';
-        await FirebaseAppCheck.instance.activate(
-          providerWeb: siteKey.isNotEmpty
-              ? ReCaptchaV3Provider(siteKey)
-              : ReCaptchaV3Provider(''),
-        );
+        if (siteKey.isNotEmpty) {
+          await FirebaseAppCheck.instance.activate(
+            providerWeb: ReCaptchaV3Provider(siteKey),
+          );
+        } else {
+          // Skip App Check activation on web if no site key is present. In
+          // production you should provide a valid RECAPTCHA_V3_SITE_KEY.
+          // Skipping avoids runtime failures that block app startup.
+          // ignore: avoid_print
+          print('Skipping App Check activation on web: RECAPTCHA_V3_SITE_KEY not set');
+        }
       } else {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kReleaseMode
