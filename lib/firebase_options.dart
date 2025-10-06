@@ -44,12 +44,12 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_WEB_API_KEY',
-    appId: 'YOUR_WEB_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'sierra-painting',
-    authDomain: 'sierra-painting.firebaseapp.com',
-    storageBucket: 'sierra-painting.appspot.com',
+    apiKey: 'AIzaSyAJizvq82-zsud2NLtp_AtiboIV7mn2WOs',
+    appId: '1:138777646966:web:4d2b7855b2cb2b0c7e0c57',
+    messagingSenderId: '138777646966',
+    projectId: 'to-do-app-ac602',
+    authDomain: 'to-do-app-ac602.firebaseapp.com',
+    storageBucket: 'to-do-app-ac602.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
