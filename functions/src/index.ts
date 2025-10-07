@@ -1,7 +1,11 @@
 import { onRequest } from 'firebase-functions/v2/https';
+import { setGlobalOptions } from 'firebase-functions/v2';
 // v2 identity triggers not yet supported in firebase-functions@5.x
 // Remove until v2 API is available
 import type { Request, Response } from 'express';
+
+// Set default region close to Providence, RI
+setGlobalOptions({ region: 'us-east4' });
 
 // Re‑export callable/HTTP functions implemented in feature modules
 export { createLead } from './leads/createLead';

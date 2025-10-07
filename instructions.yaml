@@ -1,0 +1,275 @@
+version: "1.0"
+name: "firestore_setup_and_hardening_suite"
+owner: "Sierra Painting — Engineering"
+description: >
+  Prescriptive, copy-pasteable YAML instructions to configure Cloud Firestore
+  for the Sierra Painting app: secure-by-default rules, seed indexes, emulator
+  tests, deployment order, and disaster-recovery guardrails.
+  # Ref master blueprint for program-wide governance :contentReference[oaicite:0]{index=0}
+
+env:
+  # Fill these with your actual Firebase project ids
+  dev: "to-do-app-ac602"
+  staging: "sierra-staging"
+  prod: "careful-sun-473614"
+
+prechecks:
+  - "Login: firebase login"
+  - "Targeting: ensure .firebaserc has aliases: dev, staging, prod"
+  - "App Check: Enable enforcement for Web, Android, iOS (Project Settings → App Check → Firestore)"
+  - "Auth: Ensure sign-in providers enabled and test users exist"
+  - "CLI: npm i -g firebase-tools@latest && firebase --version"
+
+files:
+  - path: "firestore.rules"
+    intent: "Secure-by-default rules with company RBAC + per-document ownership"
+    replace_with: |
+      rules_version = '2';
+      service cloud.firestore {
+        match /databases/{database}/documents {
+
+          function isAuthed() {
+            return request.auth != null;
+          }
+
+          // Custom claims expected:
+          // - company_id: string
+          // - role: "admin" | "manager" | "worker"
+          function claimCompany() {
+            return request.auth.token.company_id;
+          }
+          function hasRole(r) {
+            return isAuthed() && request.auth.token.role in r;
+          }
+
+          // Generic helpers for common document shapes
+          function ownsDoc() {
+            return isAuthed() && request.resource.data.ownerId == request.auth.uid;
+          }
+          function sameCompany(companyId) {
+            return isAuthed() && claimCompany() == companyId;
+          }
+
+          // ===== Public collections (read-only) =====
+          match /public/{document=**} {
+            allow read: if true;
+            allow write: if false;
+          }
+
+          // ===== User profile documents =====
+          match /users/{uid} {
+            allow read:  if isAuthed() && (uid == request.auth.uid || hasRole(["admin","manager"]));
+            allow create: if isAuthed() && request.resource.data.uid == request.auth.uid;
+            allow update, delete: if isAuthed() && uid == request.auth.uid;
+          }
+
+          // ===== Company-scoped data =====
+          // Example paths:
+          // /companies/{companyId}/tasks/{doc}
+          // /companies/{companyId}/timeEntries/{doc}
+          // /companies/{companyId}/jobs/{doc}
+          match /companies/{companyId}/{collectionId}/{docId} {
+            // Read for same-company workers; writes are RBAC + ownership-aware
+            allow read: if sameCompany(companyId);
+
+            allow create: if sameCompany(companyId) && (
+              hasRole(["admin","manager"]) ||
+              (hasRole(["worker"]) && request.resource.data.ownerId == request.auth.uid)
+            );
+
+            allow update, delete: if sameCompany(companyId) && (
+              hasRole(["admin","manager"]) ||
+              (hasRole(["worker"]) &&
+                resource.data.ownerId == request.auth.uid &&
+                // Workers may not escalate sensitive fields:
+                request.resource.data.diff(resource.data).changedKeys().hasOnly([
+                  "title","notes","status","images","updatedAt","hours"
+                ])
+              )
+            );
+          }
+
+          // ===== Fallback deny =====
+          match /{document=**} {
+            allow read, write: if false;
+          }
+        }
+      }
+
+  - path: "firestore.indexes.json"
+    intent: "Seed composite indexes for common queries (adjust as schema stabilizes)"
+    replace_with: |
+      {
+        "indexes": [
+          {
+            "collectionGroup": "tasks",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+              { "fieldPath": "companyId", "order": "ASCENDING" },
+              { "fieldPath": "status", "order": "ASCENDING" },
+              { "fieldPath": "createdAt", "order": "DESCENDING" }
+            ]
+          },
+          {
+            "collectionGroup": "tasks",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+              { "fieldPath": "companyId", "order": "ASCENDING" },
+              { "fieldPath": "assigneeId", "order": "ASCENDING" },
+              { "fieldPath": "dueAt", "order": "ASCENDING" }
+            ]
+          },
+          {
+            "collectionGroup": "timeEntries",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+              { "fieldPath": "companyId", "order": "ASCENDING" },
+              { "fieldPath": "userId", "order": "ASCENDING" },
+              { "fieldPath": "start", "order": "DESCENDING" }
+            ]
+          },
+          {
+            "collectionGroup": "jobs",
+            "queryScope": "COLLECTION_GROUP",
+            "fields": [
+              { "fieldPath": "companyId", "order": "ASCENDING" },
+              { "fieldPath": "city", "order": "ASCENDING" },
+              { "fieldPath": "createdAt", "order": "DESCENDING" }
+            ]
+          }
+        ],
+        "fieldOverrides": [
+          {
+            "collectionGroup": "tasks",
+            "fieldPath": "search",
+            "indexes": [
+              { "arrayConfig": "CONTAINS" }
+            ]
+          }
+        ]
+      }
+
+  - path: "tests/rules/firestore.rules.spec.ts"
+    intent: "Minimal emulator tests to gate common paths (run in CI)"
+    replace_with: |
+      import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
+      import { readFileSync } from "fs";
+      import { setDoc, doc, getDoc } from "firebase/firestore";
+
+      const rules = readFileSync("firestore.rules", "utf8");
+
+      describe("Firestore rules", () => {
+        let env: any;
+        beforeAll(async () => {
+          env = await initializeTestEnvironment({
+            projectId: "demo-sierra",
+            firestore: { rules }
+          });
+        });
+        afterAll(async () => await env.cleanup());
+
+        test("worker can read same-company task but not other-company", async () => {
+          const worker = env.authenticatedContext("u_worker", { role: "worker", company_id: "c1" });
+          const admin  = env.authenticatedContext("u_admin",  { role: "admin",  company_id: "c1" });
+          const dbA = admin.firestore();
+          await setDoc(doc(dbA, "companies/c1/tasks/t1"), { companyId: "c1", ownerId: "u_worker", status: "open", createdAt: 0 });
+
+          const dbW = worker.firestore();
+          await assertSucceeds(getDoc(doc(dbW, "companies/c1/tasks/t1")));
+          await assertFails(getDoc(doc(dbW, "companies/c2/tasks/tX")));
+        });
+      });
+
+  - path: ".github/workflows/firestore.yml"
+    intent: "CI gate: rule tests + dry-run deploy"
+    replace_with: |
+      name: firestore
+      on:
+        pull_request:
+          paths:
+            - "firestore.rules"
+            - "firestore.indexes.json"
+            - "tests/rules/**"
+        push:
+          branches: [ main ]
+          paths:
+            - "firestore.rules"
+            - "firestore.indexes.json"
+            - "tests/rules/**"
+      jobs:
+        test:
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: "20" }
+            - run: npm i -D @firebase/rules-unit-testing firebase @types/jest ts-node typescript jest
+            - run: npx jest --config jest.config.js
+        deploy:
+          if: github.ref == 'refs/heads/main'
+          needs: test
+          runs-on: ubuntu-latest
+          steps:
+            - uses: actions/checkout@v4
+            - uses: w9jds/firebase-action@v13.23.1
+              with:
+                args: deploy --only firestore:rules,firestore:indexes --project ${{ secrets.FIREBASE_PROJECT }}
+              env:
+                FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
+
+commands:
+  emulator:
+    - "firebase emulators:start --only firestore --import ./.emulator-data --export-on-exit"
+  deploy_dev:
+    - "firebase use dev"
+    - "firebase deploy --only firestore:rules,firestore:indexes"
+  deploy_staging:
+    - "firebase use staging"
+    - "firebase deploy --only firestore:rules,firestore:indexes"
+  deploy_prod:
+    - "firebase use prod"
+    - "firebase deploy --only firestore:rules,firestore:indexes"
+
+disaster_recovery:
+  point_in_time_recovery:
+    action: "Enable in Console → Firestore → Disaster Recovery → Point-in-time recovery"
+    notes: "Keeps 7 days of history; toggle per database"
+  scheduled_backups:
+    action: "Enable in Console → Firestore → Disaster Recovery → Scheduled backups"
+    schedule: "Daily backups; weekly retention ≥ 4"
+    target_bucket: "gs://<YOUR_BACKUP_BUCKET>"
+  export_script_gcloud:
+    # Optional CLI-driven backup (if you prefer infra-as-code)
+    - "gcloud firestore export gs://<YOUR_BACKUP_BUCKET>/firestore-$(date +%F) --project=${FIREBASE_PROJECT}"
+  verification:
+    - "Restore drill quarterly: import a backup into a separate project and run smoke reads"
+
+operational_policies:
+  data_model_expectations:
+    - "All company data lives under /companies/{companyId}/…"
+    - "Docs include: companyId, ownerId, createdAt, updatedAt"
+    - "Sensitive free-text fields (notes, addresses) sanitized client-side; consider field-level encryption for PII"
+  access_model:
+    - "Assign custom claims (company_id, role) via Admin SDK upon invite"
+    - "Only admins/managers can write cross-owner docs; workers can write their own"
+  logging_and_monitoring:
+    - "Create Firestore usage alerts for read/write spikes"
+    - "Enable BigQuery export for Firestore (optional) for analytics"
+    - "Set budget alerts in Cloud Billing for prod + staging"
+
+acceptance_criteria:
+  - "All reads/writes from unauthenticated clients are denied"
+  - "A worker can read company docs, write only owned docs, and cannot alter protected fields"
+  - "Admin/manager can create/update/delete any company doc"
+  - "Emulator tests pass locally and in CI"
+  - "Deploy runs clean; Console shows required composite indexes without build-time errors"
+  - "PITR enabled and daily scheduled backups configured with at least 4 weekly retention points"
+
+rollbacks:
+  - "If rules deploy breaks clients, immediately: firebase deploy --only firestore:rules --project <env> --force with last known-good rules file"
+  - "If data corruption occurs, use PITR to restore to a safe timestamp, or load scheduled backup into a new database and backfill via script"
+
+notes:
+  - "Adjust index set as query patterns stabilize; Console will suggest missing ones during dev"
+  - "Keep rules small and readable—promote complex checks into document fields (e.g., role, ownerId)"
+  - "Enforce App Check on Firestore and Functions for stronger abuse protection"
