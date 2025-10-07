@@ -3,7 +3,6 @@
  */
 
  
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { httpClient } from '../httpClient';
 import fetch from 'node-fetch';

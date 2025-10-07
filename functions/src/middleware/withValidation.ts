@@ -48,18 +48,13 @@ export function withValidation(
   // Return a wrapper that accepts a generic handler. We avoid strict typing here
   // to match many different usage sites in the repo (callable + express).
   // handler can be either an express handler or a callable-style function
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function (handler: (...args: any[]) => any) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return async function (...args: any[]) {
       // Detect Express signature (req, res, next)
       if (args.length >= 2 && args[0] && args[0].headers !== undefined && args[1] && args[1].status) {
   // cast from unknown args to Express types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const req = args[0] as any as Request;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = args[1] as any as Response;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const next = args[2] as any as NextFunction | undefined;
 
         try {
@@ -73,11 +68,8 @@ export function withValidation(
           // Apply validation if provided as ValidationSchemas
           if (schemas && typeof (schemas as ValidationSchemas).body !== 'undefined') {
             const s = schemas as ValidationSchemas;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (s.body) req.body = s.body.parse(req.body) as any;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (s.query) req.query = s.query.parse(req.query) as any;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (s.params) req.params = s.params.parse(req.params) as any;
           }
 
@@ -94,9 +86,7 @@ export function withValidation(
       }
 
     // Otherwise treat as callable-style: (data, context)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let data: any = args[0];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const context: any = args[1] ?? {};
 
       try {
@@ -121,7 +111,6 @@ export function withValidation(
           const db = admin.firestore();
           const userDoc = await db.collection('users').doc(uid).get();
           if (!userDoc.exists) throw new Error('User profile not found');
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const role = (userDoc.data() as any).role as string | undefined;
           const roleCheck = options.customRoleCheck ?? ((r: string) => r === 'admin');
           if (!roleCheck(role as string)) throw new Error('Insufficient permissions');

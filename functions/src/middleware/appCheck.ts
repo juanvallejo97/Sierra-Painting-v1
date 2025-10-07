@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * App Check Middleware for HTTP Functions
  * 

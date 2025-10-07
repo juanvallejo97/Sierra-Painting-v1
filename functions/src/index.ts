@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { onRequest } from 'firebase-functions/v2/https';
 // v2 identity triggers not yet supported in firebase-functions@5.x
 // Remove until v2 API is available
