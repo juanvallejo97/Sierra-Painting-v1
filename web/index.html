@@ -1,31 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- Enable App Check debug token printing on staging as early as possible. -->
+  <script>self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;</script>
+
+  <!-- Very early synchronous diagnostics to surface environment state before
+       Dart execution. This helps detect issues that prevent the Flutter app
+       from reaching readiness in staging. Kept minimal and safe. -->
+  <script>
+    try {
+      console.log('SYNC-DIAG: start');
+      console.log('SYNC-DIAG: userAgent=' + navigator.userAgent);
+      console.log('SYNC-DIAG: document.readyState=' + document.readyState);
+      console.log('SYNC-DIAG: serviceWorkerSupported=' + ('serviceWorker' in navigator));
+      console.log('SYNC-DIAG: appCheckDebugFlag=' + (typeof self !== 'undefined' && typeof self.FIREBASE_APPCHECK_DEBUG_TOKEN !== 'undefined' ? self.FIREBASE_APPCHECK_DEBUG_TOKEN : 'undefined'));
+    } catch (e) { try { console.error('SYNC-DIAG: error ' + e); } catch (_) {} }
+  </script>
   <base href="$FLUTTER_BASE_HREF">
+  <!-- Boot error reporter: captures first window error/unhandledrejection and POSTs to /api/reportWebBootError -->
+  <script>
+    (function(){
+      if (window.__boot_error_installed__) return; window.__boot_error_installed__ = true;
+      let sent = false;
+      const post = (payload) => {
+        try {
+          if (sent) return; sent = true;
+          fetch('/api/reportWebBootError', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+        } catch (_) {}
+      };
+      window.addEventListener('error', e => {
+        const msg = (e.error && e.error.message) || e.message || 'unknown';
+        console.error('[BOOT-ERROR]', msg, e.error || e);
+        post({ type: 'error', msg, stack: (e.error && e.error.stack) || null });
+      });
+      window.addEventListener('unhandledrejection', e => {
+        const msg = (e.reason && e.reason.message) || String(e.reason) || 'unknown';
+        console.error('[BOOT-REJECTION]', msg, e.reason || e);
+        post({ type: 'rejection', msg, stack: (e.reason && e.reason.stack) || null });
+      });
+    })();
+  </script>
+  <!-- Enable App Check debug token printing on staging. After deploy,
+       copy the printed token into Firebase Console → App Check → Manage debug tokens. -->
+  <script>self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;</script>
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Sierra Painting Business Management">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Replace deprecated apple-mobile-web-app-capable with cross-platform token -->
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Sierra Painting">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-  <link rel="icon" type="image/png" href="favicon.png"/>
   <title>Sierra Painting</title>
   <link rel="manifest" href="manifest.json">
+  <!-- Flutter web loader -->
+  <script src="flutter.js" defer></script>
   <script>
+    // Set to null to skip service worker registration; avoids build-time template token in source.
     var serviceWorkerVersion = null;
-    var scriptLoaded = false;
-    function loadMainDartJs() {
-      if (scriptLoaded) {
-        return;
-      }
-      scriptLoaded = true;
-      var scriptTag = document.createElement('script');
-      scriptTag.src = 'main.dart.js';
-      scriptTag.type = 'application/javascript';
-      document.body.append(scriptTag);
-    }
-
+  </script>
+  <script>
     if ('serviceWorker' in navigator) {
       // Attempt to unregister any existing service workers first. Some clients
       // can be stuck serving an old cached bundle which leads to a blank/black
@@ -39,15 +72,76 @@
       } catch (e) {
         // noop
       }
-
-      // NOTE: we intentionally do not register a new service worker here to
-      // avoid immediately caching potentially stale assets. You can re-enable
-      // registration later after confirming clients are loading the new bundle.
     }
   </script>
+    <!-- Early error capture: runs before flutter loader so we can collect
+         any runtime/parsing errors that happen during script evaluation. -->
+    <script>
+      try {
+        console.log('[index] early init script');
+        window.__preInitErrors = window.__preInitErrors || [];
+
+        window.addEventListener('error', function (e) {
+          try {
+            window.__preInitErrors.push({
+              type: 'error',
+              message: e && e.message,
+              filename: e && e.filename,
+              lineno: e && e.lineno,
+              colno: e && e.colno,
+              stack: e && e.error && e.error.stack
+            });
+          } catch (err) {}
+        });
+
+        window.addEventListener('unhandledrejection', function (e) {
+          try {
+            var reason = e && e.reason ? (e.reason.message || String(e.reason)) : String(e);
+            window.__preInitErrors.push({ type: 'unhandledrejection', message: reason });
+          } catch (err) {}
+        });
+
+        (function () {
+          var orig = console.error;
+          console.error = function () {
+            try {
+              var args = Array.prototype.slice.call(arguments).map(function (a) {
+                try { return (typeof a === 'string') ? a : JSON.stringify(a); } catch (e) { return String(a); }
+              }).join(' ');
+              window.__preInitErrors.push({ type: 'console.error', message: args });
+            } catch (err) {}
+            if (orig) orig.apply(console, arguments);
+          };
+        })();
+      } catch (e) {
+        /* ignore */
+      }
+    </script>
 </head>
 <body>
-  <script src="main.dart.js" type="application/javascript"></script>
+  <!-- Standard Flutter boot sequence using loader API -->
+  <script>
+    window.addEventListener('load', function() {
+      try {
+        if (!window._flutter || !window._flutter.loader) {
+          console.error('Flutter loader not found.');
+          return;
+        }
+        window._flutter.loader.loadEntrypoint({
+          entrypointUrl: 'main.dart.js',
+          // Intentionally omit "serviceWorker" to prevent re-registration on some clients
+          onEntrypointLoaded: function(engineInitializer) {
+            engineInitializer.initializeEngine().then(function(appRunner) {
+              console.log('[index] Flutter engine initialized, running app');
+              return appRunner.runApp();
+            });
+          }
+        });
+      } catch (e) {
+        console.error('Error during Flutter bootstrap', e);
+      }
+    });
+  </script>
   <div id="flutter-init-error" style="display:none;position:fixed;inset:0;z-index:9999;background:#111;color:#fff;align-items:center;justify-content:center;">
     <div style="max-width:720px;margin:0 auto;padding:24px;text-align:center;">
       <h2 style="color:#ff6b6b">App failed to initialize</h2>
@@ -70,6 +164,22 @@
       }catch(e){/* ignore */}
     }
 
+    // Auto-hide overlay once app becomes ready (even if shown earlier)
+    (function(){
+      var id = setInterval(function(){
+        try{
+          if (window.flutterReady) {
+            var el = document.getElementById('flutter-init-error');
+            if (el && el.style.display !== 'none') {
+              console.log('[index] flutterReady detected; hiding overlay');
+              el.style.display = 'none';
+            }
+            clearInterval(id);
+          }
+        }catch(e){ clearInterval(id); }
+      }, 300);
+    })();
+
     // Capture global errors and unhandled promise rejections and surface them
     // in the overlay so debugging is easier for clients.
     window.addEventListener('error', function(evt){
@@ -77,26 +187,6 @@
       var s = evt.filename ? (evt.filename + ':' + evt.lineno + ':' + evt.colno) : '';
       showFlutterInitError('Uncaught error: ' + m + '\n' + s + '\n' + (evt.error && evt.error.stack ? evt.error.stack : ''));
     });
-      // Capture runtime errors so the overlay shows details automatically.
-      window.addEventListener('error', function(ev) {
-        try {
-          var el = document.getElementById('flutter-init-error');
-          var details = document.getElementById('flutter-init-error-details');
-          el.style.display = 'flex';
-          var msg = ev && ev.message ? ev.message : String(ev.error || ev);
-          var src = ev && ev.filename ? '\nSource: ' + ev.filename + ':' + ev.lineno + ':' + ev.colno : '';
-          details.textContent = msg + src + (ev && ev.error && ev.error.stack ? '\n\n' + ev.error.stack : '');
-        } catch (e) {}
-      });
-      window.addEventListener('unhandledrejection', function(ev) {
-        try {
-          var el = document.getElementById('flutter-init-error');
-          var details = document.getElementById('flutter-init-error-details');
-          el.style.display = 'flex';
-          var reason = ev && ev.reason ? ev.reason : String(ev);
-          details.textContent = 'Unhandled promise rejection: ' + (reason && reason.message ? reason.message : reason) + (reason && reason.stack ? '\n\n' + reason.stack : '');
-        } catch (e) {}
-      });
     window.addEventListener('unhandledrejection', function(evt){
       try{
         var reason = evt.reason || 'Unhandled rejection';
@@ -121,10 +211,36 @@
     setTimeout(function(){
       try{
         if(!window.flutterReady){
-          showFlutterInitError('No readiness signal from Flutter (window.flutterReady not set). Check console for errors.');
+          try{
+            var pre = window.__preInitErrors && window.__preInitErrors.length ? window.__preInitErrors : null;
+            if(pre){
+              showFlutterInitError('No readiness signal from Flutter (window.flutterReady not set). Pre-init errors:\n' + JSON.stringify(pre, null, 2));
+            } else {
+              showFlutterInitError('No readiness signal from Flutter (window.flutterReady not set). Check console for errors.');
+            }
+          }catch(e){
+            showFlutterInitError('No readiness signal from Flutter (window.flutterReady not set). Check console for errors.');
+          }
         }
       }catch(e){/* ignore */}
     },5000);
   </script>
 </body>
+  <script>
+    // Poll for flutterReady and surface diagnostics to console for 15s.
+    (function(){
+      try{
+        var start = Date.now();
+        var id = setInterval(function(){
+          try{
+            var ready = !!window.flutterReady;
+            var pre = window.__preInitErrors && window.__preInitErrors.length ? window.__preInitErrors : null;
+            console.log('SYNC-POLL: flutterReady=' + ready + ' elapsedMs=' + (Date.now()-start));
+            if(pre) console.log('SYNC-POLL: preInitErrors=' + JSON.stringify(pre));
+            if(ready || Date.now()-start > 15000){ clearInterval(id); }
+          }catch(e){ console.error('SYNC-POLL-ERR', e); clearInterval(id); }
+        }, 1000);
+      }catch(e){/* ignore */}
+    })();
+  </script>
 </html>
