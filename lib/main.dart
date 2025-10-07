@@ -1,9 +1,6 @@
 // lib/main.dart
 import 'dart:async';
 import 'dart:ui';
-// Used to expose a browser-visible readiness flag when running on web.
-// This helps detect early runtime failures that otherwise cause a black screen.
-import 'dart:js' as js;
 
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,6 +15,7 @@ import 'package:sierra_painting/app/app.dart';
 import 'package:sierra_painting/core/services/feature_flag_service.dart';
 import 'package:sierra_painting/core/services/offline_service.dart';
 import 'package:sierra_painting/firebase_options.dart';
+import 'package:sierra_painting/web/js_bridge.dart' as jsb;
 
 // Re-export app widget for tests that import main.dart
 export 'package:sierra_painting/app/app.dart' show SierraPaintingApp;
@@ -27,7 +25,7 @@ Future<void> _initializeApp() async {
 
   // Diagnostic: mark that initialization started (helps debug blank-screen cases)
   try {
-    js.context.callMethod('console.log', ['_initializeApp: start']);
+    jsb.consoleLog('_initializeApp: start');
   } catch (_) {}
 
   // Choose env file: prefer web-safe asset on web, otherwise .env. Fallback gracefully.
@@ -36,47 +34,45 @@ Future<void> _initializeApp() async {
   // Load .env variables (don't crash if missing on web)
   try {
     await dotenv.load(fileName: envFile);
-    try { js.context.callMethod('console.log', ['_initializeApp: dotenv loaded (' + envFile + ')']); } catch (_) {}
+    try { jsb.consoleLog('_initializeApp: dotenv loaded ($envFile)'); } catch (_) {}
     // Quick diagnostics (no secret values):
     try {
       final hasEnable = dotenv.env.containsKey('ENABLE_APP_CHECK');
       final hasV3 = dotenv.env.containsKey('RECAPTCHA_V3_SITE_KEY');
       final hasLegacy = dotenv.env.containsKey('RECAPTCHA_SITE_KEY');
-      js.context.callMethod('console.log', [
-        '_initializeApp: env flags -> ENABLE_APP_CHECK=' + hasEnable.toString() + ', V3_KEY=' + hasV3.toString() + ', LEGACY_KEY=' + hasLegacy.toString()
-      ]);
+      jsb.consoleLog('_initializeApp: env flags -> ENABLE_APP_CHECK=$hasEnable, V3_KEY=$hasV3, LEGACY_KEY=$hasLegacy');
     } catch (_) {}
   } catch (e) {
     // Fallback attempts for web: try old path and .env
     if (kIsWeb) {
       try {
         await dotenv.load(fileName: '.env.public');
-        try { js.context.callMethod('console.warn', ['_initializeApp: public.env missing; loaded .env.public fallback']); } catch (_) {}
+        try { jsb.consoleWarn('_initializeApp: public.env missing; loaded .env.public fallback'); } catch (_) {}
       } catch (_) {
         try {
           await dotenv.load(fileName: '.env');
-          try { js.context.callMethod('console.warn', ['_initializeApp: public env missing; loaded .env fallback']); } catch (_) {}
+          try { jsb.consoleWarn('_initializeApp: public env missing; loaded .env fallback'); } catch (_) {}
         } catch (e2) {
           // ignore: avoid_print
           print('dotenv load failed: $e2');
-          try { js.context.callMethod('console.error', ['_initializeApp: dotenv load failed: ' + e2.toString()]); } catch (_) {}
+          try { jsb.consoleError('_initializeApp: dotenv load failed: $e2'); } catch (_) {}
         }
       }
     } else {
       // ignore: avoid_print
       print('dotenv load failed: $e');
-      try { js.context.callMethod('console.error', ['_initializeApp: dotenv load failed: ' + e.toString()]); } catch (_) {}
+      try { jsb.consoleError('_initializeApp: dotenv load failed: $e'); } catch (_) {}
     }
   }
 
   // Begin guarded initialization
   try {
     // Initialize Firebase
-    try { js.context.callMethod('console.log', ['_initializeApp: calling Firebase.initializeApp']); } catch (_) {}
+    try { jsb.consoleLog('_initializeApp: calling Firebase.initializeApp'); } catch (_) {}
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    try { js.context.callMethod('console.log', ['_initializeApp: Firebase.initializeApp succeeded']); } catch (_) {}
+    try { jsb.consoleLog('_initializeApp: Firebase.initializeApp succeeded'); } catch (_) {}
 
     // Setup Crashlytics
     final crashlyticsEnabled =
@@ -97,7 +93,7 @@ Future<void> _initializeApp() async {
     // Expose readiness signal earlier so the page can detect successful Firebase
     // initialization even if later steps (e.g., App Check) fail.
     if (kIsWeb) {
-      try { js.context['flutterReady'] = true; } catch (_) {}
+      try { jsb.setGlobalFlag('flutterReady', true); } catch (_) {}
     }
 
     // Start Firebase Performance trace after Firebase has been initialized
@@ -111,7 +107,7 @@ Future<void> _initializeApp() async {
     } catch (e) {
       // ignore: avoid_print
       print('Firebase Performance init failed: $e');
-      try { js.context.callMethod('console.error', ['_initializeApp: perf init failed: ' + e.toString()]); } catch (_) {}
+      try { jsb.consoleError('_initializeApp: perf init failed: $e'); } catch (_) {}
     }
 
     // Enable App Check (Play Integrity / App Attest / reCAPTCHA)
@@ -136,20 +132,20 @@ Future<void> _initializeApp() async {
         }
 
         runtimeSiteKey = sanitizeKey(runtimeSiteKey);
-        try { js.context.callMethod('console.log', ['App Check: runtimeSiteKey empty? ' + (runtimeSiteKey.isEmpty).toString()]); } catch (_) {}
+        try { jsb.consoleLog('App Check: runtimeSiteKey empty? ${runtimeSiteKey.isEmpty}'); } catch (_) {}
 
         if (runtimeSiteKey.isNotEmpty) {
-          try { js.context.callMethod('console.log', ['App Check: attempting activation on web. runtimeSiteKey present: ${runtimeSiteKey.isNotEmpty}']); } catch (_) {}
+          try { jsb.consoleLog('App Check: attempting activation on web. runtimeSiteKey present: ${runtimeSiteKey.isNotEmpty}'); } catch (_) {}
           try {
             await FirebaseAppCheck.instance.activate(
-              webProvider: ReCaptchaV3Provider(runtimeSiteKey),
+              providerWeb: ReCaptchaV3Provider(runtimeSiteKey),
             );
-            try { js.context.callMethod('console.log', ['App Check: activation succeeded on web']); } catch (_) {}
+            try { jsb.consoleLog('App Check: activation succeeded on web'); } catch (_) {}
           } catch (e) {
             // Don't let App Check activation crash the app; log and continue.
             // ignore: avoid_print
             print('App Check activation failed: $e');
-            try { js.context.callMethod('console.error', ['App Check activation failed: ' + e.toString()]); } catch (_) {}
+            try { jsb.consoleError('App Check activation failed: $e'); } catch (_) {}
           }
         } else {
           // No site key available; skip activation on web to avoid runtime
@@ -177,7 +173,7 @@ Future<void> _initializeApp() async {
     // Flutter app initialized correctly. This is helpful when debugging blank
     // screens caused by runtime initialization failures.
     if (kIsWeb) {
-      try { js.context['flutterReady'] = true; } catch (_) {}
+      try { jsb.setGlobalFlag('flutterReady', true); } catch (_) {}
     }
 
     // Stop startup trace after first frame
@@ -188,7 +184,7 @@ Future<void> _initializeApp() async {
     try {
       await FirebaseCrashlytics.instance.recordError(e, st, fatal: true);
     } catch (_) {}
-    try { js.context.callMethod('console.error', ['_initializeApp failed: ' + e.toString()]); } catch (_) {}
+    try { jsb.consoleError('_initializeApp failed: $e'); } catch (_) {}
     // Do not rethrow; allow page overlay/diagnostics to continue.
   }
 }

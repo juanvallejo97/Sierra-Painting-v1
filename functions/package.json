@@ -44,9 +44,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.29.1",
-    "firebase-admin": "^13.5.0",
-    "firebase-functions": "^6.4.0",
-    "firebase-functions-test": "^3.1.0",
+    "firebase-functions-test": "^3.4.1",
     "prettier": "^3.3.3",
     "ts-jest": "^29.1.1",
     "typescript": "^5.5.4"

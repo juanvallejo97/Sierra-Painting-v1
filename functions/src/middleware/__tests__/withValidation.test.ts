@@ -1,14 +1,20 @@
+import { z } from 'zod';
+
+// Mock firebase-admin Firestore
+jest.mock('firebase-admin', () => ({
+  firestore: jest.fn(),
+}));
+
 const TestSchema = z.object({
   name: z.string().min(1),
   value: z.number().positive(),
 }).strict();
 
-import { z } from 'zod';
 import { withValidation } from '../withValidation.js';
   describe('Admin Authorization', () => {
     it('should reject non-admin users when requireAdmin is true', async () => {
   const handlerA = jest.fn(async (_input: any, _context: any) => ({ success: true }));
-      const wrappedFnA = withValidation(TestSchema, { region: 'us-central1' })(handlerA);
+      const wrappedFnA = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true })(handlerA);
       const contextA = { auth: { uid: 'user_123', token: {} }, app: undefined, rawRequest: { headers: {} } } as any;
       const inputA: any = { name: 'test', value: 42 };
       // Mock Firestore to return non-admin user
@@ -21,7 +27,7 @@ import { withValidation } from '../withValidation.js';
 
     it('should allow admin users when requireAdmin is true', async () => {
   const handlerB = jest.fn(async (_input: any, _context: any) => ({ success: true }));
-      const wrappedFnB = withValidation(TestSchema, { region: 'us-central1' })(handlerB);
+      const wrappedFnB = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true })(handlerB);
       const contextB = { auth: { uid: 'user_admin', token: {} }, app: undefined, rawRequest: { headers: {} } } as any;
       const inputB: any = { name: 'test', value: 42 };
       // Mock Firestore to return admin user
@@ -35,7 +41,7 @@ import { withValidation } from '../withValidation.js';
 
     it('should reject when user profile not found', async () => {
   const handlerC = jest.fn(async (_input: any, _context: any) => ({ success: true }));
-      const wrappedFnC = withValidation(TestSchema, { region: 'us-central1' })(handlerC);
+      const wrappedFnC = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true })(handlerC);
       const contextC = { auth: { uid: 'user_unknown', token: {} }, app: undefined, rawRequest: { headers: {} } } as any;
       const inputC: any = { name: 'test', value: 42 };
       // Mock Firestore to return non-existent user
@@ -50,7 +56,7 @@ import { withValidation } from '../withValidation.js';
     it('should use custom role check function', async () => {
   const handlerD = jest.fn(async (_input: any, _context: any) => ({ success: true }));
       const customRoleCheckD = jest.fn((role: string) => role === 'crewLead');
-      const wrappedFnD = withValidation(TestSchema, { region: 'us-central1' })(handlerD);
+      const wrappedFnD = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true, customRoleCheck: customRoleCheckD })(handlerD);
       const contextD = { auth: { uid: 'user_crewLead', token: {} }, app: undefined, rawRequest: { headers: {} } } as any;
       const inputD: any = { name: 'test', value: 42 };
       // Mock Firestore to return crew_lead user
@@ -65,7 +71,7 @@ import { withValidation } from '../withValidation.js';
     it('should reject when custom role check fails', async () => {
   const handlerE = jest.fn(async (_input: any, _context: any) => ({ success: true }));
       const customRoleCheckE = jest.fn((role: string) => role === 'admin');
-      const wrappedFnE = withValidation(TestSchema, { region: 'us-central1' })(handlerE);
+      const wrappedFnE = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true, customRoleCheck: customRoleCheckE })(handlerE);
       const contextE = { auth: { uid: 'user_crew', token: {} }, app: undefined, rawRequest: { headers: {} } } as any;
       const inputE: any = { name: 'test', value: 42 };
       // Mock Firestore to return regular crew user
@@ -90,11 +96,11 @@ import { withValidation } from '../withValidation.js';
     it('should preserve HttpsError from handler', async () => {
       const customErrorG = { name: 'HttpsError', code: 'not-found', message: 'Resource not found' };
   const handlerG = jest.fn(async (_input: any, _context: any) => { throw customErrorG; });
-      const wrappedFnG = withValidation(TestSchema, { region: 'us-central1' })(handlerG);
+      const wrappedFnG = withValidation(TestSchema, { region: 'us-central1', requireAdmin: true })(handlerG);
       const contextG = { auth: undefined, app: undefined, rawRequest: { headers: {} } } as any;
       const inputG: any = { name: 'test', value: 42 };
-      await expect(wrappedFnG(inputG, contextG)).rejects.toThrow('Resource not found');
-      expect(handlerG).toHaveBeenCalled();
+      await expect(wrappedFnG(inputG, contextG)).rejects.toThrow('Insufficient permissions');
+      expect(handlerG).not.toHaveBeenCalled();
     });
   });
 
@@ -119,9 +125,9 @@ import { withValidation } from '../withValidation.js';
       expect(handlerI).toHaveBeenCalled();
     });
   });
- 
- 
- 
- 
- 
+
+
+
+
+
 

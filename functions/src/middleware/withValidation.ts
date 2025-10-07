@@ -3,6 +3,8 @@ import type { Request, Response, NextFunction } from 'express';
 import type { ZodSchema, ZodError } from 'zod';
 import admin from 'firebase-admin';
 
+const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+
 export type ValidationSchemas<
   TBody = unknown,
   TQuery = unknown,
@@ -61,6 +63,13 @@ export function withValidation(
   const next = args[2] as any as NextFunction | undefined;
 
         try {
+          // Basic payload size guard
+          const contentLength = Number(req.headers['content-length'] ?? 0);
+          const bodySize = contentLength || Buffer.byteLength(JSON.stringify(req.body ?? {}));
+          if (bodySize > MAX_PAYLOAD_BYTES) {
+            throw new Error('Payload size exceeds maximum allowed size');
+          }
+
           // Apply validation if provided as ValidationSchemas
           if (schemas && typeof (schemas as ValidationSchemas).body !== 'undefined') {
             const s = schemas as ValidationSchemas;
@@ -78,7 +87,7 @@ export function withValidation(
             res.status(400).json({ error: 'ValidationError', details: err.issues });
             return;
           }
-          if (next) next(err);
+          if (next) next(err as Error);
           else throw err;
         }
         return;
@@ -91,6 +100,12 @@ export function withValidation(
   const context: any = args[1] ?? {};
 
       try {
+        // Enforce payload size for callable
+        const payloadBytes = Buffer.byteLength(JSON.stringify(data ?? {}));
+        if (payloadBytes > MAX_PAYLOAD_BYTES) {
+          throw new Error('Payload size exceeds maximum allowed size');
+        }
+
         // If a simple ZodSchema was provided, validate the entire data payload
         if (schemas && typeof (schemas as ZodSchema).parse === 'function') {
           data = (schemas as ZodSchema).parse(data);
@@ -114,7 +129,13 @@ export function withValidation(
 
         return await Promise.resolve(handler(data, context));
       } catch (err) {
-        // Preserve thrown HttpsError-like objects
+        // Preserve thrown HttpsError-like objects; normalize non-Error to Error so tests can assert
+        if (err && typeof err === 'object' && (err as any).name === 'HttpsError') {
+          throw err;
+        }
+        if (!(err instanceof Error)) {
+          throw new Error((err as any)?.message ?? String(err));
+        }
         throw err;
       }
     };

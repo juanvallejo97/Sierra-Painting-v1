@@ -55,10 +55,6 @@
   <!-- Flutter web loader -->
   <script src="flutter.js" defer></script>
   <script>
-    // Set to null to skip service worker registration; avoids build-time template token in source.
-    var serviceWorkerVersion = null;
-  </script>
-  <script>
     if ('serviceWorker' in navigator) {
       // Attempt to unregister any existing service workers first. Some clients
       // can be stuck serving an old cached bundle which leads to a blank/black
@@ -119,7 +115,7 @@
     </script>
 </head>
 <body>
-  <!-- Standard Flutter boot sequence using loader API -->
+  <!-- Standard Flutter boot sequence using stable loader API -->
   <script>
     window.addEventListener('load', function() {
       try {
@@ -128,14 +124,15 @@
           return;
         }
         window._flutter.loader.loadEntrypoint({
-          entrypointUrl: 'main.dart.js',
-          // Intentionally omit "serviceWorker" to prevent re-registration on some clients
-          onEntrypointLoaded: function(engineInitializer) {
-            engineInitializer.initializeEngine().then(function(appRunner) {
-              console.log('[index] Flutter engine initialized, running app');
-              return appRunner.runApp();
-            });
-          }
+          // Intentionally omit serviceWorker registration to avoid sticky SW issues.
+          entrypointUrl: 'main.dart.js'
+        }).then(function(engineInitializer) {
+          return engineInitializer.initializeEngine();
+        }).then(function(appRunner) {
+          console.log('[index] Flutter engine initialized, running app');
+          return appRunner.runApp();
+        }).catch(function(e){
+          console.error('Error during Flutter bootstrap', e);
         });
       } catch (e) {
         console.error('Error during Flutter bootstrap', e);
