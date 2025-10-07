@@ -13,7 +13,9 @@
     "validate:create-user": "node scripts/create_user.js",
     "validate:run": "node scripts/validate_runner.js",
     "validate:local": "node scripts/local_validate.js",
-    "clean:reset": "git clean -xdf -e node_modules"
+    "clean:reset": "git clean -xdf -e node_modules",
+    "predeploy:functions": "npm --prefix functions run build",
+    "predeploy:web": "flutter build web --release"
   },
   "devDependencies": {
     "dotenv": "^16.3.1",

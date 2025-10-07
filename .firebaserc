@@ -3,7 +3,8 @@
     "default": "to-do-app-ac602",
     "dev": "sierra-painting-dev",
     "staging": "sierra-painting-staging",
-    "production": "sierra-painting-prod"
+    "production": "sierra-painting-prod",
+    "sierrapainting": "to-do-app-ac602"
   },
   "targets": {
     "sierra-painting-dev": {
@@ -26,6 +27,14 @@
           "sierra-painting-prod"
         ]
       }
+    },
+    "to-do-app-ac602": {
+      "hosting": {
+        "sierrapainting": [
+          "sierrapainting"
+        ]
+      }
     }
-  }
+  },
+  "etags": {}
 }
