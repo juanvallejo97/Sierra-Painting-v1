@@ -1,0 +1,127 @@
+version: "1.0"
+name: "dsierra_painting_v1_current_state_hardening"
+classification:
+  level: "CONFIDENTIAL"
+  owner: "D’Sierra – Engineering"
+  handling: ["Internal Only", "No Public Repos", "Share on Need-to-Know"]
+
+inputs:
+  repo_url: "https://github.com/juanvallejo97/Sierra-Painting-v1"
+  branch: "main"
+  runtime:
+    flutter_min: "3.8.0"
+    node_min: "18.x"
+  infra: ["Firebase Auth", "Firestore", "Storage", "Cloud Functions (TS)"]
+
+governance_alignment:
+  references:
+    - "ARCHITECTURE.md"
+    - "DEPLOYMENT_INSTRUCTIONS.md"
+    - "SECURITY.md"
+    - "TOOL_VERSIONS.md"
+  principles:
+    - "Small, reversible, auditable changes"
+    - "No schema breaks without backfill"
+    - "Security & performance > cosmetics"
+    - "Flutter + Firebase patterns hardened for mobile/web parity"
+  risks:
+    - id: R4
+      title: "Duplicated web targets lead to drift"
+      evidence: ["web/", "webapp/", "web_react/"]
+      mitigation: "Canonicalize to one target; CI blocks new files in deprecated paths"
+    - id: R1
+      title: "Privilege escalation via Firestore rules edge cases"
+      mitigation: "Expand rules tests; add negative tests; run in CI gate"
+    - id: R2
+      title: "Functions cold starts (P95 spikes)"
+      mitigation: "Pin runtime; set minInstances on hot endpoints; add caching layer"
+    - id: R3
+      title: "Docs drift"
+      mitigation: "Docs CI links + monthly audit + ownership rotation"
+
+inventory_snapshot:
+  app_targets: ["android", "ios", "web", "web_react", "webapp"]
+  backend: ["functions/", "firestore.rules", "storage.rules", "firestore.indexes.json", "firebase.json"]
+  quality: ["integration_test/", "test/", "tests/rules/", "tool/smoke/", "analysis_options.yaml"]
+  docs: ["ARCHITECTURE.md", "SECURITY.md", "DEPLOYMENT_INSTRUCTIONS.md", "CONTRIBUTING.md", "README.md"]
+
+non_functional_requirements:
+  performance:
+    p75_startup_ms_mobile: 1200
+    p95_fn_latency_ms: 600
+    p95_scroll_jank_perc: 1.0
+  reliability:
+    error_budget_pct: 1.0
+    incident_mttd_min: 5
+    incident_mttr_min: 30
+  security:
+    authz_model: "Per-document ownership + RBAC via custom claims"
+    app_check: "Required for all clients"
+    pii_policy: "Field-level encryption for sensitive notes/attachments"
+
+modules:
+  - id: "web_target_canonicalization"
+    intent: "Remove duplication across web/, web_react/, webapp/; choose a single canonical target"
+    tasks:
+      - id: "web-01"
+        action: "Decide canonical web target (Flutter web or React)."
+        deliverable: "docs/DECISION_RECORD_WEB_TARGET.md"
+      - id: "web-02"
+        action: "Move/merge assets and routes into canonical target; delete deprecated targets."
+        gate: "CI failing rule: block new files under deprecated paths"
+      - id: "web-03"
+        action: "Add bundle budgets for web output (gzip/br)."
+        acceptance: ["< 250KB critical path JS", "< 1.2s LCP on cable emulation"]
+  - id: "firestore_rules_hardening"
+    intent: "Lock down Firestore rules with test coverage"
+    tasks:
+      - id: "rules-01"
+        action: "Add negative tests (cross-tenant read/write, missing ownerId, admin-claim misuse)."
+        files: ["tests/rules/**/*.test.*"]
+      - id: "rules-02"
+        action: "CI gate: fail on any rules test failure; require coverage summary artifact."
+      - id: "rules-03"
+        action: "Add ‘deny by default’ comment and ownership invariants to firestore.rules."
+  - id: "functions_latency_control"
+    intent: "Reduce P95 via runtime pinning, minInstances, memoization/caching"
+    tasks:
+      - id: "fn-01"
+        action: "Pin Node runtime; audit cold-starts; enable minInstances on hot endpoints."
+      - id: "fn-02"
+        action: "Introduce in-memory + Firestore-backed cache for reference data (e.g., tax rates)."
+      - id: "fn-03"
+        action: "Add perf traces (custom spans) to top 5 endpoints."
+  - id: "observability_minimums"
+    intent: "Ensure crash & perf signals are actionable"
+    tasks:
+      - id: "obs-01"
+        action: "Crashlytics + Performance SDK verification on startup and key screens."
+      - id: "obs-02"
+        action: "Create dashboards: auth success rate, time-to-first-task, and function P95."
+      - id: "obs-03"
+        action: "Alerting: MTTR/MTTD targets; on-call rotation doc."
+  - id: "docs_cleanup"
+    intent: "Keep docs authoritative"
+    tasks:
+      - id: "docs-01"
+        action: "One ‘Getting Started’ doc; link all others; remove stale ‘docs_archive/’ entries."
+      - id: "docs-02"
+        action: "Add ‘Security Maturity Checklist’ mapping to implemented controls."
+  - id: "predeploy_sanity"
+    intent: "Block risky deploys"
+    tasks:
+      - id: "ship-01"
+        action: "Extend run_predeploy_checks.sh to run: smoke tests, rules tests, bundle budgets, and emulator e2e."
+      - id: "ship-02"
+        action: "Artifact store: upload coverage.md + perf snapshots to CI."
+
+acceptance_gates:
+  - "All rules tests pass with negative coverage"
+  - "No files under deprecated web targets"
+  - "Perf smoke: auth screen load p75 ≤ 1000ms on mid‑tier device"
+  - "Functions hot path P95 ≤ 600ms on staging"
+
+outputs:
+  - "reports/current_state_scorecard.md"
+  - "docs/DECISION_RECORD_WEB_TARGET.md"
+  - "ci/artifacts/{coverage,perf,smoke}.json"
