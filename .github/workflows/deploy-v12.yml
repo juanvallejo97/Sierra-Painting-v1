@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - name: Install Firebase CLI
-        run: npm i -g firebase-tools
+        run: npm i -g firebase-tools@13.23.1
       - name: Download validator artifacts from triggering workflow run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

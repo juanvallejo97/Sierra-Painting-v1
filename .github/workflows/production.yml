@@ -4,10 +4,13 @@ on:
   push:
     tags:
       - 'v*'
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   FLUTTER_VERSION: '3.35.5'
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   JAVA_VERSION: '17'
   FIREBASE_PROJECT_PROD: 'sierra-painting-prod'
 
@@ -270,7 +273,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@13.23.1
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -304,7 +307,7 @@ jobs:
           cache-dependency-path: functions/package-lock.json
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@13.23.1
 
       - name: Install Functions dependencies
         working-directory: ./functions

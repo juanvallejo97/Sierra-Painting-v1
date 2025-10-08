@@ -37,7 +37,7 @@ jobs:
           java-version: '17'
 
       - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@13.23.1
 
       - name: Install test dependencies
         working-directory: firestore-tests

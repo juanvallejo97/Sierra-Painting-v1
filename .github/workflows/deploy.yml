@@ -177,7 +177,7 @@ jobs:
           retention-days: 7
 
       - name: 🚀 Install Firebase CLI
-        run: npm i -g firebase-tools
+        run: npm i -g firebase-tools@13.23.1
 
       - name: 🔑 Write service account to file
         id: sa
