@@ -127,14 +127,46 @@ async function request(url: string, options: HttpClientOptions = {}): Promise<Ht
   while (attempt <= retries) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let response: any = undefined;
+      try {
+        timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      const response = await fetch(url, {
-        ...fetchOptions,
-        signal: controller.signal,
-      });
+        response = await fetch(url, {
+          ...fetchOptions,
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeoutId);
+        // Check if we should retry
+        span.setAttribute('http.status_code', response.status);
+        if (shouldRetry(response.status) && attempt < retries) {
+          log.warn('http_request_retry', {
+            url,
+            status: response.status,
+            attempt: attempt + 1,
+            maxRetries: retries,
+          });
+
+          await sleep(getBackoffDelay(attempt));
+          attempt++;
+          continue;
+        }
+
+        // Convert response to our format
+        const body = await response.text();
+        const httpResponse: HttpResponse = {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          body,
+          json: <T = unknown>() => JSON.parse(body) as T,
+        };
+
+        span.end();
+        return httpResponse;
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
 
       span.setAttribute('http.status_code', response.status);
 
@@ -181,10 +213,10 @@ async function request(url: string, options: HttpClientOptions = {}): Promise<Ht
         continue;
       }
 
-      // Not retryable or out of retries
-      span.recordException(error as Error);
-      span.end();
-      throw error;
+  // Not retryable or out of retries
+  span.recordException(error as Error);
+  span.end();
+  throw error;
     }
   }
 
