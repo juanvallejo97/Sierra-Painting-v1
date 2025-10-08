@@ -167,35 +167,6 @@ async function request(url: string, options: HttpClientOptions = {}): Promise<Ht
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
       }
-
-      span.setAttribute('http.status_code', response.status);
-
-      // Check if we should retry
-      if (shouldRetry(response.status) && attempt < retries) {
-        log.warn('http_request_retry', {
-          url,
-          status: response.status,
-          attempt: attempt + 1,
-          maxRetries: retries,
-        });
-
-        await sleep(getBackoffDelay(attempt));
-        attempt++;
-        continue;
-      }
-
-      // Convert response to our format
-      const body = await response.text();
-      const httpResponse: HttpResponse = {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        body,
-        json: <T = unknown>() => JSON.parse(body) as T,
-      };
-
-      span.end();
-      return httpResponse;
     } catch (error) {
       lastError = error as Error;
 

@@ -1,0 +1,25 @@
+name: Smoke check
+
+on:
+  workflow_dispatch:
+    inputs:
+      smoke_url:
+        description: 'URL to run smoke checks against'
+        required: true
+        default: 'https://your-staging-site.web.app'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run smoke script
+        env:
+          SMOKE_URL: ${{ github.event.inputs.smoke_url }}
+        run: npm run smoke
