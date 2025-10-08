@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Root package for CI testing infrastructure including Firestore rules tests",
   "scripts": {
-    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+  "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+  "test": "jest --runInBand --detectOpenHandles",
     "smoke": "dart run tool/smoke/smoke.dart",
     "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
     "validate:e2e": "node scripts/validate_runner.js",
