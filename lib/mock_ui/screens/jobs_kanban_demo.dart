@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../components/app_scaffold.dart';
-import '../fakers.dart';
+import 'package:sierra_painting/mock_ui/components/app_scaffold.dart';
+import 'package:sierra_painting/mock_ui/fakers.dart';
 
 class JobsKanbanDemo extends StatelessWidget {
   const JobsKanbanDemo({super.key});
@@ -20,7 +20,9 @@ class JobsKanbanDemo extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: by.entries.map((e) => _Column(title: e.key, jobs: e.value)).toList(),
+          children: by.entries
+              .map((e) => _Column(title: e.key, jobs: e.value))
+              .toList(),
         ),
       ),
     );
@@ -28,7 +30,8 @@ class JobsKanbanDemo extends StatelessWidget {
 }
 
 class _Column extends StatelessWidget {
-  final String title; final List<Job> jobs;
+  final String title;
+  final List<Job> jobs;
   const _Column({required this.title, required this.jobs});
 
   @override
@@ -36,17 +39,20 @@ class _Column extends StatelessWidget {
     return Container(
       width: 320,
       margin: const EdgeInsets.only(right: 12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(title, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
-        for (final j in jobs)
-          Card(
-            child: ListTile(
-              title: Text(j.title),
-              subtitle: Text('${j.city} · ${j.assignee}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          for (final j in jobs)
+            Card(
+              child: ListTile(
+                title: Text(j.title),
+                subtitle: Text('${j.city} · ${j.assignee}'),
+              ),
             ),
-          )
-      ]),
+        ],
+      ),
     );
   }
 }

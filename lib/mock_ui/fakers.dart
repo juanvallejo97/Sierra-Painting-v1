@@ -4,12 +4,35 @@ final _rnd = Random();
 
 String pick(List<String> xs) => xs[_rnd.nextInt(xs.length)];
 
-const _names = ['Avery', 'Riley', 'Jordan', 'Parker', 'River', 'Rowan', 'Emerson', 'Quinn'];
-const _streets = ['Maple', 'Cedar', 'Oak', 'Pine', 'Willow', 'Elm', 'Birch', 'Spruce'];
+const _names = [
+  'Avery',
+  'Riley',
+  'Jordan',
+  'Parker',
+  'River',
+  'Rowan',
+  'Emerson',
+  'Quinn',
+];
+const _streets = [
+  'Maple',
+  'Cedar',
+  'Oak',
+  'Pine',
+  'Willow',
+  'Elm',
+  'Birch',
+  'Spruce',
+];
 const _cities = ['Elk Grove', 'Fresno', 'Modesto', 'Tracy', 'Sacramento'];
 
 class Job {
-  final String id, title, address, city, assignee, status; // open|in_progress|done
+  final String id,
+      title,
+      address,
+      city,
+      assignee,
+      status; // open|in_progress|done
   final DateTime createdAt, dueAt;
   Job({
     required this.id,
@@ -24,10 +47,11 @@ class Job {
 }
 
 List<Job> fakeJobs(int n) => List.generate(n, (i) {
-  final status = pick(['open','in_progress','done']);
+  final status = pick(['open', 'in_progress', 'done']);
   return Job(
-    id: 'J${1000+i}',
-    title: '${pick(['Exterior','Interior','Fence'])} ${pick(['Paint','Repaint'])}',
+    id: 'J${1000 + i}',
+    title:
+        '${pick(['Exterior', 'Interior', 'Fence'])} ${pick(['Paint', 'Repaint'])}',
     address: '${100 + _rnd.nextInt(900)} ${pick(_streets)} St.',
     city: pick(_cities),
     assignee: pick(_names),
@@ -37,8 +61,11 @@ List<Job> fakeJobs(int n) => List.generate(n, (i) {
   );
 });
 
-class LineItem { String desc; int qty; double price;
-  LineItem(this.desc,this.qty,this.price);
+class LineItem {
+  String desc;
+  int qty;
+  double price;
+  LineItem(this.desc, this.qty, this.price);
   double get total => qty * price;
 }
 

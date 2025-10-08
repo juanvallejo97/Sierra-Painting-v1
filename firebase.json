@@ -1,89 +1,151 @@
-﻿{
-    "hosting":  {
-                    "site": "sierrapainting",
-                    "public":  "build/web",
-                    "ignore":  [
-                                   "firebase.json",
-                                   "**/.*",
-                                   "**/node_modules/**"
-                               ],
-                    "predeploy":  [
-                                      "npm run predeploy:web"
-                                  ],
-                    "rewrites":  [
-                                     {
-                                         "source":  "**",
-                                         "destination":  "/index.html"
-                                     }
-                                 ],
-                    "headers":  [
-                                    {
-                                        "source": "/index.html",
-                                        "headers": [
-                                          { "key": "Cache-Control", "value": "no-cache" }
-                                        ]
-                                    },
-                                    {
-                                        "source": "**/*.html",
-                                        "headers": [
-                                          { "key": "Cache-Control", "value": "no-cache" }
-                                        ]
-                                    },
-                                    {
-                                        "source": "**/*.js",
-                                        "headers": [
-                                          { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
-                                        ]
-                                    },
-                                    {
-                                        "source": "flutter_service_worker.js",
-                                        "headers": [
-                                          { "key": "Cache-Control", "value": "no-store" }
-                                        ]
-                                    },
-                                    {
-                                        "source":  "**",
-                                        "headers":  [
-                                                        {
-                                                            "key":  "X-Content-Type-Options",
-                                                            "value":  "nosniff"
-                                                        }
-                                                    ]
-                                    }
-                                ]
+{
+    "hosting": {
+        "site": "sierrapainting",
+        "public": "build/web",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ],
+        "headers": [
+            {
+                "source": "/index.html",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache"
+                    }
+                ]
+            },
+            {
+                "source": "**/*.html",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-cache"
+                    }
+                ]
+            },
+            {
+                "source": "**/*.js",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "public, max-age=0, must-revalidate"
+                    }
+                ]
+            },
+            {
+                "source": "flutter_service_worker.js",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "no-store"
+                    }
+                ]
+            },
+            {
+                "source": "**",
+                "headers": [
+                    {
+                        "key": "X-Content-Type-Options",
+                        "value": "nosniff"
+                    }
+                ]
+            }
+        ],
+        "remoteConfig": {
+            "killSwitchCrashlytics": true
+        }
+    },
+    "firestore": {
+        "rules": "firestore.rules",
+        "indexes": "firestore.indexes.json"
+    },
+    "storage": {
+        "rules": "storage.rules"
+    },
+    "functions": [
+        {
+            "source": "functions",
+            "codebase": "default",
+            "runtime": "nodejs20",
+            "predeploy": [
+                "npm run predeploy:functions"
+            ],
+            "ignore": [
+                "node_modules",
+                ".git",
+                "firebase-debug.log",
+                "firebase-debug.*.log",
+                "src/test"
+            ],
+            "endpoints": {
+                "api": {
+                    "region": "us-central1",
+                    "minInstances": 1,
+                    "concurrency": 80,
+                    "timeoutSeconds": 30,
+                    "memory": "512MiB"
                 },
-    "firestore":  {
-                      "rules":  "firestore.rules",
-                      "indexes":  "firestore.indexes.json"
-                  },
-    "storage":  {
-                    "rules":  "storage.rules"
+                "taskWorker": {
+                    "region": "us-central1",
+                    "minInstances": 0,
+                    "concurrency": 20,
+                    "timeoutSeconds": 60,
+                    "memory": "512MiB"
                 },
-    "functions":  [
-                      {
-                          "source":  "functions",
-                          "codebase":  "default",
-                          "runtime":  "nodejs20",
-                          "predeploy": [
-                              "npm run predeploy:functions"
-                          ],
-                          "ignore":  [
-                                         "node_modules",
-                                         ".git",
-                                         "firebase-debug.log",
-                                         "firebase-debug.*.log",
-                                         "src/test"
-                                     ]
-                      }
-                  ],
-    "emulators":  {
-                      "auth":  {
-                                   "host":  "127.0.0.1",
-                                   "port":  58547
-                               },
-                      "ui":  {
-                                 "port":  4401,
-                                 "enabled":  false
-                             }
-                  }
+                "warm": {
+                    "region": "us-central1",
+                    "minInstances": 0,
+                    "concurrency": 1,
+                    "timeoutSeconds": 10,
+                    "memory": "256MiB",
+                    "labels": {
+                        "purpose": "warmup"
+                    }
+                }
+            }
+        }
+    ],
+    "emulators": {
+        "auth": {
+            "host": "127.0.0.1",
+            "port": 58547
+        },
+        "ui": {
+            "port": 4401,
+            "enabled": false
+        },
+        "firestore": {
+            "port": 8080
+        }
+    },
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "to-do-app-ac602",
+                    "appId": "1:138777646966:android:36104ede7ac939a87e0c57",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "to-do-app-ac602",
+                    "configurations": {
+                        "android": "1:138777646966:android:36104ede7ac939a87e0c57",
+                        "ios": "1:138777646966:ios:eb8f44789bae81f27e0c57",
+                        "web": "1:138777646966:web:4d2b7855b2cb2b0c7e0c57"
+                    }
+                }
+            }
+        }
+    }
 }

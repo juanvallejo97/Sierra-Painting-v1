@@ -91,8 +91,8 @@ class FakeApiClient implements ApiClient {
   }) async {
     // Return a trivial success for tests; adjust if a specific flow is asserted.
     final responseData = <String, dynamic>{
-      "success": true,
-      "entryId": "test-entry-id",
+      'success': true,
+      'entryId': 'test-entry-id',
     };
     if (fromJson != null) {
       return Result.success(fromJson(responseData));

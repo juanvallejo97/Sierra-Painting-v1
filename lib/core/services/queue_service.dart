@@ -205,6 +205,6 @@ final queueServiceProvider = Provider<QueueService?>((ref) {
   return boxAsync.when(
     data: (box) => QueueService(box),
     loading: () => null,
-  error: (_, _) => null,
+    error: (_, _) => null,
   );
 });

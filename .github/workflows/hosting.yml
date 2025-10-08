@@ -1,0 +1,46 @@
+name: Web — Build & Firebase Hosting
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.5'
+          channel: 'stable'
+      - name: Flutter pub get
+        run: flutter pub get
+      - name: Build web (release)
+        run: flutter build web --release --web-renderer html
+      - name: Deploy to Firebase Hosting (preview on PR, live on main)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  preview-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.5'
+          channel: 'stable'
+      - run: flutter pub get
+      - run: flutter build web --release --web-renderer html
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+
+# Ensure secrets are properly configured in GitHub Actions
+# Replace FIREBASE_SERVICE_ACCOUNT and FIREBASE_PROJECT_ID with valid secrets in the GitHub repository settings.

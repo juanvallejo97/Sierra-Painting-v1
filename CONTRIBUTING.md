@@ -24,12 +24,29 @@ Thank you for your interest in contributing to Sierra Painting!
 
 ## Development Workflow
 
+### Branch, Commit, PR
+- Branch format: `feat/<scope>`, `fix/<scope>`, `chore/<scope>`
+- Conventional commits (enforced): `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`
+- PRs must pass CI (analyze + tests), and include the PR checklist.
+
+### Running tests locally (Windows-friendly)
+```powershell
+# Stable TEMP/TMP to avoid flutter_test_listener flake
+$env:TEMP='C:\tmp'; $env:TMP='C:\tmp'
+flutter clean; flutter pub get
+flutter analyze
+flutter test --concurrency=1 -r expanded
+```
+
 ### Code Style
 - Use **Conventional Commits** for commit messages
 - Follow the existing code style (enforced by `analysis_options.yaml`)
 - Always use package imports: `package:sierra_painting/...`
 - Add trailing commas for better formatting
 - Use single quotes for strings
+- `flutter format` + `flutter analyze`
+- Avoid `print`; use `debugPrint` or logging.
+- Keep mobile vs web scaffolds gated via `core/platform.dart`.
 
 ### Before Committing
 Run these commands to ensure code quality:
@@ -155,3 +172,11 @@ Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) in all interactions.
 ---
 
 Thank you for contributing to Sierra Painting! 🎨
+
+# Contributing
+
+- [ ] Run `flutter analyze` and ensure no errors/warnings
+- [ ] All tests pass (unit, integration, rules)
+- [ ] Rule tests green (no cross-user reads)
+- [ ] Link to relevant blueprint/issue in PR
+- [ ] Add runbook notes if new features or flows

@@ -13,6 +13,12 @@ import 'package:sierra_painting/main.dart' as app;
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  final originalOnError = FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    debugPrint('FlutterError caught: ${details.exceptionAsString()}');
+    originalOnError?.call(details);
+  };
+
   group('App Boot Smoke Tests', () {
     testWidgets('App launches and renders first frame', (tester) async {
       final startTime = DateTime.now();
@@ -43,4 +49,6 @@ void main() {
       debugPrint('✅ App started successfully in ${startupMs}ms');
     });
   });
+
+  FlutterError.onError = originalOnError;
 }

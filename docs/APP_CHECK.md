@@ -559,3 +559,8 @@ Monitor these metrics during rollout:
 - [App Attest](https://developer.apple.com/documentation/devicecheck/establishing_your_app_s_integrity)
 - [App Check with Cloud Functions](https://firebase.google.com/docs/app-check/cloud-functions)
 - [App Check Monitoring](https://firebase.google.com/docs/app-check/monitor-metrics)
+
+# App Check
+- Local dev/tests: APP_CHECK_ENFORCE=false (or Debug Provider if true).
+- Staging/Prod: APP_CHECK_ENFORCE=true + web RECAPTCHA_V3_KEY set.
+- For long-running tests, keep enforce=false or supply a DEBUG token.

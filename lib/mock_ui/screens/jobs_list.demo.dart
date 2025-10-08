@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../components/app_scaffold.dart';
-import '../components/states.dart';
-import '../demo_state.dart';
-import '../fakers.dart';
+import 'package:sierra_painting/mock_ui/components/app_scaffold.dart';
+import 'package:sierra_painting/mock_ui/components/states.dart';
+import 'package:sierra_painting/mock_ui/demo_state.dart';
+import 'package:sierra_painting/mock_ui/fakers.dart';
 
 class JobsListDemo extends StatefulWidget {
   const JobsListDemo({super.key});
-  @override State<JobsListDemo> createState() => _JobsListDemoState();
+  @override
+  State<JobsListDemo> createState() => _JobsListDemoState();
 }
 
 class _JobsListDemoState extends State<JobsListDemo> {
@@ -15,11 +16,22 @@ class _JobsListDemoState extends State<JobsListDemo> {
   @override
   Widget build(BuildContext context) {
     final c = DemoScope.of(context);
-    if (c.simulateLoading) return const AppScaffold(title: 'Jobs', body: LoadingView());
-    if (c.simulateError) return AppScaffold(title: 'Jobs', body: ErrorView('Network error', onRetry: () => c.setError(false)));
+    if (c.simulateLoading) {
+      return const AppScaffold(title: 'Jobs', body: LoadingView());
+    }
+    if (c.simulateError) {
+      return AppScaffold(
+        title: 'Jobs',
+        body: ErrorView('Network error', onRetry: () => c.setError(false)),
+      );
+    }
 
-    final jobs = fakeJobs(12).where((j) => filter == 'all' ? true : j.status == filter).toList();
-    if (jobs.isEmpty) return const AppScaffold(title: 'Jobs', body: EmptyView('No jobs yet'));
+    final jobs = fakeJobs(
+      12,
+    ).where((j) => filter == 'all' ? true : j.status == filter).toList();
+    if (jobs.isEmpty) {
+      return const AppScaffold(title: 'Jobs', body: EmptyView('No jobs yet'));
+    }
 
     return AppScaffold(
       title: 'Jobs',
@@ -46,14 +58,16 @@ class _JobsListDemoState extends State<JobsListDemo> {
                 return Card(
                   child: ListTile(
                     title: Text(j.title),
-                    subtitle: Text('${j.address}, ${j.city}\nAssigned to ${j.assignee}'),
+                    subtitle: Text(
+                      '${j.address}, ${j.city}\nAssigned to ${j.assignee}',
+                    ),
                     isThreeLine: true,
                     trailing: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Chip(label: Text(j.status.replaceAll('_', ' '))),
                         const SizedBox(height: 4),
-                        Text('Due ${j.dueAt.month}/${j.dueAt.day}')
+                        Text('Due ${j.dueAt.month}/${j.dueAt.day}'),
                       ],
                     ),
                   ),

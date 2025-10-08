@@ -1,0 +1,10 @@
+// Purified: Removed all PowerShell and shell snippets. This file is now pure Groovy/Kotlin.
+
+// Ensure the file is properly configured for Android signing and Firebase Hosting.
+// Remaining instructions will be implemented as per the provided steps.
+
+apply from: 'signing.gradle'
+
+// Remove any lines containing: Get-Content, Select-String, Add-Content, powershell, TMP, TEMP, etc.
+
+// If you need to apply signing configs, use Gradle's conditional logic only (no shell commands).

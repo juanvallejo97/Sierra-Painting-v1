@@ -1,0 +1,23 @@
+name: path-guard
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+jobs:
+  forbid-deprecated-web-paths:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fail if PR changes deprecated web folders
+        run: |
+          set -e
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.sha }}"
+          echo "Diffing $BASE_SHA...$HEAD_SHA"
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -E '^(web_react/|webapp/)'; then
+            echo "::error::Changes under deprecated web paths (web_react/ or webapp/) are not allowed. Use /web."
+            exit 1
+          fi
+          echo "✅ No changes in deprecated paths."

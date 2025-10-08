@@ -1,0 +1,8 @@
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-keep class com.google.firebase.** { *; }
+-keepattributes *Annotation*
+-dontwarn org.codehaus.mojo.animal_sniffer.**
+-dontwarn javax.annotation.**
+-dontwarn kotlin.**
+-optimizations !code/simplification/arithmetic

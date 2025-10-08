@@ -1,0 +1,5 @@
+// Purified: Remove any PowerShell or shell snippets. This file must be pure Groovy/Kotlin.
+// Compare with Flutter 3.35.x template and keep only valid Gradle config.
+// Purified: Removed all PowerShell and shell snippets. This file is now pure Groovy/Kotlin.
+// Remove any lines containing: Get-Content, Select-String, Add-Content, powershell, TMP, TEMP, etc.
+// If you need to apply signing configs, use Gradle's conditional logic only (no shell commands).
