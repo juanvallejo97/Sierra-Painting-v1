@@ -84,7 +84,12 @@ try {
   $branch = (git rev-parse --abbrev-ref HEAD).Trim()
   $msg = "chore(deploy): prod $(Get-Date -Format s) [branch:$branch]"
   Run "git add -A"
-  Run "git commit -m \"$msg\" --allow-empty"
+  # Use direct invocation so powershell handles argument quoting robustly
+  Write-Host "› git commit -m '$msg' --allow-empty" -ForegroundColor DarkGray
+  & git commit -m $msg --allow-empty
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "git commit returned exit code $LASTEXITCODE; continuing (no changes to commit)" -ForegroundColor Yellow
+  }
   Run "git push origin $branch"
 
   if ($DeleteBranch) {
