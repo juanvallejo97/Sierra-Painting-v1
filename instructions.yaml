@@ -1,275 +1,103 @@
 version: "1.0"
-name: "firestore_setup_and_hardening_suite"
-owner: "Sierra Painting — Engineering"
-description: >
-  Prescriptive, copy-pasteable YAML instructions to configure Cloud Firestore
-  for the Sierra Painting app: secure-by-default rules, seed indexes, emulator
-  tests, deployment order, and disaster-recovery guardrails.
-  # Ref master blueprint for program-wide governance :contentReference[oaicite:0]{index=0}
+playbook: "collab_batch_02_ci_teardown_smoke"
+owner: "Sierra Painting"
 
-env:
-  # Fill these with your actual Firebase project ids
-  dev: "to-do-app-ac602"
-  staging: "sierra-staging"
-  prod: "careful-sun-473614"
+cards:
 
-prechecks:
-  - "Login: firebase login"
-  - "Targeting: ensure .firebaserc has aliases: dev, staging, prod"
-  - "App Check: Enable enforcement for Web, Android, iOS (Project Settings → App Check → Firestore)"
-  - "Auth: Ensure sign-in providers enabled and test users exist"
-  - "CLI: npm i -g firebase-tools@latest && firebase --version"
-
-files:
-  - path: "firestore.rules"
-    intent: "Secure-by-default rules with company RBAC + per-document ownership"
-    replace_with: |
-      rules_version = '2';
-      service cloud.firestore {
-        match /databases/{database}/documents {
-
-          function isAuthed() {
-            return request.auth != null;
+  - id: jest-teardown-for-firestore-tests
+    why: "Fix 'worker failed to exit gracefully' by closing open handles."
+    create_or_update:
+      - path: "tests/rules/jest.setup.ts"
+        body: |
+          // Increase timeouts for emulator startup/cleanup
+          jest.setTimeout(30000);
+      - path: "tests/rules/jest.teardown.ts"
+        body: |
+          import { getApps, deleteApp } from "firebase/app";
+          // If you use rules-unit-testing's initializeTestEnvironment, prefer env.cleanup().
+          // This is a safety net to close any stray client apps.
+          export default async function globalTeardown() {
+            // Close any client apps still registered
+            await Promise.all(getApps().map(a => deleteApp(a)));
           }
+      - path: "tests/rules/jest.config.cjs"
+        body: |
+          module.exports = {
+            testEnvironment: "node",
+            setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
+            globalTeardown: "<rootDir>/jest.teardown.ts",
+            testMatch: ["**/?(*.)+(spec|test).[tj]s"],
+            // Keep reporters minimal in CI to reduce noise
+            reporters: ["default"]
+          };
+    edit:
+      - file: "package.json"
+        ops:
+          - ensure_json:
+              scripts:
+                test: "jest --runInBand --detectOpenHandles --forceExit"
+    accept:
+      - "Local `npm test` ends clean (no open-handle warning)"
+      - "CI rules job exits 0 without worker-exit message"
 
-          // Custom claims expected:
-          // - company_id: string
-          // - role: "admin" | "manager" | "worker"
-          function claimCompany() {
-            return request.auth.token.company_id;
-          }
-          function hasRole(r) {
-            return isAuthed() && request.auth.token.role in r;
-          }
+  - id: prefer-env-cleanup-if-using-test-environment
+    why: "rules-unit-testing provides its own cleanup"
+    note: "If tests use `initializeTestEnvironment`, ensure `await env.cleanup()` in `afterAll` of each suite or a shared helper."
+    accept:
+      - "All suites either call env.cleanup() or a shared afterAll does"
 
-          // Generic helpers for common document shapes
-          function ownsDoc() {
-            return isAuthed() && request.resource.data.ownerId == request.auth.uid;
-          }
-          function sameCompany(companyId) {
-            return isAuthed() && claimCompany() == companyId;
-          }
+  - id: explicit-staging-url
+    why: "Hosting site id may differ from project id — avoid false red/green."
+    edits:
+      - file: ".github/workflows/staging.yml"
+        ops:
+          - ensure_yaml_env:
+              STAGING_URL: "https://<YOUR-STAGING-SITE>.web.app"
+      - file: "scripts/smoke.mjs"
+        ops:
+          - replace_line_matching: "const site ="
+            with: "const site = process.env.SMOKE_URL || process.env.STAGING_URL;"
+    accept:
+      - "CI log shows SMOKE_URL resolved to expected domain"
+      - "Smoke fails correctly if wrong site is set"
 
-          // ===== Public collections (read-only) =====
-          match /public/{document=**} {
-            allow read: if true;
-            allow write: if false;
-          }
-
-          // ===== User profile documents =====
-          match /users/{uid} {
-            allow read:  if isAuthed() && (uid == request.auth.uid || hasRole(["admin","manager"]));
-            allow create: if isAuthed() && request.resource.data.uid == request.auth.uid;
-            allow update, delete: if isAuthed() && uid == request.auth.uid;
-          }
-
-          // ===== Company-scoped data =====
-          // Example paths:
-          // /companies/{companyId}/tasks/{doc}
-          // /companies/{companyId}/timeEntries/{doc}
-          // /companies/{companyId}/jobs/{doc}
-          match /companies/{companyId}/{collectionId}/{docId} {
-            // Read for same-company workers; writes are RBAC + ownership-aware
-            allow read: if sameCompany(companyId);
-
-            allow create: if sameCompany(companyId) && (
-              hasRole(["admin","manager"]) ||
-              (hasRole(["worker"]) && request.resource.data.ownerId == request.auth.uid)
-            );
-
-            allow update, delete: if sameCompany(companyId) && (
-              hasRole(["admin","manager"]) ||
-              (hasRole(["worker"]) &&
-                resource.data.ownerId == request.auth.uid &&
-                // Workers may not escalate sensitive fields:
-                request.resource.data.diff(resource.data).changedKeys().hasOnly([
-                  "title","notes","status","images","updatedAt","hours"
-                ])
-              )
-            );
-          }
-
-          // ===== Fallback deny =====
-          match /{document=**} {
-            allow read, write: if false;
-          }
+  - id: tougher-smoke
+    why: "Catch bad deploys even when 200 is returned."
+    patch:
+      file: "scripts/smoke.mjs"
+      replace_with: |
+        import fetch from "node-fetch";
+        const site = process.env.SMOKE_URL || process.env.STAGING_URL;
+        if (!site) throw new Error("SMOKE_URL/STAGING_URL not set");
+        const res = await fetch(site, { redirect: "follow" });
+        if (res.status < 200 || res.status >= 400) throw new Error(`Hosting not healthy: ${res.status}`);
+        const html = await res.text();
+        if (!html.includes("<title") && !html.includes("flutter")) {
+          throw new Error("Unexpected payload (app shell markers missing)");
         }
-      }
+        console.log("Hosting OK:", res.status);
+    accept:
+      - "Smoke step prints 'Hosting OK' and exits 0"
 
-  - path: "firestore.indexes.json"
-    intent: "Seed composite indexes for common queries (adjust as schema stabilizes)"
-    replace_with: |
-      {
-        "indexes": [
-          {
-            "collectionGroup": "tasks",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-              { "fieldPath": "companyId", "order": "ASCENDING" },
-              { "fieldPath": "status", "order": "ASCENDING" },
-              { "fieldPath": "createdAt", "order": "DESCENDING" }
-            ]
-          },
-          {
-            "collectionGroup": "tasks",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-              { "fieldPath": "companyId", "order": "ASCENDING" },
-              { "fieldPath": "assigneeId", "order": "ASCENDING" },
-              { "fieldPath": "dueAt", "order": "ASCENDING" }
-            ]
-          },
-          {
-            "collectionGroup": "timeEntries",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-              { "fieldPath": "companyId", "order": "ASCENDING" },
-              { "fieldPath": "userId", "order": "ASCENDING" },
-              { "fieldPath": "start", "order": "DESCENDING" }
-            ]
-          },
-          {
-            "collectionGroup": "jobs",
-            "queryScope": "COLLECTION_GROUP",
-            "fields": [
-              { "fieldPath": "companyId", "order": "ASCENDING" },
-              { "fieldPath": "city", "order": "ASCENDING" },
-              { "fieldPath": "createdAt", "order": "DESCENDING" }
-            ]
-          }
-        ],
-        "fieldOverrides": [
-          {
-            "collectionGroup": "tasks",
-            "fieldPath": "search",
-            "indexes": [
-              { "arrayConfig": "CONTAINS" }
-            ]
-          }
-        ]
-      }
+  - id: mirror-cleanup-policy-to-release
+    why: "Keep all deploy entrypoints non-interactive."
+    edits:
+      - file: ".github/workflows/release.yml"
+        ops:
+          - insert_after_step_named: "Setup Firebase CLI"
+            body: |
+              - name: Ensure Functions artifacts cleanup policy
+                run: |
+                  firebase functions:artifacts:setpolicy --keep=50 --age=14d --force --project ${{ env.FB_PROJECT }}
+                  firebase functions:artifacts:getpolicy --project ${{ env.FB_PROJECT }}
+    accept:
+      - "Release workflow prints policy and deploys without prompt"
 
-  - path: "tests/rules/firestore.rules.spec.ts"
-    intent: "Minimal emulator tests to gate common paths (run in CI)"
-    replace_with: |
-      import { initializeTestEnvironment, assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
-      import { readFileSync } from "fs";
-      import { setDoc, doc, getDoc } from "firebase/firestore";
-
-      const rules = readFileSync("firestore.rules", "utf8");
-
-      describe("Firestore rules", () => {
-        let env: any;
-        beforeAll(async () => {
-          env = await initializeTestEnvironment({
-            projectId: "demo-sierra",
-            firestore: { rules }
-          });
-        });
-        afterAll(async () => await env.cleanup());
-
-        test("worker can read same-company task but not other-company", async () => {
-          const worker = env.authenticatedContext("u_worker", { role: "worker", company_id: "c1" });
-          const admin  = env.authenticatedContext("u_admin",  { role: "admin",  company_id: "c1" });
-          const dbA = admin.firestore();
-          await setDoc(doc(dbA, "companies/c1/tasks/t1"), { companyId: "c1", ownerId: "u_worker", status: "open", createdAt: 0 });
-
-          const dbW = worker.firestore();
-          await assertSucceeds(getDoc(doc(dbW, "companies/c1/tasks/t1")));
-          await assertFails(getDoc(doc(dbW, "companies/c2/tasks/tX")));
-        });
-      });
-
-  - path: ".github/workflows/firestore.yml"
-    intent: "CI gate: rule tests + dry-run deploy"
-    replace_with: |
-      name: firestore
-      on:
-        pull_request:
-          paths:
-            - "firestore.rules"
-            - "firestore.indexes.json"
-            - "tests/rules/**"
-        push:
-          branches: [ main ]
-          paths:
-            - "firestore.rules"
-            - "firestore.indexes.json"
-            - "tests/rules/**"
-      jobs:
-        test:
-          runs-on: ubuntu-latest
-          steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with: { node-version: "20" }
-            - run: npm i -D @firebase/rules-unit-testing firebase @types/jest ts-node typescript jest
-            - run: npx jest --config jest.config.js
-        deploy:
-          if: github.ref == 'refs/heads/main'
-          needs: test
-          runs-on: ubuntu-latest
-          steps:
-            - uses: actions/checkout@v4
-            - uses: w9jds/firebase-action@v13.23.1
-              with:
-                args: deploy --only firestore:rules,firestore:indexes --project ${{ secrets.FIREBASE_PROJECT }}
-              env:
-                FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
-
-commands:
-  emulator:
-    - "firebase emulators:start --only firestore --import ./.emulator-data --export-on-exit"
-  deploy_dev:
-    - "firebase use dev"
-    - "firebase deploy --only firestore:rules,firestore:indexes"
-  deploy_staging:
-    - "firebase use staging"
-    - "firebase deploy --only firestore:rules,firestore:indexes"
-  deploy_prod:
-    - "firebase use prod"
-    - "firebase deploy --only firestore:rules,firestore:indexes"
-
-disaster_recovery:
-  point_in_time_recovery:
-    action: "Enable in Console → Firestore → Disaster Recovery → Point-in-time recovery"
-    notes: "Keeps 7 days of history; toggle per database"
-  scheduled_backups:
-    action: "Enable in Console → Firestore → Disaster Recovery → Scheduled backups"
-    schedule: "Daily backups; weekly retention ≥ 4"
-    target_bucket: "gs://<YOUR_BACKUP_BUCKET>"
-  export_script_gcloud:
-    # Optional CLI-driven backup (if you prefer infra-as-code)
-    - "gcloud firestore export gs://<YOUR_BACKUP_BUCKET>/firestore-$(date +%F) --project=${FIREBASE_PROJECT}"
-  verification:
-    - "Restore drill quarterly: import a backup into a separate project and run smoke reads"
-
-operational_policies:
-  data_model_expectations:
-    - "All company data lives under /companies/{companyId}/…"
-    - "Docs include: companyId, ownerId, createdAt, updatedAt"
-    - "Sensitive free-text fields (notes, addresses) sanitized client-side; consider field-level encryption for PII"
-  access_model:
-    - "Assign custom claims (company_id, role) via Admin SDK upon invite"
-    - "Only admins/managers can write cross-owner docs; workers can write their own"
-  logging_and_monitoring:
-    - "Create Firestore usage alerts for read/write spikes"
-    - "Enable BigQuery export for Firestore (optional) for analytics"
-    - "Set budget alerts in Cloud Billing for prod + staging"
-
-acceptance_criteria:
-  - "All reads/writes from unauthenticated clients are denied"
-  - "A worker can read company docs, write only owned docs, and cannot alter protected fields"
-  - "Admin/manager can create/update/delete any company doc"
-  - "Emulator tests pass locally and in CI"
-  - "Deploy runs clean; Console shows required composite indexes without build-time errors"
-  - "PITR enabled and daily scheduled backups configured with at least 4 weekly retention points"
-
-rollbacks:
-  - "If rules deploy breaks clients, immediately: firebase deploy --only firestore:rules --project <env> --force with last known-good rules file"
-  - "If data corruption occurs, use PITR to restore to a safe timestamp, or load scheduled backup into a new database and backfill via script"
-
-notes:
-  - "Adjust index set as query patterns stabilize; Console will suggest missing ones during dev"
-  - "Keep rules small and readable—promote complex checks into document fields (e.g., role, ownerId)"
-  - "Enforce App Check on Firestore and Functions for stronger abuse protection"
+  - id: PR-open-and-validate
+    why: "Run everything in real CI."
+    run:
+      - git: "create branch chore/ci-batch-02"
+      - commit: "Add Jest teardown, stricter smoke, explicit STAGING_URL, mirror cleanup policy"
+      - push_pr: "Open PR 'CI: close open handles + tougher smoke + explicit staging url'"
+    accept:
+      - "PR checks pass: rules tests clean, smoke passes, no interactive prompts"

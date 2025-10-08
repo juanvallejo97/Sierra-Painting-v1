@@ -12,6 +12,8 @@ env:
   NODE_VERSION: '20'
   JAVA_VERSION: '17'
   FIREBASE_PROJECT_STAGING: 'sierra-painting-staging'
+  # Explicit hosting site URL (set your staging hosting site here if it differs from project id)
+  STAGING_URL: 'https://<YOUR-STAGING-SITE>.web.app'
 
 jobs:
   setup:

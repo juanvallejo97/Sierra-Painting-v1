@@ -144,6 +144,11 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools@13.23.1
 
+      - name: Ensure Functions artifacts cleanup policy
+        run: |
+          firebase functions:artifacts:setpolicy --keep=50 --age=14d --force --project ${{ env.FIREBASE_PROJECT_PROD }} || true
+          firebase functions:artifacts:getpolicy --project ${{ env.FIREBASE_PROJECT_PROD }} || true
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
