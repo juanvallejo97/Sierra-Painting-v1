@@ -25,12 +25,7 @@ void main() {
 
     test('Authenticated routes are defined', () {
       // Routes that require authentication
-      final authenticatedRoutes = [
-        '/timeclock',
-        '/invoices',
-        '/estimates',
-        '/admin',
-      ];
+      final authenticatedRoutes = ['/timeclock', '/invoices', '/estimates', '/admin'];
 
       expect(authenticatedRoutes.length, greaterThan(0));
       expect(authenticatedRoutes, contains('/timeclock'));
@@ -46,40 +41,22 @@ void main() {
     });
 
     test('All routes follow naming conventions', () {
-      final allRoutes = [
-        '/login',
-        '/timeclock',
-        '/invoices',
-        '/estimates',
-        '/admin',
-      ];
+      final allRoutes = ['/login', '/timeclock', '/invoices', '/estimates', '/admin'];
 
       // Routes should start with /
       for (final route in allRoutes) {
-        expect(
-          route.startsWith('/'),
-          isTrue,
-          reason: 'Route $route should start with /',
-        );
+        expect(route.startsWith('/'), isTrue, reason: 'Route $route should start with /');
       }
 
       // Routes should be lowercase
       for (final route in allRoutes) {
-        expect(
-          route,
-          equals(route.toLowerCase()),
-          reason: 'Route $route should be lowercase',
-        );
+        expect(route, equals(route.toLowerCase()), reason: 'Route $route should be lowercase');
       }
 
       // Routes should not end with /
       for (final route in allRoutes) {
         if (route != '/') {
-          expect(
-            route.endsWith('/'),
-            isFalse,
-            reason: 'Route $route should not end with /',
-          );
+          expect(route.endsWith('/'), isFalse, reason: 'Route $route should not end with /');
         }
       }
     });
@@ -104,11 +81,7 @@ void main() {
       // Verify path parameter syntax
       for (final route in deepLinkRoutes) {
         final hasPathParam = route.contains(':');
-        expect(
-          hasPathParam,
-          isTrue,
-          reason: 'Deep link route $route should have path parameter',
-        );
+        expect(hasPathParam, isTrue, reason: 'Deep link route $route should have path parameter');
       }
     });
   });
@@ -117,12 +90,7 @@ void main() {
     test('Unauthenticated users redirect to login', () {
       // This would be tested in integration tests with actual navigation
       // Here we document the expected behavior
-      final protectedRoutes = [
-        '/timeclock',
-        '/invoices',
-        '/estimates',
-        '/admin',
-      ];
+      final protectedRoutes = ['/timeclock', '/invoices', '/estimates', '/admin'];
 
       for (final route in protectedRoutes) {
         expect(route, isNotEmpty);

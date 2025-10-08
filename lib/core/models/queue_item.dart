@@ -63,6 +63,5 @@ class QueueItem extends HiveObject {
 
   Map<String, dynamic> toJson() => _$QueueItemToJson(this);
 
-  factory QueueItem.fromJson(Map<String, dynamic> json) =>
-      _$QueueItemFromJson(json);
+  factory QueueItem.fromJson(Map<String, dynamic> json) => _$QueueItemFromJson(json);
 }

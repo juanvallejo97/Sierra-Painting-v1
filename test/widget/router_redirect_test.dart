@@ -45,7 +45,7 @@ void main() {
 
     await tester.pumpAndSettle();
 
-  // Timeclock screen's body contains a welcome text; assert it's present.
-  expect(find.byKey(const Key('welcomeText')), findsOneWidget);
+    // Timeclock screen's body contains a welcome text; assert it's present.
+    expect(find.byKey(const Key('welcomeText')), findsOneWidget);
   });
 }

@@ -19,8 +19,7 @@ import 'package:sierra_painting/core/services/haptic_service.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final messenger =
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   messenger.setMockMethodCallHandler(
     SystemChannels.platform,
     (call) async => call.method.startsWith('HapticFeedback') ? null : null,
@@ -175,12 +174,7 @@ void main() {
   group('HapticService Usage Guidelines', () {
     test('Light haptic is for minor interactions', () {
       // Use cases documented:
-      final lightUseCases = [
-        'Button taps',
-        'Navigation',
-        'Form field focus',
-        'Minor UI interactions',
-      ];
+      final lightUseCases = ['Button taps', 'Navigation', 'Form field focus', 'Minor UI interactions'];
 
       expect(lightUseCases.length, equals(4));
     });
@@ -200,12 +194,7 @@ void main() {
 
     test('Heavy haptic is for errors and warnings', () {
       // Use cases documented:
-      final heavyUseCases = [
-        'Errors',
-        'Warnings',
-        'Critical alerts',
-        'Failed operations',
-      ];
+      final heavyUseCases = ['Errors', 'Warnings', 'Critical alerts', 'Failed operations'];
 
       expect(heavyUseCases.length, equals(4));
     });

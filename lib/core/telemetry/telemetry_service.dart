@@ -80,12 +80,7 @@ class TelemetryService {
   }
 
   /// Log an error with context
-  void logError(
-    dynamic error, {
-    StackTrace? stackTrace,
-    Map<String, dynamic>? context,
-    String? requestId,
-  }) {
+  void logError(dynamic error, {StackTrace? stackTrace, Map<String, dynamic>? context, String? requestId}) {
     final effectiveRequestId = requestId ?? _currentRequestId;
     final enrichedContext = {
       ...?context,
@@ -121,9 +116,7 @@ class TelemetryService {
     return () {
       final duration = DateTime.now().difference(startTime);
       if (kDebugMode) {
-        debugPrint(
-          '[Telemetry] Trace: $name took ${duration.inMilliseconds}ms',
-        );
+        debugPrint('[Telemetry] Trace: $name took ${duration.inMilliseconds}ms');
       }
       // TODO: Send to Firebase Performance Monitoring
     };

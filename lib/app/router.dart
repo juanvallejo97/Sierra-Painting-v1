@@ -27,13 +27,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && isLoginRoute) return '/timeclock';
       return null;
     },
-    errorBuilder: (context, state) =>
-        ErrorScreen(error: state.error, path: state.uri.toString()),
+    errorBuilder: (context, state) => ErrorScreen(error: state.error, path: state.uri.toString()),
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/timeclock', builder: (context, state) => const TimeclockScreen()),
-  GoRoute(path: '/estimates', builder: (context, state) => const EstimatesScreen()),
-  GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
+      GoRoute(path: '/estimates', builder: (context, state) => const EstimatesScreen()),
+      GoRoute(path: '/jobs', builder: (context, state) => const JobsScreen()),
       GoRoute(path: '/invoices', builder: (context, state) => const InvoicesScreen()),
       GoRoute(
         path: '/admin',

@@ -9,33 +9,15 @@ class AppSkeleton extends StatelessWidget {
   final double height;
   final BorderRadius? borderRadius;
 
-  const AppSkeleton({
-    super.key,
-    this.width,
-    this.height = 16,
-    this.borderRadius,
-  });
+  const AppSkeleton({super.key, this.width, this.height = 16, this.borderRadius});
 
-  const AppSkeleton.card({
-    super.key,
-    this.width = double.infinity,
-    this.height = 120,
-  }) : borderRadius = const BorderRadius.all(
-         Radius.circular(DesignTokens.radiusLG),
-       );
+  const AppSkeleton.card({super.key, this.width = double.infinity, this.height = 120})
+    : borderRadius = const BorderRadius.all(Radius.circular(DesignTokens.radiusLG));
 
-  const AppSkeleton.text({
-    super.key,
-    this.width = double.infinity,
-    this.height = 16,
-  }) : borderRadius = const BorderRadius.all(
-         Radius.circular(DesignTokens.radiusSM),
-       );
+  const AppSkeleton.text({super.key, this.width = double.infinity, this.height = 16})
+    : borderRadius = const BorderRadius.all(Radius.circular(DesignTokens.radiusSM));
 
-  const AppSkeleton.circle({super.key, required double size})
-    : width = size,
-      height = size,
-      borderRadius = null;
+  const AppSkeleton.circle({super.key, required double size}) : width = size, height = size, borderRadius = null;
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +30,7 @@ class AppSkeleton extends StatelessWidget {
         color: colorScheme.surfaceContainerHighest,
         borderRadius:
             borderRadius ??
-            (width == height
-                ? BorderRadius.circular(width! / 2)
-                : BorderRadius.circular(DesignTokens.radiusSM)),
+            (width == height ? BorderRadius.circular(width! / 2) : BorderRadius.circular(DesignTokens.radiusSM)),
       ),
     );
   }

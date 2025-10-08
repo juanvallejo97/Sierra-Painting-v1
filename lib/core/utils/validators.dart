@@ -23,9 +23,7 @@ class Validators {
       return 'Email is required';
     }
 
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
@@ -232,9 +230,7 @@ class Validators {
   ///   Validators.email,
   /// ]),
   /// ```
-  static String? Function(String?) combine(
-    List<String? Function(String?)> validators,
-  ) {
+  static String? Function(String?) combine(List<String? Function(String?)> validators) {
     return (value) {
       for (final validator in validators) {
         final error = validator(value);

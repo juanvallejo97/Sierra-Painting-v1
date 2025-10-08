@@ -35,10 +35,7 @@ class TimeclockBody extends StatelessWidget {
   const TimeclockBody({super.key});
   @override
   Widget build(BuildContext context) {
-    final String userEmail =
-        'User'; // TODO: wire to provider; keep null-safe default
-    return Center(
-      child: Text('Welcome, $userEmail', key: const Key('welcomeText')),
-    );
+    final String userEmail = 'User'; // TODO: wire to provider; keep null-safe default
+    return Center(child: Text('Welcome, $userEmail', key: const Key('welcomeText')));
   }
 }

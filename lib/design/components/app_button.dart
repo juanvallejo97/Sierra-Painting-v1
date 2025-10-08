@@ -23,11 +23,7 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget child = isLoading
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
+        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
         : icon != null
         ? Row(
             mainAxisSize: MainAxisSize.min,
@@ -41,20 +37,11 @@ class AppButton extends StatelessWidget {
 
     switch (variant) {
       case ButtonVariant.filled:
-        return FilledButton(
-          onPressed: isLoading ? null : onPressed,
-          child: child,
-        );
+        return FilledButton(onPressed: isLoading ? null : onPressed, child: child);
       case ButtonVariant.outlined:
-        return OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          child: child,
-        );
+        return OutlinedButton(onPressed: isLoading ? null : onPressed, child: child);
       case ButtonVariant.text:
-        return TextButton(
-          onPressed: isLoading ? null : onPressed,
-          child: child,
-        );
+        return TextButton(onPressed: isLoading ? null : onPressed, child: child);
     }
   }
 }

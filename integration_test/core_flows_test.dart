@@ -130,9 +130,7 @@ void main() {
   });
 
   group('Offline Sync Flow', () {
-    testWidgets('Pending operations sync when connectivity restored', (
-      tester,
-    ) async {
+    testWidgets('Pending operations sync when connectivity restored', (tester) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle();
@@ -242,9 +240,7 @@ void main() {
   });
 
   group('Accessibility Flow', () {
-    testWidgets('All interactive elements have semantic labels', (
-      tester,
-    ) async {
+    testWidgets('All interactive elements have semantic labels', (tester) async {
       // Start the app
       app.main();
       await tester.pumpAndSettle();

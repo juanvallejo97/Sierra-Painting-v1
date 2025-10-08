@@ -31,11 +31,7 @@ void main() {
       final hasMaterialApp = find.byType(MaterialApp).evaluate().isNotEmpty;
       final hasScaffold = find.byType(Scaffold).evaluate().isNotEmpty;
 
-      expect(
-        hasMaterialApp || hasScaffold,
-        true,
-        reason: 'App should have rendered basic UI',
-      );
+      expect(hasMaterialApp || hasScaffold, true, reason: 'App should have rendered basic UI');
 
       // Budget: 3000ms for CI environment
       expect(startupMs, lessThan(3000), reason: 'App startup exceeds budget');

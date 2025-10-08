@@ -27,11 +27,7 @@ class PerformanceOverlay extends StatefulWidget {
   final Widget child;
   final bool enabled;
 
-  const PerformanceOverlay({
-    super.key,
-    required this.child,
-    this.enabled = kDebugMode,
-  });
+  const PerformanceOverlay({super.key, required this.child, this.enabled = kDebugMode});
 
   @override
   State<PerformanceOverlay> createState() => _PerformanceOverlayState();
@@ -72,8 +68,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
       }
 
       _frameCount++;
-      _averageFrameTime =
-          _frameTimes.reduce((a, b) => a + b) / _frameTimes.length;
+      _averageFrameTime = _frameTimes.reduce((a, b) => a + b) / _frameTimes.length;
       _maxFrameTime = _frameTimes.reduce((a, b) => a > b ? a : b);
     }
 
@@ -111,11 +106,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
                 children: [
                   const Text(
                     '⚡ Performance',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -124,18 +115,12 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
                       Container(
                         width: 8,
                         height: 8,
-                        decoration: BoxDecoration(
-                          color: _getFrameColor(),
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: _getFrameColor(), shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${_averageFrameTime.toStringAsFixed(1)}ms avg',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ],
                   ),
@@ -147,10 +132,7 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
                     'FPS: ${(1000 / _averageFrameTime).toStringAsFixed(0)}',
                     style: const TextStyle(color: Colors.white70, fontSize: 10),
                   ),
-                  Text(
-                    'Frames: $_frameCount',
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
+                  Text('Frames: $_frameCount', style: const TextStyle(color: Colors.white70, fontSize: 10)),
                 ],
               ),
             ),
@@ -173,10 +155,6 @@ class DebugPerformanceBanner extends StatelessWidget {
       return child;
     }
 
-    return Banner(
-      message: 'DEBUG',
-      location: BannerLocation.topEnd,
-      child: child,
-    );
+    return Banner(message: 'DEBUG', location: BannerLocation.topEnd, child: child);
   }
 }

@@ -1,0 +1,320 @@
+version: "1.0"
+name: "A1_frontend_auth_screens_and_logic"
+intent: "Create modern email/password auth screens with friendly validation and routing"
+owner: "frontend"
+inputs:
+  branch: "feat/auth-foundation-day1"
+tasks:
+  - id: A1_01_auth_controller
+    action: "Add AuthController wrapper for FirebaseAuth"
+    patches:
+      - path: "lib/features/auth/logic/auth_controller.dart"
+        create: true
+        lang: "dart"
+        content: |
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:firebase_auth/firebase_auth.dart';
+
+          final authControllerProvider = Provider<AuthController>((ref) {
+            return AuthController(FirebaseAuth.instance);
+          });
+
+          class AuthController {
+            final FirebaseAuth _auth;
+            AuthController(this._auth);
+
+            Future<UserCredential> signUp({required String email, required String password}) =>
+              _auth.createUserWithEmailAndPassword(email: email, password: password);
+
+            Future<UserCredential> signIn({required String email, required String password}) =>
+              _auth.signInWithEmailAndPassword(email: email, password: password);
+
+            Future<void> sendPasswordReset(String email) =>
+              _auth.sendPasswordResetEmail(email: email);
+
+            Stream<User?> authState() => _auth.authStateChanges();
+          }
+  - id: A1_02_signup_screen
+    action: "Create SignUp screen with live validation + friendly errors"
+    patches:
+      - path: "lib/features/auth/view/signup_screen.dart"
+        create: true
+        lang: "dart"
+        content: |
+          import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import '../logic/auth_controller.dart';
+
+          class SignUpScreen extends ConsumerStatefulWidget {
+            const SignUpScreen({super.key});
+            @override ConsumerState<SignUpScreen> createState() => _S();
+          }
+
+          class _S extends ConsumerState<SignUpScreen> {
+            final _form = GlobalKey<FormState>();
+            final _email = TextEditingController();
+            final _pw = TextEditingController();
+            bool _busy = false;
+
+            @override void dispose(){ _email.dispose(); _pw.dispose(); super.dispose(); }
+
+            String? _emailV(String? v){
+              if(v==null||v.isEmpty) return 'Email required';
+              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+              if(!re.hasMatch(v)) return 'Please enter a valid email address';
+              return null;
+            }
+            String? _pwV(String? v){
+              if(v==null||v.length<8) return 'Your password is too weak. Please choose a stronger password.';
+              return null;
+            }
+
+            Future<void> _submit() async {
+              if(!_form.currentState!.validate()) return;
+              setState(()=>_busy=true);
+              final auth = ref.read(authControllerProvider);
+              try {
+                await auth.signUp(email: _email.text.trim(), password: _pw.text);
+                if(!mounted) return;
+                Navigator.of(context).pushReplacementNamed('/dashboard');
+              } catch (e) {
+                final txt = e.toString().contains('email-already-in-use')
+                  ? 'An account with this email already exists'
+                  : e.toString().toLowerCase().contains('network')
+                    ? 'Network error. Please try again later.'
+                    : 'Sign up failed. Please try again.';
+                if(!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(txt)));
+              } finally {
+                if(mounted) setState(()=>_busy=false);
+              }
+            }
+
+            @override
+            Widget build(BuildContext c){
+              return Scaffold(
+                resizeToAvoidBottomInset: true,
+                appBar: AppBar(title: const Text('Create account')),
+                body: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Form(
+                        key: _form,
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          TextFormField(
+                            controller: _email,
+                            decoration: const InputDecoration(labelText: 'Email'),
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.email],
+                            validator: _emailV,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _pw,
+                            decoration: const InputDecoration(labelText: 'Password'),
+                            obscureText: true,
+                            validator: _pwV,
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: _busy ? null : _submit,
+                              child: _busy
+                                ? const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2))
+                                : const Text('Create Account'),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: ()=>Navigator.pushReplacementNamed(context,'/login'),
+                            child: const Text('Have an account? Log in'),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+  - id: A1_03_login_screen
+    action: "Create Login screen (friendly errors, navigation to dashboard)"
+    patches:
+      - path: "lib/features/auth/view/login_screen.dart"
+        create: true
+        lang: "dart"
+        content: |
+          import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import '../logic/auth_controller.dart';
+
+          class LoginScreen extends ConsumerStatefulWidget {
+            const LoginScreen({super.key});
+            @override ConsumerState<LoginScreen> createState() => _S();
+          }
+
+          class _S extends ConsumerState<LoginScreen> {
+            final _form = GlobalKey<FormState>();
+            final _email = TextEditingController();
+            final _pw = TextEditingController();
+            bool _busy=false;
+
+            @override void dispose(){ _email.dispose(); _pw.dispose(); super.dispose(); }
+
+            String? _emailV(String? v){
+              if(v==null||v.isEmpty) return 'Email required';
+              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+              if(!re.hasMatch(v)) return 'Please enter a valid email address';
+              return null;
+            }
+
+            Future<void> _submit() async {
+              if(!_form.currentState!.validate()) return;
+              setState(()=>_busy=true);
+              final auth = ref.read(authControllerProvider);
+              try{
+                await auth.signIn(email:_email.text.trim(), password:_pw.text);
+                if(!mounted) return;
+                Navigator.of(context).pushReplacementNamed('/dashboard');
+              } catch(e){
+                final s = e.toString().toLowerCase();
+                final msg = s.contains('user-not-found') || s.contains('wrong-password')
+                  ? 'Email or password is incorrect'
+                  : s.contains('network')
+                    ? 'Network error. Please try again later.'
+                    : 'Login failed. Please try again.';
+                if(!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+              } finally { if(mounted) setState(()=>_busy=false); }
+            }
+
+            @override
+            Widget build(BuildContext c){
+              return Scaffold(
+                appBar: AppBar(title: const Text('Log in')),
+                body: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Form(
+                        key: _form,
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          TextFormField(controller:_email, decoration: const InputDecoration(labelText:'Email'), validator:_emailV, keyboardType: TextInputType.emailAddress),
+                          const SizedBox(height:12),
+                          TextFormField(controller:_pw, decoration: const InputDecoration(labelText:'Password'), obscureText:true, validator:(v)=> (v==null||v.isEmpty)?'Password required':null),
+                          const SizedBox(height:20),
+                          SizedBox(width:double.infinity, child: FilledButton(onPressed:_busy?null:_submit, child:_busy?const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2)):const Text('Log In'))),
+                          TextButton(onPressed: ()=>Navigator.pushNamed(context,'/forgot'), child: const Text('Forgot password?')),
+                          TextButton(onPressed: ()=>Navigator.pushReplacementNamed(context,'/signup'), child: const Text('Create account')),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+  - id: A1_04_forgot_password
+    action: "Create Forgot Password screen"
+    patches:
+      - path: "lib/features/auth/view/forgot_password_screen.dart"
+        create: true
+        lang: "dart"
+        content: |
+          import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import '../logic/auth_controller.dart';
+
+          class ForgotPasswordScreen extends ConsumerStatefulWidget {
+            const ForgotPasswordScreen({super.key});
+            @override ConsumerState<ForgotPasswordScreen> createState()=>_S();
+          }
+
+          class _S extends ConsumerState<ForgotPasswordScreen> {
+            final _form = GlobalKey<FormState>();
+            final _email = TextEditingController();
+            bool _busy=false;
+
+            @override void dispose(){ _email.dispose(); super.dispose(); }
+
+            String? _emailV(String? v){
+              if(v==null||v.isEmpty) return 'Email required';
+              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+              if(!re.hasMatch(v)) return 'Please enter a valid email address';
+              return null;
+            }
+
+            Future<void> _submit() async {
+              if(!_form.currentState!.validate()) return;
+              setState(()=>_busy=true);
+              try{
+                await ref.read(authControllerProvider).sendPasswordReset(_email.text.trim());
+                if(!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset email sent')));
+                Navigator.pop(context);
+              } catch(e){
+                if(!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send reset email')));
+              } finally { if(mounted) setState(()=>_busy=false); }
+            }
+
+            @override
+            Widget build(BuildContext c){
+              return Scaffold(
+                appBar: AppBar(title: const Text('Reset password')),
+                body: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key:_form,
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      TextFormField(controller:_email, decoration: const InputDecoration(labelText:'Email'), validator:_emailV, keyboardType: TextInputType.emailAddress),
+                      const SizedBox(height:16),
+                      FilledButton(onPressed:_busy?null:_submit, child:_busy?const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2)):const Text('Send reset link')),
+                    ]),
+                  ),
+                ),
+              );
+            }
+          }
+  - id: A1_05_router
+    action: "Wire routes to new screens"
+    patches:
+      - path: "lib/router.dart"
+        create_if_missing: true
+        lang: "dart"
+        content: |
+          import 'package:flutter/material.dart';
+          import 'features/auth/view/signup_screen.dart';
+          import 'features/auth/view/login_screen.dart';
+          import 'features/auth/view/forgot_password_screen.dart';
+
+          // TODO: replace with your real dashboard widget
+          class DashboardScreen extends StatelessWidget {
+            const DashboardScreen({super.key});
+            @override Widget build(BuildContext c)=> const Scaffold(body: Center(child: Text('Dashboard')));}
+          
+          Route<dynamic>? onGenerateRoute(RouteSettings s){
+            switch (s.name) {
+              case '/signup': return MaterialPageRoute(builder:(_)=>const SignUpScreen());
+              case '/login': return MaterialPageRoute(builder:(_)=>const LoginScreen());
+              case '/forgot': return MaterialPageRoute(builder:(_)=>const ForgotPasswordScreen());
+              case '/dashboard': return MaterialPageRoute(builder:(_)=>const DashboardScreen());
+            }
+            return null;
+          }
+    acceptance:
+      - "Build succeeds on web + mobile"
+      - "Forms validate inputs and show friendly messages within 1s"
+      - "Successful sign-up/login navigates to /dashboard"
+      - "Forgot password sends email and returns to login"
+    run:
+      - "flutter pub get"
+      - "flutter analyze"
+      - "flutter run -d chrome"
+outputs:
+  - "lib/features/auth/logic/auth_controller.dart"
+  - "lib/features/auth/view/{signup_screen.dart,login_screen.dart,forgot_password_screen.dart}"
+  - "lib/router.dart"

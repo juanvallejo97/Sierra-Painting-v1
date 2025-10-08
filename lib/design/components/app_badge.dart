@@ -43,16 +43,11 @@ class AppBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final effectiveBackgroundColor =
-        backgroundColor ?? _getDefaultBackgroundColor(colorScheme);
-    final effectiveForegroundColor =
-        foregroundColor ?? _getDefaultForegroundColor(colorScheme);
+    final effectiveBackgroundColor = backgroundColor ?? _getDefaultBackgroundColor(colorScheme);
+    final effectiveForegroundColor = foregroundColor ?? _getDefaultForegroundColor(colorScheme);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: DesignTokens.spaceMD,
-        vertical: DesignTokens.spaceXS,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMD, vertical: DesignTokens.spaceXS),
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
@@ -66,11 +61,7 @@ class AppBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: effectiveForegroundColor,
-            ),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: effectiveForegroundColor),
           ),
         ],
       ),

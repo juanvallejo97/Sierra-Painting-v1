@@ -30,8 +30,7 @@ class FeatureFlagService {
   static const String markPaidEnabled = 'feature_c3_mark_paid_enabled';
 
   // V4 Features (optional)
-  static const String stripeCheckoutEnabled =
-      'feature_c5_stripe_checkout_enabled';
+  static const String stripeCheckoutEnabled = 'feature_c5_stripe_checkout_enabled';
 
   // Operational flags
   static const String offlineModeEnabled = 'offline_mode_enabled';
@@ -64,10 +63,7 @@ class FeatureFlagService {
 
       // Set fetch timeout and cache expiration
       await instance._remoteConfig!.setConfigSettings(
-        RemoteConfigSettings(
-          fetchTimeout: const Duration(minutes: 1),
-          minimumFetchInterval: const Duration(hours: 1),
-        ),
+        RemoteConfigSettings(fetchTimeout: const Duration(minutes: 1), minimumFetchInterval: const Duration(hours: 1)),
       );
 
       // Fetch and activate

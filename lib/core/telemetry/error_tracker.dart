@@ -43,14 +43,8 @@ class ErrorContext {
   final String? action;
   final Map<String, dynamic> extra;
 
-  ErrorContext({
-    this.userId,
-    this.orgId,
-    this.requestId,
-    this.screen,
-    this.action,
-    Map<String, dynamic>? extra,
-  }) : extra = extra ?? {};
+  ErrorContext({this.userId, this.orgId, this.requestId, this.screen, this.action, Map<String, dynamic>? extra})
+    : extra = extra ?? {};
 
   Map<String, dynamic> toMap() {
     return {
@@ -76,16 +70,10 @@ class ErrorTracker {
 
   /// Set global user context
   void setUserContext({String? userId, String? orgId, String? email}) {
-    _globalContext = ErrorContext(
-      userId: userId,
-      orgId: orgId,
-      extra: {if (email != null) 'email': email},
-    );
+    _globalContext = ErrorContext(userId: userId, orgId: orgId, extra: {if (email != null) 'email': email});
 
     if (kDebugMode) {
-      debugPrint(
-        '[ErrorTracker] User context set: userId=$userId, orgId=$orgId',
-      );
+      debugPrint('[ErrorTracker] User context set: userId=$userId, orgId=$orgId');
     }
     // TODO: Set user context in Firebase Crashlytics
   }
@@ -128,11 +116,7 @@ class ErrorTracker {
   }
 
   /// Record a message
-  static void recordMessage(
-    String message, {
-    ErrorSeverity severity = ErrorSeverity.info,
-    ErrorContext? context,
-  }) {
+  static void recordMessage(String message, {ErrorSeverity severity = ErrorSeverity.info, ErrorContext? context}) {
     final instance = ErrorTracker();
     final mergedContext = _mergeContexts(instance._globalContext, context);
 

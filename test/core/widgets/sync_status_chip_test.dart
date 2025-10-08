@@ -3,10 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sierra_painting/core/models/sync_status.dart' as models;
 import 'package:sierra_painting/core/widgets/sync_status_chip.dart';
 
-Future<void> _pumpWithMaterial(
-  WidgetTester tester, {
-  required Widget child,
-}) async {
+Future<void> _pumpWithMaterial(WidgetTester tester, {required Widget child}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(body: Center(child: child)),
@@ -21,10 +18,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
-          key: chipKey,
-          status: models.SyncStatus.synced,
-        ),
+        child: const SyncStatusChip(key: chipKey, status: models.SyncStatus.synced),
       );
 
       expect(find.byKey(chipKey), findsOneWidget);
@@ -36,10 +30,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
-          key: chipKey,
-          status: models.SyncStatus.pending,
-        ),
+        child: const SyncStatusChip(key: chipKey, status: models.SyncStatus.pending),
       );
 
       expect(find.byKey(chipKey), findsOneWidget);
@@ -51,10 +42,7 @@ void main() {
 
       await _pumpWithMaterial(
         tester,
-        child: const SyncStatusChip(
-          key: chipKey,
-          status: models.SyncStatus.failed,
-        ),
+        child: const SyncStatusChip(key: chipKey, status: models.SyncStatus.failed),
       );
 
       expect(find.byKey(chipKey), findsOneWidget);

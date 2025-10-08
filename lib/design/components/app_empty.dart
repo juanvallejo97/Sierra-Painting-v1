@@ -31,34 +31,22 @@ class AppEmpty extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 120,
-              color: theme.colorScheme.primary.withValues(alpha: 0.3),
-            ),
+            Icon(icon, size: 120, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
             const SizedBox(height: DesignTokens.spaceLG),
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: DesignTokens.spaceSM),
             Text(
               description,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: DesignTokens.spaceXL),
-              AppButton(
-                label: actionLabel!,
-                icon: Icons.add,
-                onPressed: onAction,
-              ),
+              AppButton(label: actionLabel!, icon: Icons.add, onPressed: onAction),
             ],
           ],
         ),

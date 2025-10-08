@@ -35,11 +35,7 @@ void main() {
     });
 
     test('ApiError toString includes requestId', () {
-      final error = ApiError(
-        type: ApiErrorType.network,
-        message: 'Network error',
-        requestId: 'req_456',
-      );
+      final error = ApiError(type: ApiErrorType.network, message: 'Network error', requestId: 'req_456');
 
       expect(error.toString(), contains('req_456'));
       expect(error.toString(), contains('Network error'));

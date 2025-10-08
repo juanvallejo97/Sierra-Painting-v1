@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'debug_drawer.dart';
+import 'package:sierra_painting/mock_ui/components/debug_drawer.dart';
 
 class AppScaffold extends StatelessWidget {
   final String title;
@@ -11,10 +11,18 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: [
-        ...?actions,
-        IconButton(icon: const Icon(Icons.tune), tooltip: 'Debug', onPressed: () => Scaffold.of(context).openEndDrawer()),
-      ], bottom: bottom),
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          ...?actions,
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: 'Debug',
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+        ],
+        bottom: bottom,
+      ),
       endDrawer: const DebugDrawer(),
       body: body,
     );

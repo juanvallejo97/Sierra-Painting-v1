@@ -46,22 +46,14 @@ class _AdminBody extends StatelessWidget {
           children: [
             const Icon(Icons.admin_panel_settings, size: 100),
             const SizedBox(height: DesignTokens.spaceLG),
-            Text(
-              'Admin Panel',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Admin Panel', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: DesignTokens.spaceSM),
             Text(
               'RBAC Protected',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(height: DesignTokens.spaceXL),
-            const Text(
-              'Admin features coming soon...',
-              textAlign: TextAlign.center,
-            ),
+            const Text('Admin features coming soon...', textAlign: TextAlign.center),
           ],
         ),
       ),

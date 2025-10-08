@@ -26,9 +26,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('Smoke Tests', () {
-    testWidgets('App launches and renders first frame within budget', (
-      tester,
-    ) async {
+    testWidgets('App launches and renders first frame within budget', (tester) async {
       // Start timing
       final startTime = DateTime.now();
 
@@ -51,18 +49,10 @@ void main() {
       debugPrint('✅ App started in ${startupMs}ms (budget: ${budgetMs}ms)');
 
       // Verify we can find some UI element (app has rendered)
-      expect(
-        find.byType(MaterialApp),
-        findsOneWidget,
-        reason: 'App should render MaterialApp',
-      );
+      expect(find.byType(MaterialApp), findsOneWidget, reason: 'App should render MaterialApp');
 
       // Verify startup is within budget
-      expect(
-        startupMs,
-        lessThan(budgetMs),
-        reason: 'App startup time exceeds budget',
-      );
+      expect(startupMs, lessThan(budgetMs), reason: 'App startup time exceeds budget');
 
       // Export metrics for artifact
       await _exportMetric('app_startup_ms', startupMs);
@@ -76,8 +66,7 @@ void main() {
 
       // Verify app is running (has a Scaffold or MaterialApp)
       expect(
-        find.byType(MaterialApp).evaluate().isNotEmpty ||
-            find.byType(Scaffold).evaluate().isNotEmpty,
+        find.byType(MaterialApp).evaluate().isNotEmpty || find.byType(Scaffold).evaluate().isNotEmpty,
         true,
         reason: 'App should have rendered basic UI',
       );
@@ -103,8 +92,7 @@ void main() {
 
       // The key success is that the app didn't crash
       expect(
-        find.byType(MaterialApp).evaluate().isNotEmpty ||
-            find.byType(Scaffold).evaluate().isNotEmpty,
+        find.byType(MaterialApp).evaluate().isNotEmpty || find.byType(Scaffold).evaluate().isNotEmpty,
         true,
         reason: 'App should still be running after navigation attempt',
       );
@@ -125,11 +113,7 @@ void main() {
 
       // Frame time should be < 16ms (60fps) but we allow 100ms in CI
       const frameBudgetMs = 100;
-      expect(
-        frameTimeMs,
-        lessThan(frameBudgetMs),
-        reason: 'Frame rendering time exceeds budget',
-      );
+      expect(frameTimeMs, lessThan(frameBudgetMs), reason: 'Frame rendering time exceeds budget');
 
       await _exportMetric('frame_time_ms', frameTimeMs);
     });

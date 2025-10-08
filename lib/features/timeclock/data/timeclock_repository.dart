@@ -32,12 +32,7 @@ class ClockInRequest {
   final String clientId;
   final GeoPoint? geo;
 
-  ClockInRequest({
-    required this.jobId,
-    required this.at,
-    required this.clientId,
-    this.geo,
-  });
+  ClockInRequest({required this.jobId, required this.at, required this.clientId, this.geo});
 
   Map<String, dynamic> toJson() {
     return {
@@ -57,10 +52,7 @@ class ClockInResponse {
   ClockInResponse({required this.success, required this.entryId});
 
   factory ClockInResponse.fromJson(Map<String, dynamic> json) {
-    return ClockInResponse(
-      success: (json['success'] as bool?) ?? false,
-      entryId: json['entryId'] as String,
-    );
+    return ClockInResponse(success: (json['success'] as bool?) ?? false, entryId: json['entryId'] as String);
   }
 }
 
@@ -77,31 +69,19 @@ class TimeclockRepository {
   /// Maximum pagination limit
   static const int maxLimit = 100;
 
-  TimeclockRepository({
-    required ApiClient apiClient,
-    required FirebaseFirestore firestore,
-    QueueService? queueService,
-  }) : _apiClient = apiClient,
-       _firestore = firestore,
-       _queueService = queueService;
+  TimeclockRepository({required ApiClient apiClient, required FirebaseFirestore firestore, QueueService? queueService})
+    : _apiClient = apiClient,
+      _firestore = firestore,
+      _queueService = queueService;
 
   /// Clock in to a job
   ///
   /// Handles both online and offline scenarios:
   /// - Online: Calls Cloud Function directly
   /// - Offline: Queues operation for later sync
-  Future<Result<ClockInResponse, String>> clockIn({
-    required String jobId,
-    GeoPoint? geo,
-    bool? isOnline,
-  }) async {
+  Future<Result<ClockInResponse, String>> clockIn({required String jobId, GeoPoint? geo, bool? isOnline}) async {
     final clientId = _uuid.v4();
-    final request = ClockInRequest(
-      jobId: jobId,
-      at: DateTime.now(),
-      clientId: clientId,
-      geo: geo,
-    );
+    final request = ClockInRequest(jobId: jobId, at: DateTime.now(), clientId: clientId, geo: geo);
 
     // Check if online
     final online = isOnline ?? true; // TODO: Add network connectivity check
@@ -160,30 +140,20 @@ class TimeclockRepository {
   }) async {
     try {
       // Enforce pagination limits
-      final effectiveLimit = limit != null
-          ? (limit > maxLimit ? maxLimit : limit)
-          : defaultLimit;
+      final effectiveLimit = limit != null ? (limit > maxLimit ? maxLimit : limit) : defaultLimit;
 
-      Query query = _firestore
-          .collectionGroup('timeEntries')
-          .where('userId', isEqualTo: userId);
+      Query query = _firestore.collectionGroup('timeEntries').where('userId', isEqualTo: userId);
 
       if (jobId != null) {
         query = query.where('jobId', isEqualTo: jobId);
       }
 
       if (startDate != null) {
-        query = query.where(
-          'clockIn',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startDate),
-        );
+        query = query.where('clockIn', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
 
       if (endDate != null) {
-        query = query.where(
-          'clockIn',
-          isLessThanOrEqualTo: Timestamp.fromDate(endDate),
-        );
+        query = query.where('clockIn', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
       query = query.orderBy('clockIn', descending: true);
@@ -197,9 +167,7 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries = snapshot.docs
-          .map((doc) => TimeEntry.fromFirestore(doc))
-          .toList();
+      final entries = snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
 
       return Result.success(entries);
     } catch (e) {
@@ -208,29 +176,19 @@ class TimeclockRepository {
   }
 
   /// Get today's time entries for a user
-  Future<Result<List<TimeEntry>, String>> getTodayEntries({
-    required String userId,
-  }) async {
+  Future<Result<List<TimeEntry>, String>> getTodayEntries({required String userId}) async {
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    return getTimeEntries(
-      userId: userId,
-      startDate: startOfDay,
-      endDate: endOfDay,
-    );
+    return getTimeEntries(userId: userId, startDate: startOfDay, endDate: endOfDay);
   }
 
   /// Get active (open) time entries for a user
   ///
   /// PERFORMANCE: Limited to prevent unbounded queries.
   /// Active entries should be rare (typically 0-1 per user).
-  Future<Result<List<TimeEntry>, String>> getActiveEntries({
-    required String userId,
-    String? jobId,
-    int? limit,
-  }) async {
+  Future<Result<List<TimeEntry>, String>> getActiveEntries({required String userId, String? jobId, int? limit}) async {
     try {
       // Limit active entries query (typically returns 0-1)
       final effectiveLimit = limit ?? 10;
@@ -246,9 +204,7 @@ class TimeclockRepository {
       }
 
       final snapshot = await query.get();
-      final entries = snapshot.docs
-          .map((doc) => TimeEntry.fromFirestore(doc))
-          .toList();
+      final entries = snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
 
       return Result.success(entries);
     } catch (e) {
@@ -274,8 +230,7 @@ class TimeclockRepository {
       case ApiErrorType.resourceExhausted:
         return 'Too many requests. Please try again later.';
       case ApiErrorType.failedPrecondition:
-        return error
-            .message; // Use specific message (e.g., "Already clocked in")
+        return error.message; // Use specific message (e.g., "Already clocked in")
       case ApiErrorType.internal:
         return 'Server error. Please try again.';
       case ApiErrorType.unknown:
@@ -290,9 +245,5 @@ final timeclockRepositoryProvider = Provider<TimeclockRepository>((ref) {
   final firestore = ref.watch(firestoreProvider);
   final queueService = ref.watch(queueServiceProvider);
 
-  return TimeclockRepository(
-    apiClient: apiClient,
-    firestore: firestore,
-    queueService: queueService,
-  );
+  return TimeclockRepository(apiClient: apiClient, firestore: firestore, queueService: queueService);
 });

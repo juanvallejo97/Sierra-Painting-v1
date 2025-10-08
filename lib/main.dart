@@ -34,7 +34,9 @@ Future<void> _initializeApp() async {
   // Load .env variables (don't crash if missing on web)
   try {
     await dotenv.load(fileName: envFile);
-    try { jsb.consoleLog('_initializeApp: dotenv loaded ($envFile)'); } catch (_) {}
+    try {
+      jsb.consoleLog('_initializeApp: dotenv loaded ($envFile)');
+    } catch (_) {}
     // Quick diagnostics (no secret values):
     try {
       final hasEnable = dotenv.env.containsKey('ENABLE_APP_CHECK');
@@ -47,40 +49,47 @@ Future<void> _initializeApp() async {
     if (kIsWeb) {
       try {
         await dotenv.load(fileName: '.env.public');
-        try { jsb.consoleWarn('_initializeApp: public.env missing; loaded .env.public fallback'); } catch (_) {}
+        try {
+          jsb.consoleWarn('_initializeApp: public.env missing; loaded .env.public fallback');
+        } catch (_) {}
       } catch (_) {
         try {
           await dotenv.load(fileName: '.env');
-          try { jsb.consoleWarn('_initializeApp: public env missing; loaded .env fallback'); } catch (_) {}
+          try {
+            jsb.consoleWarn('_initializeApp: public env missing; loaded .env fallback');
+          } catch (_) {}
         } catch (e2) {
           // ignore: avoid_print
           print('dotenv load failed: $e2');
-          try { jsb.consoleError('_initializeApp: dotenv load failed: $e2'); } catch (_) {}
+          try {
+            jsb.consoleError('_initializeApp: dotenv load failed: $e2');
+          } catch (_) {}
         }
       }
     } else {
       // ignore: avoid_print
       print('dotenv load failed: $e');
-      try { jsb.consoleError('_initializeApp: dotenv load failed: $e'); } catch (_) {}
+      try {
+        jsb.consoleError('_initializeApp: dotenv load failed: $e');
+      } catch (_) {}
     }
   }
 
   // Begin guarded initialization
   try {
     // Initialize Firebase
-    try { jsb.consoleLog('_initializeApp: calling Firebase.initializeApp'); } catch (_) {}
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    try { jsb.consoleLog('_initializeApp: Firebase.initializeApp succeeded'); } catch (_) {}
+    try {
+      jsb.consoleLog('_initializeApp: calling Firebase.initializeApp');
+    } catch (_) {}
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    try {
+      jsb.consoleLog('_initializeApp: Firebase.initializeApp succeeded');
+    } catch (_) {}
 
     // Setup Crashlytics
-    final crashlyticsEnabled =
-        dotenv.env['CRASHLYTICS_ENABLED']?.toLowerCase() == 'true';
+    final crashlyticsEnabled = dotenv.env['CRASHLYTICS_ENABLED']?.toLowerCase() == 'true';
     if (!kIsWeb) {
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-        kReleaseMode || crashlyticsEnabled,
-      );
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(kReleaseMode || crashlyticsEnabled);
 
       FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
@@ -93,7 +102,9 @@ Future<void> _initializeApp() async {
     // Expose readiness signal earlier so the page can detect successful Firebase
     // initialization even if later steps (e.g., App Check) fail.
     if (kIsWeb) {
-      try { jsb.setGlobalFlag('flutterReady', true); } catch (_) {}
+      try {
+        jsb.setGlobalFlag('flutterReady', true);
+      } catch (_) {}
     }
 
     // Start Firebase Performance trace after Firebase has been initialized
@@ -107,12 +118,13 @@ Future<void> _initializeApp() async {
     } catch (e) {
       // ignore: avoid_print
       print('Firebase Performance init failed: $e');
-      try { jsb.consoleError('_initializeApp: perf init failed: $e'); } catch (_) {}
+      try {
+        jsb.consoleError('_initializeApp: perf init failed: $e');
+      } catch (_) {}
     }
 
     // Enable App Check (Play Integrity / App Attest / reCAPTCHA)
-    final appCheckEnabled =
-        dotenv.env['ENABLE_APP_CHECK']?.toLowerCase() == 'true';
+    final appCheckEnabled = dotenv.env['ENABLE_APP_CHECK']?.toLowerCase() == 'true';
 
     if (appCheckEnabled || kReleaseMode) {
       if (kIsWeb) {
@@ -132,20 +144,28 @@ Future<void> _initializeApp() async {
         }
 
         runtimeSiteKey = sanitizeKey(runtimeSiteKey);
-        try { jsb.consoleLog('App Check: runtimeSiteKey empty? ${runtimeSiteKey.isEmpty}'); } catch (_) {}
+        try {
+          jsb.consoleLog('App Check: runtimeSiteKey empty? ${runtimeSiteKey.isEmpty}');
+        } catch (_) {}
 
         if (runtimeSiteKey.isNotEmpty) {
-          try { jsb.consoleLog('App Check: attempting activation on web. runtimeSiteKey present: ${runtimeSiteKey.isNotEmpty}'); } catch (_) {}
           try {
-            await FirebaseAppCheck.instance.activate(
-              providerWeb: ReCaptchaV3Provider(runtimeSiteKey),
+            jsb.consoleLog(
+              'App Check: attempting activation on web. runtimeSiteKey present: ${runtimeSiteKey.isNotEmpty}',
             );
-            try { jsb.consoleLog('App Check: activation succeeded on web'); } catch (_) {}
+          } catch (_) {}
+          try {
+            await FirebaseAppCheck.instance.activate(providerWeb: ReCaptchaV3Provider(runtimeSiteKey));
+            try {
+              jsb.consoleLog('App Check: activation succeeded on web');
+            } catch (_) {}
           } catch (e) {
             // Don't let App Check activation crash the app; log and continue.
             // ignore: avoid_print
             print('App Check activation failed: $e');
-            try { jsb.consoleError('App Check activation failed: $e'); } catch (_) {}
+            try {
+              jsb.consoleError('App Check activation failed: $e');
+            } catch (_) {}
           }
         } else {
           // No site key available; skip activation on web to avoid runtime
@@ -155,12 +175,8 @@ Future<void> _initializeApp() async {
         }
       } else {
         await FirebaseAppCheck.instance.activate(
-          androidProvider: kReleaseMode
-              ? AndroidProvider.playIntegrity
-              : AndroidProvider.debug,
-          appleProvider: kReleaseMode
-              ? AppleProvider.appAttest
-              : AppleProvider.debug,
+          androidProvider: kReleaseMode ? AndroidProvider.playIntegrity : AndroidProvider.debug,
+          appleProvider: kReleaseMode ? AppleProvider.appAttest : AppleProvider.debug,
         );
       }
     }
@@ -173,18 +189,24 @@ Future<void> _initializeApp() async {
     // Flutter app initialized correctly. This is helpful when debugging blank
     // screens caused by runtime initialization failures.
     if (kIsWeb) {
-      try { jsb.setGlobalFlag('flutterReady', true); } catch (_) {}
+      try {
+        jsb.setGlobalFlag('flutterReady', true);
+      } catch (_) {}
     }
 
     // Stop startup trace after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try { await startupTrace?.stop(); } catch (_) {}
+      try {
+        await startupTrace?.stop();
+      } catch (_) {}
     });
   } catch (e, st) {
     try {
       await FirebaseCrashlytics.instance.recordError(e, st, fatal: true);
     } catch (_) {}
-    try { jsb.consoleError('_initializeApp failed: $e'); } catch (_) {}
+    try {
+      jsb.consoleError('_initializeApp failed: $e');
+    } catch (_) {}
     // Do not rethrow; allow page overlay/diagnostics to continue.
   }
 }
@@ -197,11 +219,7 @@ void main() {
     },
     (error, stack) async {
       try {
-        await FirebaseCrashlytics.instance.recordError(
-          error,
-          stack,
-          fatal: true,
-        );
+        await FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       } catch (_) {}
     },
   );

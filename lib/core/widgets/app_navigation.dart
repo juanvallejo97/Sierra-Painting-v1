@@ -23,37 +23,15 @@ class NavigationItem {
   final String label;
   final bool adminOnly;
 
-  const NavigationItem({
-    required this.route,
-    required this.icon,
-    required this.label,
-    this.adminOnly = false,
-  });
+  const NavigationItem({required this.route, required this.icon, required this.label, this.adminOnly = false});
 }
 
 /// Navigation items list (const for performance)
 const List<NavigationItem> _navigationItems = [
-  NavigationItem(
-    route: '/timeclock',
-    icon: Icons.access_time,
-    label: 'Time Clock',
-  ),
-  NavigationItem(
-    route: '/estimates',
-    icon: Icons.request_quote,
-    label: 'Estimates',
-  ),
-  NavigationItem(
-    route: '/invoices',
-    icon: Icons.receipt_long,
-    label: 'Invoices',
-  ),
-  NavigationItem(
-    route: '/admin',
-    icon: Icons.admin_panel_settings,
-    label: 'Admin',
-    adminOnly: true,
-  ),
+  NavigationItem(route: '/timeclock', icon: Icons.access_time, label: 'Time Clock'),
+  NavigationItem(route: '/estimates', icon: Icons.request_quote, label: 'Estimates'),
+  NavigationItem(route: '/invoices', icon: Icons.receipt_long, label: 'Invoices'),
+  NavigationItem(route: '/admin', icon: Icons.admin_panel_settings, label: 'Admin', adminOnly: true),
 ];
 
 /// App Navigation Bar
@@ -68,14 +46,10 @@ class AppNavigationBar extends ConsumerWidget {
     final hapticService = ref.read(hapticServiceProvider);
 
     // Filter items based on admin status
-    final visibleItems = _navigationItems
-        .where((item) => !item.adminOnly || isAdmin)
-        .toList();
+    final visibleItems = _navigationItems.where((item) => !item.adminOnly || isAdmin).toList();
 
     // Find current index
-    final currentIndex = visibleItems.indexWhere(
-      (item) => currentRoute.startsWith(item.route),
-    );
+    final currentIndex = visibleItems.indexWhere((item) => currentRoute.startsWith(item.route));
 
     return BottomNavigationBar(
       currentIndex: currentIndex >= 0 ? currentIndex : 0,
@@ -87,14 +61,7 @@ class AppNavigationBar extends ConsumerWidget {
         context.go(route);
       },
       type: BottomNavigationBarType.fixed,
-      items: visibleItems
-          .map(
-            (item) => BottomNavigationBarItem(
-              icon: Icon(item.icon),
-              label: item.label,
-            ),
-          )
-          .toList(),
+      items: visibleItems.map((item) => BottomNavigationBarItem(icon: Icon(item.icon), label: item.label)).toList(),
     );
   }
 }
@@ -113,28 +80,16 @@ class AppDrawer extends ConsumerWidget {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const Icon(Icons.format_paint, size: 48, color: Colors.white),
                 const SizedBox(height: 8),
-                Text(
-                  'Sierra Painting',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(color: Colors.white),
-                ),
+                Text('Sierra Painting', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
                 if (user?.email != null)
-                  Text(
-                    user!.email!,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                  ),
+                  Text(user!.email!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
               ],
             ),
           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../components/app_scaffold.dart';
+import 'package:sierra_painting/mock_ui/components/app_scaffold.dart';
 
 class PlaygroundHome extends StatelessWidget {
   const PlaygroundHome({super.key});
@@ -20,24 +20,31 @@ class PlaygroundHome extends StatelessWidget {
       title: 'Playground',
       body: GridView.count(
         padding: const EdgeInsets.all(16),
-        crossAxisCount: MediaQuery.of(context).size.width > 1000 ? 4 : (MediaQuery.of(context).size.width > 700 ? 3 : 2),
+        crossAxisCount: MediaQuery.of(context).size.width > 1000
+            ? 4
+            : (MediaQuery.of(context).size.width > 700 ? 3 : 2),
         children: [
           for (final d in demos)
             Card(
               child: InkWell(
                 onTap: () => Navigator.of(context).pushNamed(d.route),
                 child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(d.icon, size: 40),
-                    const SizedBox(height: 8),
-                    Text(d.title),
-                  ]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [Icon(d.icon, size: 40), const SizedBox(height: 8), Text(d.title)],
+                  ),
                 ),
               ),
-            )
+            ),
         ],
       ),
     );
   }
 }
-class _Demo { final String title; final IconData icon; final String route; _Demo(this.title, this.icon, this.route); }
+
+class _Demo {
+  final String title;
+  final IconData icon;
+  final String route;
+  _Demo(this.title, this.icon, this.route);
+}
