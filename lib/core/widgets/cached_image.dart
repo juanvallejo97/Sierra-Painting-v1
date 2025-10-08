@@ -97,7 +97,10 @@ class CachedImage extends StatelessWidget {
     );
 
     if (borderRadius != null) {
-      return ClipRRect(borderRadius: BorderRadius.circular(borderRadius!), child: widget);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius!),
+        child: widget,
+      );
     }
 
     return widget;
@@ -137,8 +140,10 @@ class CachedCircleImage extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          placeholder: (context, url) => Icon(errorIcon, size: radius, color: Colors.grey[600]),
-          errorWidget: (context, url, error) => Icon(errorIcon, size: radius, color: Colors.grey[600]),
+          placeholder: (context, url) =>
+              Icon(errorIcon, size: radius, color: Colors.grey[600]),
+          errorWidget: (context, url, error) =>
+              Icon(errorIcon, size: radius, color: Colors.grey[600]),
           // Optimize for small avatars
           memCacheWidth: (radius * 2 * 2).toInt(), // 2x for retina
           memCacheHeight: (radius * 2 * 2).toInt(),
@@ -183,7 +188,8 @@ class CachedBackgroundImage extends StatelessWidget {
               imageUrl: imageUrl,
               fit: fit,
               placeholder: (context, url) => Container(color: Colors.grey[200]),
-              errorWidget: (context, url, error) => Container(color: Colors.grey[300]),
+              errorWidget: (context, url, error) =>
+                  Container(color: Colors.grey[300]),
             ),
           ),
         ),

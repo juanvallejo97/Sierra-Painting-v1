@@ -1,0 +1,30 @@
+// Purified: Remove any PowerShell or shell snippets. This file must be pure Groovy/Kotlin.
+// Compare with Flutter 3.35.x template and keep only valid Gradle config.
+
+buildscript {
+    ext {
+        // Flutter version
+        flutterVersion = '3.35.0'
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+// Note: If you need to apply signing configs, use Gradle's conditional logic only (no shell commands).

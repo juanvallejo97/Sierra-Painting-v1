@@ -13,7 +13,10 @@ class AppShellTheme {
   static ThemeData dark() {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent, brightness: Brightness.dark),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.blueAccent,
+        brightness: Brightness.dark,
+      ),
     );
   }
 }

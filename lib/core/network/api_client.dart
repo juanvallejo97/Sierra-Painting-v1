@@ -68,10 +68,17 @@ class ApiError {
   final String? functionName;
   final dynamic originalError;
 
-  ApiError({required this.type, required this.message, this.requestId, this.functionName, this.originalError});
+  ApiError({
+    required this.type,
+    required this.message,
+    this.requestId,
+    this.functionName,
+    this.originalError,
+  });
 
   @override
-  String toString() => 'ApiError($type): $message ${requestId != null ? "(requestId: $requestId)" : ""}';
+  String toString() =>
+      'ApiError($type): $message ${requestId != null ? "(requestId: $requestId)" : ""}';
 }
 
 /// API Client for Cloud Functions
@@ -79,7 +86,8 @@ class ApiClient {
   final cf.FirebaseFunctions _functions;
   final Uuid _uuid = const Uuid();
 
-  ApiClient({cf.FirebaseFunctions? functions}) : _functions = functions ?? cf.FirebaseFunctions.instance;
+  ApiClient({cf.FirebaseFunctions? functions})
+    : _functions = functions ?? cf.FirebaseFunctions.instance;
 
   /// Call a Cloud Function with timeout, retry, and requestId
   Future<core.Result<T, ApiError>> call<T>({
@@ -129,7 +137,9 @@ class ApiClient {
       } on cf.FirebaseFunctionsException catch (e) {
         // Do not retry client errors (4xx)
         if (!_shouldRetry(e)) {
-          return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
+          return core.Result.failure(
+            _mapFirebaseError(e, requestId, functionName),
+          );
         }
 
         if (attempt < effectiveMaxRetries) {
@@ -137,7 +147,9 @@ class ApiClient {
           continue;
         }
 
-        return core.Result.failure(_mapFirebaseError(e, requestId, functionName));
+        return core.Result.failure(
+          _mapFirebaseError(e, requestId, functionName),
+        );
       } catch (e) {
         if (attempt < effectiveMaxRetries) {
           await _delay(attempt);
@@ -196,7 +208,10 @@ class ApiClient {
     final baseDelay = ApiConfig.initialRetryDelay.inMilliseconds;
     final exponentialDelay = baseDelay * (1 << attempt); // 2^attempt
     final jitter = (exponentialDelay * 0.1).toInt(); // 10% jitter
-    final delayMs = (exponentialDelay + jitter).clamp(0, ApiConfig.maxRetryDelay.inMilliseconds);
+    final delayMs = (exponentialDelay + jitter).clamp(
+      0,
+      ApiConfig.maxRetryDelay.inMilliseconds,
+    );
 
     await Future<void>.delayed(Duration(milliseconds: delayMs));
   }
@@ -217,7 +232,11 @@ class ApiClient {
   }
 
   /// Map Firebase error to ApiError
-  ApiError _mapFirebaseError(cf.FirebaseFunctionsException e, String requestId, String functionName) {
+  ApiError _mapFirebaseError(
+    cf.FirebaseFunctionsException e,
+    String requestId,
+    String functionName,
+  ) {
     final type = _errorTypeFromCode(e.code);
     return ApiError(
       type: type,

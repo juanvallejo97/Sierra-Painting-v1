@@ -34,7 +34,11 @@ class DemoController extends ChangeNotifier {
 }
 
 class DemoScope extends InheritedNotifier<DemoController> {
-  const DemoScope({super.key, required DemoController controller, required super.child}) : super(notifier: controller);
+  const DemoScope({
+    super.key,
+    required DemoController controller,
+    required super.child,
+  }) : super(notifier: controller);
 
   static DemoController of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<DemoScope>();

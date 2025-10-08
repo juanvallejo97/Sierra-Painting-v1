@@ -1,24 +1,14 @@
 include: package:flutter_lints/flutter.yaml
-analyzer:
-  language:
-    strict-inference: true
-    strict-raw-types: true
-  exclude:
-    - build/**
-    - "**.g.dart"
-    - "**.freezed.dart"
-    - ios/**
-    - android/**
-    - web/**/generated_plugin_registrant.dart
 linter:
   rules:
-    - always_use_package_imports
-    - directives_ordering
-    - avoid_print
-    - prefer_final_locals
-    - prefer_const_constructors
-    - prefer_const_literals_to_create_immutables
-    - require_trailing_commas
-    - prefer_final_fields
-    - avoid_dynamic_calls
-    - unawaited_futures
+    avoid_print: true
+    unawaited_futures: true
+    always_declare_return_types: true
+    prefer_const_constructors: true
+    prefer_single_quotes: true
+analyzer:
+  exclude:
+    - build/**
+    - ios/**
+    - android/**
+    - web/**

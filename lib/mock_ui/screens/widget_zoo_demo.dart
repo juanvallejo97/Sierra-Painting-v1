@@ -22,7 +22,15 @@ class WidgetZooDemo extends StatelessWidget {
             Tab(text: 'Motion/FX'),
           ],
         ),
-        body: TabBarView(children: [_TypographyTab(), _ControlsTab(), _DataTab(), _LayoutTab(), _MotionFxTab()]),
+        body: TabBarView(
+          children: [
+            _TypographyTab(),
+            _ControlsTab(),
+            _DataTab(),
+            _LayoutTab(),
+            _MotionFxTab(),
+          ],
+        ),
       ),
     );
   }
@@ -37,12 +45,24 @@ class _TypographyTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('Display Large', style: t.displayLarge?.copyWith(letterSpacing: 1)),
-        Text('Display Medium', style: t.displayMedium?.copyWith(fontWeight: FontWeight.w300)),
+        Text(
+          'Display Large',
+          style: t.displayLarge?.copyWith(letterSpacing: 1),
+        ),
+        Text(
+          'Display Medium',
+          style: t.displayMedium?.copyWith(fontWeight: FontWeight.w300),
+        ),
         Text(
           'Headline Large',
           style: t.headlineLarge?.copyWith(
-            shadows: const [Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 2))],
+            shadows: const [
+              Shadow(
+                blurRadius: 4,
+                color: Colors.black26,
+                offset: Offset(1, 2),
+              ),
+            ],
           ),
         ),
         const Divider(),
@@ -51,12 +71,16 @@ class _TypographyTab extends StatelessWidget {
             children: [
               TextSpan(
                 text: 'Rich',
-                style: t.headlineSmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+                style: t.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               TextSpan(text: 'Text ', style: t.headlineSmall),
               TextSpan(
                 text: 'with ',
-                style: t.titleLarge?.copyWith(decoration: TextDecoration.underline),
+                style: t.titleLarge?.copyWith(
+                  decoration: TextDecoration.underline,
+                ),
               ),
               TextSpan(
                 text: 'spans ',
@@ -75,7 +99,12 @@ class _TypographyTab extends StatelessWidget {
             Chip(label: Text('Body Medium', style: t.bodyMedium)),
             Chip(label: Text('Body Small', style: t.bodySmall)),
             Chip(
-              label: Text('Mono', style: t.bodyMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()])),
+              label: Text(
+                'Mono',
+                style: t.bodyMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ),
           ],
         ),
@@ -127,20 +156,37 @@ class _ControlsTabState extends State<_ControlsTab> {
             ElevatedButton(onPressed: () {}, child: const Text('Elevated')),
             OutlinedButton(onPressed: () {}, child: const Text('Outlined')),
             TextButton(onPressed: () {}, child: const Text('Text')),
-            IconButton(onPressed: () {}, icon: const Icon(Icons.favorite_border)),
-            const Badge(label: Text('9'), child: Icon(Icons.notifications_outlined)),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.favorite_border),
+            ),
+            const Badge(
+              label: Text('9'),
+              child: Icon(Icons.notifications_outlined),
+            ),
           ],
         ),
         const Divider(),
         Row(
           children: [
             Switch(value: s1, onChanged: (v) => setState(() => s1 = v)),
-            Switch.adaptive(value: s2, onChanged: (v) => setState(() => s2 = v)),
+            Switch.adaptive(
+              value: s2,
+              onChanged: (v) => setState(() => s2 = v),
+            ),
             const SizedBox(width: 12),
             Checkbox(value: s1, onChanged: (v) => setState(() => s1 = v ?? s1)),
             const SizedBox(width: 12),
-            Radio<int>(value: 1, groupValue: seg, onChanged: (v) => setState(() => seg = v!)),
-            Radio<int>(value: 2, groupValue: seg, onChanged: (v) => setState(() => seg = v!)),
+            Radio<int>(
+              value: 1,
+              groupValue: seg,
+              onChanged: (v) => setState(() => seg = v!),
+            ),
+            Radio<int>(
+              value: 2,
+              groupValue: seg,
+              onChanged: (v) => setState(() => seg = v!),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -157,15 +203,27 @@ class _ControlsTabState extends State<_ControlsTab> {
         const SizedBox(height: 12),
         TextField(
           controller: _ctl,
-          decoration: const InputDecoration(labelText: 'Address', prefixIcon: Icon(Icons.home_outlined)),
+          decoration: const InputDecoration(
+            labelText: 'Address',
+            prefixIcon: Icon(Icons.home_outlined),
+          ),
         ),
         const SizedBox(height: 12),
         const Wrap(
           spacing: 8,
           children: [
-            Chip(label: Text('Open'), avatar: Icon(Icons.radio_button_unchecked, size: 16)),
-            Chip(label: Text('In progress'), avatar: Icon(Icons.more_horiz, size: 16)),
-            Chip(label: Text('Done'), avatar: Icon(Icons.check_circle_outline, size: 16)),
+            Chip(
+              label: Text('Open'),
+              avatar: Icon(Icons.radio_button_unchecked, size: 16),
+            ),
+            Chip(
+              label: Text('In progress'),
+              avatar: Icon(Icons.more_horiz, size: 16),
+            ),
+            Chip(
+              label: Text('Done'),
+              avatar: Icon(Icons.check_circle_outline, size: 16),
+            ),
             InputChip(label: Text('Filter: Exterior')),
             ChoiceChip(label: Text('High priority'), selected: true),
           ],
@@ -202,9 +260,12 @@ class _ControlsTabState extends State<_ControlsTab> {
     );
   }
 
-  void _showSnack(BuildContext c) => ScaffoldMessenger.of(
-    c,
-  ).showSnackBar(const SnackBar(content: Text('Saved! (mock)'), duration: Duration(seconds: 1)));
+  void _showSnack(BuildContext c) => ScaffoldMessenger.of(c).showSnackBar(
+    const SnackBar(
+      content: Text('Saved! (mock)'),
+      duration: Duration(seconds: 1),
+    ),
+  );
 
   Future<void> _showDialog(BuildContext c) async {
     await showDialog<void>(
@@ -213,15 +274,26 @@ class _ControlsTabState extends State<_ControlsTab> {
         title: const Text('Confirm'),
         content: const Text('Do you want to apply these settings?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(c), child: const Text('Apply')),
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Apply'),
+          ),
         ],
       ),
     );
   }
 
   Future<void> _showDate(BuildContext c) async {
-    await showDatePicker(context: c, firstDate: DateTime(2020), lastDate: DateTime(2030), initialDate: DateTime.now());
+    await showDatePicker(
+      context: c,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      initialDate: DateTime.now(),
+    );
   }
 
   Future<void> _showTime(BuildContext c) async {
@@ -239,7 +311,12 @@ class _DataTab extends StatefulWidget {
 class _DataTabState extends State<_DataTab> {
   final data = List.generate(
     30,
-    (i) => ('J${1000 + i}', 'Exterior Paint', 'Elk Grove', i.isEven ? 'open' : 'in_progress'),
+    (i) => (
+      'J${1000 + i}',
+      'Exterior Paint',
+      'Elk Grove',
+      i.isEven ? 'open' : 'in_progress',
+    ),
   );
 
   @override
@@ -252,7 +329,10 @@ class _DataTabState extends State<_DataTab> {
             leading: const CircleAvatar(child: Icon(Icons.account_circle)),
             title: const Text('Alex Customer'),
             subtitle: const Text('742 Evergreen Terrace'),
-            trailing: FilledButton.tonal(onPressed: () {}, child: const Text('Call')),
+            trailing: FilledButton.tonal(
+              onPressed: () {},
+              child: const Text('Call'),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -267,7 +347,12 @@ class _DataTabState extends State<_DataTab> {
             rows: [
               for (final r in data.take(6))
                 DataRow(
-                  cells: [DataCell(Text(r.$1)), DataCell(Text(r.$2)), DataCell(Text(r.$3)), DataCell(Text(r.$4))],
+                  cells: [
+                    DataCell(Text(r.$1)),
+                    DataCell(Text(r.$2)),
+                    DataCell(Text(r.$3)),
+                    DataCell(Text(r.$4)),
+                  ],
                 ),
             ],
           ),
@@ -291,7 +376,9 @@ class _DataTabState extends State<_DataTab> {
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black26)],
+              boxShadow: const [
+                BoxShadow(blurRadius: 8, color: Colors.black26),
+              ],
             ),
           ),
         ),
@@ -300,7 +387,10 @@ class _DataTabState extends State<_DataTab> {
           title: const Text('More details'),
           children: List.generate(
             3,
-            (i) => ListTile(leading: const Icon(Icons.check_circle_outline), title: Text('Completed step ${i + 1}')),
+            (i) => ListTile(
+              leading: const Icon(Icons.check_circle_outline),
+              title: Text('Completed step ${i + 1}'),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -333,7 +423,11 @@ class _ReorderableDemoState extends State<_ReorderableDemo> {
         },
         children: [
           for (final it in items)
-            ListTile(key: ValueKey(it), title: Text(it), leading: const Icon(Icons.drag_indicator)),
+            ListTile(
+              key: ValueKey(it),
+              title: Text(it),
+              leading: const Icon(Icons.drag_indicator),
+            ),
         ],
       ),
     );
@@ -375,7 +469,9 @@ class _LayoutTab extends StatelessWidget {
                 Positioned.fill(
                   child: Container(
                     decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0x662563EB), Color(0x660EA5E9)]),
+                      gradient: LinearGradient(
+                        colors: [Color(0x662563EB), Color(0x660EA5E9)],
+                      ),
                     ),
                   ),
                 ),
@@ -399,7 +495,10 @@ class _LayoutTab extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Card(
-          child: SizedBox(height: 160, child: CustomPaint(painter: _RainbowPainter())),
+          child: SizedBox(
+            height: 160,
+            child: CustomPaint(painter: _RainbowPainter()),
+          ),
         ),
       ],
     );
@@ -410,8 +509,12 @@ class _LayoutTab extends StatelessWidget {
     height: size.height,
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(12),
-      gradient: const LinearGradient(colors: [Color(0xFF22C55E), Color(0xFF10B981)]),
-      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(1, 2))],
+      gradient: const LinearGradient(
+        colors: [Color(0xFF22C55E), Color(0xFF10B981)],
+      ),
+      boxShadow: const [
+        BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(1, 2)),
+      ],
     ),
     child: Center(
       child: Padding(
@@ -424,9 +527,18 @@ class _LayoutTab extends StatelessWidget {
   Widget _gradientCard(BuildContext c, String title) => Card(
     child: Container(
       height: 80,
-      decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF9333EA), Color(0xFFEA580C)])),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF9333EA), Color(0xFFEA580C)],
+        ),
+      ),
       child: Center(
-        child: Text(title, style: Theme.of(c).textTheme.titleMedium!.copyWith(color: Colors.white)),
+        child: Text(
+          title,
+          style: Theme.of(
+            c,
+          ).textTheme.titleMedium!.copyWith(color: Colors.white),
+        ),
       ),
     ),
   );
@@ -435,14 +547,29 @@ class _LayoutTab extends StatelessWidget {
 class _RainbowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final colors = [Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.blue, Colors.purple];
+    final colors = [
+      Colors.red,
+      Colors.orange,
+      Colors.yellow,
+      Colors.green,
+      Colors.blue,
+      Colors.purple,
+    ];
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8;
     for (int i = 0; i < colors.length; i++) {
       paint.color = colors[i].withOpacity(.7);
-      final rect = Rect.fromLTWH(10.0 + i * 8, 10.0 + i * 8, size.width - 20 - i * 16, size.height - 20 - i * 16);
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, Radius.circular(12 + i * 3.0)), paint);
+      final rect = Rect.fromLTWH(
+        10.0 + i * 8,
+        10.0 + i * 8,
+        size.width - 20 - i * 16,
+        size.height - 20 - i * 16,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, Radius.circular(12 + i * 3.0)),
+        paint,
+      );
     }
   }
 
@@ -470,16 +597,28 @@ class _MotionFxTabState extends State<_MotionFxTab> {
       children: [
         Row(
           children: [
-            ElevatedButton(onPressed: () => setState(() => size = size == 100 ? 160 : 100), child: const Text('Size')),
+            ElevatedButton(
+              onPressed: () => setState(() => size = size == 100 ? 160 : 100),
+              child: const Text('Size'),
+            ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: () => setState(() => color = color == Colors.amber ? Colors.teal : Colors.amber),
+              onPressed: () => setState(
+                () =>
+                    color = color == Colors.amber ? Colors.teal : Colors.amber,
+              ),
               child: const Text('Color'),
             ),
             const SizedBox(width: 8),
-            ElevatedButton(onPressed: () => setState(() => cross = !cross), child: const Text('Crossfade')),
+            ElevatedButton(
+              onPressed: () => setState(() => cross = !cross),
+              child: const Text('Crossfade'),
+            ),
             const SizedBox(width: 8),
-            ElevatedButton(onPressed: () => setState(() => angle += math.pi / 6), child: const Text('Rotate')),
+            ElevatedButton(
+              onPressed: () => setState(() => angle += math.pi / 6),
+              child: const Text('Rotate'),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -492,14 +631,18 @@ class _MotionFxTabState extends State<_MotionFxTab> {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [BoxShadow(blurRadius: 12, color: Colors.black26)],
+              boxShadow: const [
+                BoxShadow(blurRadius: 12, color: Colors.black26),
+              ],
             ),
           ),
         ),
         const SizedBox(height: 12),
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 500),
-          crossFadeState: cross ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: cross
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           firstChild: _boxy(Colors.indigo, 'A'),
           secondChild: _boxy(Colors.pink, 'B'),
         ),
@@ -539,7 +682,11 @@ class _HeroDemo extends StatelessWidget {
       children: [
         for (final color in [Colors.red, Colors.blue, Colors.green])
           GestureDetector(
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => _HeroDetail(color: color))),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => _HeroDetail(color: color),
+              ),
+            ),
             child: Hero(tag: color, child: _circle(color, 40)),
           ),
       ],

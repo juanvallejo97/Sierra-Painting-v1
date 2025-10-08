@@ -10,7 +10,13 @@ class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
 
-  const AppCard({super.key, required this.child, this.onTap, this.padding, this.margin});
+  const AppCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding,
+    this.margin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,10 @@ class AppCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLG),
-        child: Padding(padding: padding ?? const EdgeInsets.all(DesignTokens.spaceMD), child: child),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(DesignTokens.spaceMD),
+          child: child,
+        ),
       ),
     );
 

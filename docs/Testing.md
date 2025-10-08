@@ -552,3 +552,10 @@ firebase emulators:start --import=./seed-data
 - ✅ CI/CD integration for automated validation
 
 For questions or issues, see [DEVELOPER_WORKFLOW.md](./DEVELOPER_WORKFLOW.md).
+
+---
+
+## Runbooks
+
+- See [TEST_HARNESS.md](./TEST_HARNESS.md) for using the test harness.
+- See [PR_CHECKLIST.md](./PR_CHECKLIST.md) for pull request checklist.

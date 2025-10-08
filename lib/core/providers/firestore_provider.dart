@@ -47,7 +47,10 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   final firestore = FirebaseFirestore.instance;
 
   // Enable offline persistence
-  firestore.settings = const Settings(persistenceEnabled: true, cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED);
+  firestore.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
 
   return firestore;
 });

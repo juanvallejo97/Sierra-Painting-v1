@@ -6,7 +6,13 @@ class AppScaffold extends StatelessWidget {
   final Widget body;
   final List<Widget>? actions;
   final PreferredSizeWidget? bottom; // NEW
-  const AppScaffold({super.key, required this.title, required this.body, this.actions, this.bottom});
+  const AppScaffold({
+    super.key,
+    required this.title,
+    required this.body,
+    this.actions,
+    this.bottom,
+  });
 
   @override
   Widget build(BuildContext context) {

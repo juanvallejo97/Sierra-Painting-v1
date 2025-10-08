@@ -13,8 +13,9 @@
     "predeploy": "npm run build",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-  "test": "jest --runInBand --detectOpenHandles",
-    "lint:fix": "eslint --fix \"src/**/*.ts\" \"test/**/*.ts\""
+    "test": "jest --runInBand --detectOpenHandles",
+    "lint:fix": "eslint --fix \"src/**/*.ts\" \"test/**/*.ts\"",
+    "dev": "firebase emulators:start --only functions"
   },
   "engines": {
     "node": "20"
@@ -37,7 +38,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.6.2",
     "@types/node-fetch": "^2.6.9",
-  "firebase": "^12.3.0",
+    "firebase": "^12.3.0",
     "@types/pdfkit": "^0.13.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
@@ -53,5 +54,12 @@
     "typescript": "^5.5.4"
   },
   "type": "commonjs",
-  "private": true
+  "private": true,
+  "functions": [
+    {
+      "name": "<function-name>",
+      "region": "us-central1",
+      "minInstances": 1
+    }
+  ]
 }

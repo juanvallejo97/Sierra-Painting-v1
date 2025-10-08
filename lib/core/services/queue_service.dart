@@ -42,7 +42,9 @@ class QueueService {
     final pendingCount = getPendingItems().length;
 
     if (pendingCount >= maxQueueSize) {
-      throw QueueFullException('Queue is full ($maxQueueSize items). Please sync pending items before adding more.');
+      throw QueueFullException(
+        'Queue is full ($maxQueueSize items). Please sync pending items before adding more.',
+      );
     }
 
     await box.add(item);
@@ -200,5 +202,9 @@ class QueueFullException implements Exception {
 
 final queueServiceProvider = Provider<QueueService?>((ref) {
   final boxAsync = ref.watch(queueBoxProvider);
-  return boxAsync.when(data: (box) => QueueService(box), loading: () => null, error: (_, _) => null);
+  return boxAsync.when(
+    data: (box) => QueueService(box),
+    loading: () => null,
+    error: (_, _) => null,
+  );
 });

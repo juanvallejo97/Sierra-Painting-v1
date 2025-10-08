@@ -57,14 +57,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref
           .read(firebaseAuthProvider)
-          .signInWithEmailAndPassword(email: _emailController.text.trim(), password: _passwordController.text);
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
       // Medium haptic on successful login
       await ref.read(hapticServiceProvider).medium();
     } catch (e) {
       // Heavy haptic on error
       await ref.read(hapticServiceProvider).heavy();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Login failed: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${e.toString()}')),
+        );
       }
     } finally {
       if (mounted) {
@@ -87,11 +92,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.format_paint, size: 100, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.format_paint,
+                  size: 100,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(height: DesignTokens.spaceLG),
                 Text(
                   'Sierra Painting',
-                  style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: DesignTokens.spaceSM),
@@ -135,7 +146,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                 ),
                 const SizedBox(height: DesignTokens.spaceXL),
-                AppButton(label: 'Sign In', icon: Icons.login, onPressed: _signIn, isLoading: _isLoading),
+                AppButton(
+                  label: 'Sign In',
+                  icon: Icons.login,
+                  onPressed: _signIn,
+                  isLoading: _isLoading,
+                ),
               ],
             ),
           ),

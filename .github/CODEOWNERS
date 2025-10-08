@@ -4,10 +4,11 @@
 /web_react/**  @platform-team
 /webapp/**     @platform-team
 # Default ownership
-* @juanvallejo97
+*       @your-org/owners
 
 # Optional: narrow ownership examples
 /docs/ @juanvallejo97
 /functions/ @juanvallejo97
+/docs/*  @your-org/docs
 
 ---

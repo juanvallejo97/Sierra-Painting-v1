@@ -11,7 +11,14 @@ class AppListItem extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
 
-  const AppListItem({super.key, required this.title, this.subtitle, this.leading, this.trailing, this.onTap});
+  const AppListItem({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +29,10 @@ class AppListItem extends StatelessWidget {
       trailing: trailing,
       onTap: onTap,
       minVerticalPadding: DesignTokens.spaceSM,
-      contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMD, vertical: DesignTokens.spaceSM),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.spaceMD,
+        vertical: DesignTokens.spaceSM,
+      ),
     );
   }
 }

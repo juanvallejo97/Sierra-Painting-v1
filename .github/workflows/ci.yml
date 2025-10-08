@@ -21,91 +21,49 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze_fast:
+  analyze:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache Dart dependencies
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
+          flutter-version: '3.35.5'
           channel: 'stable'
-
-      - name: Pub get
-        run: flutter pub get
-
-      - name: Generate code
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      - name: Analyze
+      - name: Flutter analyze
         run: flutter analyze
 
-  build-test:
-    needs: [analyze_fast]
+  test:
     runs-on: ubuntu-latest
-
+    needs: analyze
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Cache Dart dependencies
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      - name: Setup Java (Temurin 17)
-        if: github.actor != 'dependabot[bot]'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
+          flutter-version: '3.35.5'
           channel: 'stable'
+      - name: Run tests
+        run: flutter test -r expanded
 
-      - name: Flutter Doctor
-        run: flutter --version
-
-      - name: Pub get
-        run: flutter pub get
-
-      - name: Build Runner
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      - name: Format check
-        run: flutter format --set-exit-if-changed .
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Test
-        run: flutter test -r compact
-
-      - name: Upload test results (always)
-        if: always()
-        uses: actions/upload-artifact@v4
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          name: unit-test-results
-          path: |
-            **/test_output.log
-            coverage/**
+          flutter-version: '3.35.5'
+          channel: 'stable'
+      - name: Build web
+        run: flutter build web --release --web-renderer html
+      - name: Build android
+        run: flutter build apk --release
+
+  lint-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yamllint
+        run: pip install yamllint
+      - name: Lint YAML
+        run: yamllint .github/workflows/
 

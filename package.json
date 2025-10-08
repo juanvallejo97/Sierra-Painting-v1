@@ -8,24 +8,7 @@
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "smoke": "node scripts/smoke.mjs",
-    "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
-    "validate:e2e": "node scripts/validate_runner.js",
-    "validate:generate-config": "node scripts/generate_firebase_config.js",
-    "validate:create-user": "node scripts/create_user.js",
-    "validate:run": "node scripts/validate_runner.js",
-    "validate:local": "node scripts/local_validate.js",
-    "clean:reset": "git clean -xdf -e node_modules",
-    "predeploy:functions": "npm --prefix functions run build",
-    "predeploy:web": "flutter build web --release"
-  },
-  "bin": {
-    "spa-server": "scripts/spa_server.mjs"
-  },
-  "scripts": {
-    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
-    "test": "jest --runInBand --detectOpenHandles --forceExit",
-  "smoke": "node scripts/smoke.mjs",
-  "smoke:local": "node scripts/smoke.mjs http://127.0.0.1:8080",
+    "smoke:local": "node scripts/smoke.mjs http://127.0.0.1:8080",
     "spa": "node scripts/spa_server.mjs",
     "dev:serve": "npx serve -l 3000 ./scripts --no-clipboard",
     "validate:e2e": "node scripts/validate_runner.js",
@@ -35,16 +18,31 @@
     "validate:local": "node scripts/local_validate.js",
     "clean:reset": "git clean -xdf -e node_modules",
     "predeploy:functions": "npm --prefix functions run build",
-    "predeploy:web": "flutter build web --release"
+    "predeploy:web": "flutter build web --release",
+    "fs:emul": "firebase emulators:start --only firestore",
+    "fs:lint": "firebase emulators:exec --only firestore 'firebase firestore:rules:test || exit 1'",
+    "ci:test": "pwsh ./scripts/run_tests_windows.ps1",
+    "ci:guard": "pwsh ./scripts/ci_functions_guard.ps1",
+    "prepare": "husky",
+    "dev:web": "pwsh ./scripts/dev.ps1 web",
+    "dev:android": "pwsh ./scripts/dev.ps1 android",
+    "fix": "pwsh ./scripts/dev.ps1 fix",
+    "smoke:android": "pwsh ./scripts/dev.ps1 smoke",
+    "seed": "dart run tools/seed_fixtures.dart"
+  },
+  "bin": {
+    "spa-server": "scripts/spa_server.mjs"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "dotenv": "^16.3.1",
     "firebase-tools": "^13.9.1",
     "http-server": "^14.1.1",
+    "husky": "^9.1.7",
     "node-fetch": "^3.3.2",
     "puppeteer": "^21.6.0",
-    "vitest": "^2.1.3",
-    "node-fetch": "^3.3.2"
+    "vitest": "^2.1.3"
   },
   "dependencies": {
     "dotenv": "16.4.5",

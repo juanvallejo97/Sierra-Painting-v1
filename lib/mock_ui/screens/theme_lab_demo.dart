@@ -38,17 +38,37 @@ class ThemeLabDemo extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: col,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Corner radius: 8', style: Theme.of(context).textTheme.titleLarge),
-          Slider(min: 0, max: 32, divisions: 32, value: 8, onChanged: null),
+          Text(
+            'Corner radius: 8',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const Slider(
+            min: 0,
+            max: 32,
+            divisions: 32,
+            value: 8,
+            onChanged: null,
+          ),
           const SizedBox(height: 8),
-          Text('Density: 1.0 (‑2 compact → +2 comfy)', style: Theme.of(context).textTheme.titleLarge),
-          Slider(min: -2, max: 2, divisions: 16, value: 1.0, onChanged: null),
+          Text(
+            'Density: 1.0 (‑2 compact → +2 comfy)',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const Slider(
+            min: -2,
+            max: 2,
+            divisions: 16,
+            value: 1.0,
+            onChanged: null,
+          ),
           const SizedBox(height: 24),
           Text('Preview', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
@@ -56,33 +76,41 @@ class ThemeLabDemo extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _PreviewCard(
+              const _PreviewCard(
                 title: 'Elevated',
                 child: ElevatedButton(onPressed: null, child: Text('Elevated')),
               ),
-              _PreviewCard(
+              const _PreviewCard(
                 title: 'Filled',
                 child: FilledButton(onPressed: null, child: Text('Filled')),
               ),
-              _PreviewCard(
+              const _PreviewCard(
                 title: 'Outlined',
                 child: OutlinedButton(onPressed: null, child: Text('Outlined')),
               ),
-              _PreviewCard(
+              const _PreviewCard(
                 title: 'Chip',
                 child: Chip(label: Text('Chip')),
               ),
-              _PreviewCard(
+              const _PreviewCard(
                 title: 'TextField',
                 child: SizedBox(
                   width: 220,
-                  child: TextField(decoration: InputDecoration(labelText: 'Label')),
+                  child: TextField(
+                    decoration: InputDecoration(labelText: 'Label'),
+                  ),
                 ),
               ),
-              _PreviewCard(title: 'Switch', child: Switch(value: true, onChanged: null)),
+              const _PreviewCard(
+                title: 'Switch',
+                child: Switch(value: true, onChanged: null),
+              ),
               _PreviewCard(
                 title: 'Slider',
-                child: SizedBox(width: 160, child: Slider(value: .6, onChanged: (_) {})),
+                child: SizedBox(
+                  width: 160,
+                  child: Slider(value: .6, onChanged: (_) {}),
+                ),
               ),
             ],
           ),

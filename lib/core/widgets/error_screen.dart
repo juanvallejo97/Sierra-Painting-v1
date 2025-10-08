@@ -28,7 +28,9 @@ class ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isNotFound = error.toString().contains('not found') || error.toString().contains('404');
+    final isNotFound =
+        error.toString().contains('not found') ||
+        error.toString().contains('404');
 
     return Scaffold(
       appBar: AppBar(title: Text(isNotFound ? 'Page Not Found' : 'Error')),
@@ -46,15 +48,23 @@ class ErrorScreen extends StatelessWidget {
               const SizedBox(height: DesignTokens.spaceLG),
               Text(
                 isNotFound ? 'Page Not Found' : 'Oops! Something Went Wrong',
-                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: DesignTokens.spaceMD),
               if (path != null) ...[
-                const Text('The page you are looking for does not exist.', textAlign: TextAlign.center),
+                const Text(
+                  'The page you are looking for does not exist.',
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: DesignTokens.spaceSM),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMD, vertical: DesignTokens.spaceSM),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: DesignTokens.spaceMD,
+                    vertical: DesignTokens.spaceSM,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMD),
@@ -69,26 +79,39 @@ class ErrorScreen extends StatelessWidget {
                   ),
                 ),
               ] else if (error != null) ...[
-                const Text('We encountered an unexpected error. Please try again.', textAlign: TextAlign.center),
+                const Text(
+                  'We encountered an unexpected error. Please try again.',
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: DesignTokens.spaceSM),
                 Text(
                   error.toString(),
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ] else ...[
-                const Text('Something unexpected happened. Please try again.', textAlign: TextAlign.center),
+                const Text(
+                  'Something unexpected happened. Please try again.',
+                  textAlign: TextAlign.center,
+                ),
               ],
               const SizedBox(height: DesignTokens.spaceXL),
-              AppButton(label: 'Go to Home', icon: Icons.home, onPressed: () => context.go('/timeclock')),
+              AppButton(
+                label: 'Go to Home',
+                icon: Icons.home,
+                onPressed: () => context.go('/timeclock'),
+              ),
               const SizedBox(height: DesignTokens.spaceSM),
               AppButton(
                 label: 'Go Back',
                 icon: Icons.arrow_back,
                 variant: ButtonVariant.text,
-                onPressed: () => context.canPop() ? context.pop() : context.go('/timeclock'),
+                onPressed: () =>
+                    context.canPop() ? context.pop() : context.go('/timeclock'),
               ),
             ],
           ),

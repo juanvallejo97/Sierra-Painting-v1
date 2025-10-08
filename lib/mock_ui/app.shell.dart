@@ -38,11 +38,15 @@ class _PlaygroundAppState extends State<PlaygroundApp> {
             onGenerateRoute: buildRouter(),
             builder: (context, child) {
               final mq = MediaQuery.of(context);
-              final dir = controller.rtl ? TextDirection.rtl : TextDirection.ltr;
+              final dir = controller.rtl
+                  ? TextDirection.rtl
+                  : TextDirection.ltr;
               return Directionality(
                 textDirection: dir,
                 child: MediaQuery(
-                  data: mq.copyWith(textScaler: TextScaler.linear(controller.textScale)),
+                  data: mq.copyWith(
+                    textScaler: TextScaler.linear(controller.textScale),
+                  ),
                   child: child ?? const SizedBox.shrink(),
                 ),
               );

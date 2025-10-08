@@ -53,7 +53,9 @@ class PerformanceTrace {
     : startTime = DateTime.now(),
       attributes = {},
       metrics = {},
-      _firebaseTrace = kReleaseMode ? FirebasePerformance.instance.newTrace(name) : null {
+      _firebaseTrace = kReleaseMode
+          ? FirebasePerformance.instance.newTrace(name)
+          : null {
     // Start Firebase trace in release mode
     _firebaseTrace?.start();
   }
@@ -161,7 +163,9 @@ class PerformanceMonitor {
       final httpMetric = FirebasePerformance.instance.newHttpMetric(
         url,
         HttpMethod.values.firstWhere(
-          (m) => m.toString().split('.').last.toUpperCase() == method.toUpperCase(),
+          (m) =>
+              m.toString().split('.').last.toUpperCase() ==
+              method.toUpperCase(),
           orElse: () => HttpMethod.Get,
         ),
       );
@@ -182,7 +186,11 @@ class PerformanceMonitor {
   }
 
   /// Record custom metric
-  void recordMetric({required String name, required num value, Map<String, String>? attributes}) {
+  void recordMetric({
+    required String name,
+    required num value,
+    Map<String, String>? attributes,
+  }) {
     if (kDebugMode) {
       debugPrint('[Performance] Metric: $name = $value');
       if (attributes != null && attributes.isNotEmpty) {
@@ -216,13 +224,21 @@ mixin PerformanceMonitorMixin<T extends StatefulWidget> on State<T> {
   /// Record an interaction
   void recordInteraction(String name, int durationMs) {
     final monitor = PerformanceMonitor();
-    monitor.recordMetric(name: 'interaction_${name}_latency', value: durationMs, attributes: {'screen': screenName});
+    monitor.recordMetric(
+      name: 'interaction_${name}_latency',
+      value: durationMs,
+      attributes: {'screen': screenName},
+    );
   }
 
   /// Record a custom metric for this screen
   void recordScreenMetric(String name, num value) {
     final monitor = PerformanceMonitor();
-    monitor.recordMetric(name: '${screenName}_$name', value: value, attributes: {'screen': screenName});
+    monitor.recordMetric(
+      name: '${screenName}_$name',
+      value: value,
+      attributes: {'screen': screenName},
+    );
   }
 }
 
@@ -231,7 +247,11 @@ class PerformanceTrackedWidget extends StatelessWidget {
   final String name;
   final Widget Function(BuildContext) builder;
 
-  const PerformanceTrackedWidget({super.key, required this.name, required this.builder});
+  const PerformanceTrackedWidget({
+    super.key,
+    required this.name,
+    required this.builder,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +260,9 @@ class PerformanceTrackedWidget extends StatelessWidget {
     stopwatch.stop();
 
     if (kDebugMode && stopwatch.elapsedMilliseconds > 16) {
-      debugPrint('[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms');
+      debugPrint(
+        '[Performance] Slow build: $name took ${stopwatch.elapsedMilliseconds}ms',
+      );
     }
 
     return built;

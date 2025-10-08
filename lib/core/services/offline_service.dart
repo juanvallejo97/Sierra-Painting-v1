@@ -27,8 +27,12 @@ class OfflineService {
     instance._isOnline = !connectivityResult.contains(ConnectivityResult.none);
 
     // Listen to connectivity changes
-    instance._connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      instance._isOnline = results.any((result) => result != ConnectivityResult.none);
+    instance._connectivity.onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
+      instance._isOnline = results.any(
+        (result) => result != ConnectivityResult.none,
+      );
     });
   }
 
@@ -81,11 +85,18 @@ class OfflineService {
   }
 
   /// Save pending sync operation
-  Future<void> addPendingSync(String operation, Map<String, dynamic> data) async {
+  Future<void> addPendingSync(
+    String operation,
+    Map<String, dynamic> data,
+  ) async {
     if (_cacheBox == null) return;
 
     final pendingSyncs = getFromCache<List<dynamic>>('pending_syncs') ?? [];
-    pendingSyncs.add({'operation': operation, 'data': data, 'timestamp': DateTime.now().toIso8601String()});
+    pendingSyncs.add({
+      'operation': operation,
+      'data': data,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
 
     await saveToCache('pending_syncs', pendingSyncs);
   }

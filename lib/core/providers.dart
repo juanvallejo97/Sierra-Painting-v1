@@ -36,7 +36,8 @@ export 'package:sierra_painting/core/services/feature_flag_service.dart'
         offlineModeEnabledProvider,
         gpsTrackingEnabledProvider;
 // Haptic service providers (from haptic_service.dart)
-export 'package:sierra_painting/core/services/haptic_service.dart' show hapticServiceProvider, HapticService;
+export 'package:sierra_painting/core/services/haptic_service.dart'
+    show hapticServiceProvider, HapticService;
 // Queue service provider
 export 'package:sierra_painting/core/services/queue_service.dart'
     show queueServiceProvider, queueBoxProvider, QueueService;

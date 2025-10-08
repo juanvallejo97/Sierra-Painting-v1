@@ -179,7 +179,10 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
                 const SizedBox(height: 16),
                 Text('Error loading items: $_error'),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: _loadMore, child: const Text('Retry')),
+                ElevatedButton(
+                  onPressed: _loadMore,
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           );
@@ -189,7 +192,10 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(height: MediaQuery.of(context).size.height * 0.8, child: errorWidget),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: errorWidget,
+                ),
               ),
             )
           : errorWidget;
@@ -197,14 +203,18 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
 
     // Show empty state
     if (_items.isEmpty && !_isLoading) {
-      final emptyWidget = widget.emptyWidget ?? const Center(child: Text('No items found'));
+      final emptyWidget =
+          widget.emptyWidget ?? const Center(child: Text('No items found'));
 
       return widget.enableRefresh
           ? RefreshIndicator(
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(height: MediaQuery.of(context).size.height * 0.8, child: emptyWidget),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: emptyWidget,
+                ),
               ),
             )
           : emptyWidget;
@@ -221,7 +231,10 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
             itemBuilder: (context, index) {
               if (index >= _items.length) {
                 return const Center(
-                  child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator()),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
                 );
               }
               return widget.itemBuilder(context, _items[index], index);
@@ -236,14 +249,19 @@ class _PaginatedListViewState<T> extends State<PaginatedListView<T>> {
             itemBuilder: (context, index) {
               if (index >= _items.length) {
                 return const Center(
-                  child: Padding(padding: EdgeInsets.all(16.0), child: CircularProgressIndicator()),
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
                 );
               }
               return widget.itemBuilder(context, _items[index], index);
             },
           );
 
-    return widget.enableRefresh ? RefreshIndicator(onRefresh: _refresh, child: listView) : listView;
+    return widget.enableRefresh
+        ? RefreshIndicator(onRefresh: _refresh, child: listView)
+        : listView;
   }
 }
 
@@ -367,14 +385,18 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
   @override
   Widget build(BuildContext context) {
     if (_items.isEmpty && !_isLoading) {
-      final emptyWidget = widget.emptyWidget ?? const Center(child: Text('No items found'));
+      final emptyWidget =
+          widget.emptyWidget ?? const Center(child: Text('No items found'));
 
       return widget.enableRefresh
           ? RefreshIndicator(
               onRefresh: _refresh,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(height: MediaQuery.of(context).size.height * 0.8, child: emptyWidget),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.8,
+                  child: emptyWidget,
+                ),
               ),
             )
           : emptyWidget;
@@ -398,6 +420,8 @@ class _PaginatedGridViewState<T> extends State<PaginatedGridView<T>> {
       },
     );
 
-    return widget.enableRefresh ? RefreshIndicator(onRefresh: _refresh, child: gridView) : gridView;
+    return widget.enableRefresh
+        ? RefreshIndicator(onRefresh: _refresh, child: gridView)
+        : gridView;
   }
 }

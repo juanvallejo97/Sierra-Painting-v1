@@ -31,7 +31,11 @@ class PlaygroundHome extends StatelessWidget {
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: [Icon(d.icon, size: 40), const SizedBox(height: 8), Text(d.title)],
+                    children: [
+                      Icon(d.icon, size: 40),
+                      const SizedBox(height: 8),
+                      Text(d.title),
+                    ],
                   ),
                 ),
               ),

@@ -1,320 +1,131 @@
-version: "1.0"
-name: "A1_frontend_auth_screens_and_logic"
-intent: "Create modern email/password auth screens with friendly validation and routing"
-owner: "frontend"
-inputs:
-  branch: "feat/auth-foundation-day1"
-tasks:
-  - id: A1_01_auth_controller
-    action: "Add AuthController wrapper for FirebaseAuth"
-    patches:
-      - path: "lib/features/auth/logic/auth_controller.dart"
-        create: true
-        lang: "dart"
-        content: |
-          import 'package:flutter_riverpod/flutter_riverpod.dart';
-          import 'package:firebase_auth/firebase_auth.dart';
+id: next_steps_roadmap
+title: "Next Steps: Security hardening, perf/latency, CI/CD, parity & docs"
+owner: platform
+labels: [roadmap, security, performance, ci-cd, docs]
+timeframe: "ship across 2–3 short iterations"
 
-          final authControllerProvider = Provider<AuthController>((ref) {
-            return AuthController(FirebaseAuth.instance);
-          });
+context:
+  done_now:
+    - A1 Kickoff & Tooling
+    - A2 Screens & Logic (login/forgot/signup scaffold, routes) with perf traces in place
+    - A3/A4 basic parity checks + first integration test path (Android)
+  drivers:
+    - Firestore rules regression flagged (subcollection read overly permissive under `companies/{companyId}/{collection}/{docId}`).
+    - CI YAML sprawl & duplicate/invalid jobs.
+    - Cold starts on Cloud Functions (and potential long tail on first API).
+    - Need a clean security/observability posture before widening feature work.
 
-          class AuthController {
-            final FirebaseAuth _auth;
-            AuthController(this._auth);
+workstreams:
 
-            Future<UserCredential> signUp({required String email, required String password}) =>
-              _auth.createUserWithEmailAndPassword(email: email, password: password);
-
-            Future<UserCredential> signIn({required String email, required String password}) =>
-              _auth.signInWithEmailAndPassword(email: email, password: password);
-
-            Future<void> sendPasswordReset(String email) =>
-              _auth.sendPasswordResetEmail(email: email);
-
-            Stream<User?> authState() => _auth.authStateChanges();
+  - id: secure_firestore_rules
+    title: "Lock down Firestore rules for companies"
+    files_touch:
+      - firestore.rules
+      - firestore.indexes.json
+      - tool/rules/rules_test.mjs (Node) or test/firestore_rules_test.dart (Flutter)
+    actions:
+      - "Remove blanket `allow read: if request.auth.token.company_id == companyId` on all subcollections."
+      - "Refactor shared predicates:"
+        functions: |
+          function isCompany(companyId) { return request.auth != null
+            && request.auth.token.company_id == companyId; }
+          function isAdmin() { return request.auth.token.role in ['admin']; }
+          function isManager() { return request.auth.token.role in ['admin','manager']; }
+          function isOwner(uid) { return request.auth.uid == uid; }
+      - "Per subcollection, be explicit (examples):"
+        examples: |
+          match /companies/{companyId}/invoices/{doc} {
+            allow read: if isCompany(companyId) && (isManager() || isAdmin());
+            allow create,update,delete: if isCompany(companyId) && isAdmin();
           }
-  - id: A1_02_signup_screen
-    action: "Create SignUp screen with live validation + friendly errors"
-    patches:
-      - path: "lib/features/auth/view/signup_screen.dart"
-        create: true
-        lang: "dart"
-        content: |
-          import 'package:flutter/material.dart';
-          import 'package:flutter_riverpod/flutter_riverpod.dart';
-          import '../logic/auth_controller.dart';
-
-          class SignUpScreen extends ConsumerStatefulWidget {
-            const SignUpScreen({super.key});
-            @override ConsumerState<SignUpScreen> createState() => _S();
+          match /companies/{companyId}/users/{uid} {
+            allow read: if isCompany(companyId) && (isOwner(uid) || isAdmin());
+            allow update: if isCompany(companyId) && (isOwner(uid) || isAdmin());
+            allow create,delete: if isCompany(companyId) && isAdmin();
           }
+      - "Add a rules test harness that proves non-admin employees cannot read invoices/payments of peers."
+    acceptance_criteria:
+      - "Rules unit tests: ✅ pass (deny cross-user reads; allow admin reads)."
+      - "Manual spot checks in the emulator match expectations."
+      - "No regression in app’s normal reads for correct roles."
 
-          class _S extends ConsumerState<SignUpScreen> {
-            final _form = GlobalKey<FormState>();
-            final _email = TextEditingController();
-            final _pw = TextEditingController();
-            bool _busy = false;
+  - id: cloud_functions_latency
+    title: "Latency hardening for serverless"
+    files_touch:
+      - functions/package.json
+      - functions/src/index.ts
+      - .github/workflows/deploy.yml
+    actions:
+      - "Pin region: `us-central1` (or team’s region) and set `minInstances` for hot paths to 1–2."
+      - "Enable HTTP keep-alive & set sensible timeouts/retries in client SDK."
+      - "Emit perf metrics (custom trace) around first API call."
+    acceptance_criteria:
+      - "First call p95 < 1.5s on warm, p95 < 3s on cold (measured in Integration Test)."
 
-            @override void dispose(){ _email.dispose(); _pw.dispose(); super.dispose(); }
+  - id: ci_cd_consolidation
+    title: "Consolidate & lint GitHub Actions YAML"
+    files_touch:
+      - .github/workflows/{deploy.yml,hosting.yml,production.yml,nightly.yml,updates.yml}  # consolidate
+      - .github/workflows/ci.yml  # new unified CI
+    actions:
+      - "Create a single `ci.yml` with jobs: analyze → test → build (web, android)."
+      - "Create a single `deploy.yml` gated by branch/tag with environments (staging/production)."
+      - "Remove duplicate steps & invalid YAML; add `actionlint` / `yamllint` step."
+      - "Reference secrets by required names only (FIREBASE_SERVICE_ACCOUNT, FIREBASE_PROJECT_ID, GCP_WORKLOAD_IDENTITY_PROVIDER)."
+    acceptance_criteria:
+      - "CI green pipeline on PR."
+      - "Deploy job runs only on protected branches/tags."
 
-            String? _emailV(String? v){
-              if(v==null||v.isEmpty) return 'Email required';
-              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-              if(!re.hasMatch(v)) return 'Please enter a valid email address';
-              return null;
-            }
-            String? _pwV(String? v){
-              if(v==null||v.length<8) return 'Your password is too weak. Please choose a stronger password.';
-              return null;
-            }
+  - id: perf_observability
+    title: "Observability & perf dashboards"
+    files_touch:
+      - lib/perf/performance_monitor.dart
+      - firebase.json / remote config defaults
+    actions:
+      - "Promote the existing perf trace (boot_ms) to a dashboard; add traces for: login_route_ms, first_query_ms."
+      - "Remote‑config kill‑switch for Crashlytics/AppCheck in production."
+    acceptance_criteria:
+      - "Perf chart in Firebase Performance shows the 3 key traces."
+      - "Toggling RC kill‑switch disables Crashlytics collection at runtime in a test build."
 
-            Future<void> _submit() async {
-              if(!_form.currentState!.validate()) return;
-              setState(()=>_busy=true);
-              final auth = ref.read(authControllerProvider);
-              try {
-                await auth.signUp(email: _email.text.trim(), password: _pw.text);
-                if(!mounted) return;
-                Navigator.of(context).pushReplacementNamed('/dashboard');
-              } catch (e) {
-                final txt = e.toString().contains('email-already-in-use')
-                  ? 'An account with this email already exists'
-                  : e.toString().toLowerCase().contains('network')
-                    ? 'Network error. Please try again later.'
-                    : 'Sign up failed. Please try again.';
-                if(!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(txt)));
-              } finally {
-                if(mounted) setState(()=>_busy=false);
-              }
-            }
+  - id: parity_a11y
+    title: "A11y + parity audit (A3 continuation)"
+    files_touch:
+      - lib/features/auth/view/login_screen.dart
+      - lib/l10n/ (if present)
+    actions:
+      - "Add semantics labels to buttons/fields."
+      - "Ensure tap targets >= 48dp and color contrast is AA."
+      - "Hook `onTapOutside` → unfocus to improve keyboard flow."
+    acceptance_criteria:
+      - "TalkBack/VoiceOver can navigate and announce all controls."
+      - "No a11y issues in `flutter analyze --no-fatal-infos --no-fatal-warnings`."
 
-            @override
-            Widget build(BuildContext c){
-              return Scaffold(
-                resizeToAvoidBottomInset: true,
-                appBar: AppBar(title: const Text('Create account')),
-                body: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Form(
-                        key: _form,
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          TextFormField(
-                            controller: _email,
-                            decoration: const InputDecoration(labelText: 'Email'),
-                            keyboardType: TextInputType.emailAddress,
-                            autofillHints: const [AutofillHints.email],
-                            validator: _emailV,
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _pw,
-                            decoration: const InputDecoration(labelText: 'Password'),
-                            obscureText: true,
-                            validator: _pwV,
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: _busy ? null : _submit,
-                              child: _busy
-                                ? const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2))
-                                : const Text('Create Account'),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: ()=>Navigator.pushReplacementNamed(context,'/login'),
-                            child: const Text('Have an account? Log in'),
-                          ),
-                        ]),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }
-          }
-  - id: A1_03_login_screen
-    action: "Create Login screen (friendly errors, navigation to dashboard)"
-    patches:
-      - path: "lib/features/auth/view/login_screen.dart"
-        create: true
-        lang: "dart"
-        content: |
-          import 'package:flutter/material.dart';
-          import 'package:flutter_riverpod/flutter_riverpod.dart';
-          import '../logic/auth_controller.dart';
+  - id: docs_pr_hygiene
+    title: "Docs & PR hygiene"
+    files_touch:
+      - CONTRIBUTING.md
+      - docs/DEVELOPMENT.md
+      - docs/TESTING.md
+    actions:
+      - "Add runbooks for: local Android build, test harness usage, and the Windows TMP/TEMP note."
+      - "Define PR checklist (analyze, tests green, rule tests green, blueprint link)."
+    acceptance_criteria:
+      - "New contributors can clone → run → test without backchanneling."
+      - "PRs consistently include checklist ticks."
 
-          class LoginScreen extends ConsumerStatefulWidget {
-            const LoginScreen({super.key});
-            @override ConsumerState<LoginScreen> createState() => _S();
-          }
+timeline:
+  milestone_1:
+    - secure_firestore_rules
+    - ci_cd_consolidation
+  milestone_2:
 
-          class _S extends ConsumerState<LoginScreen> {
-            final _form = GlobalKey<FormState>();
-            final _email = TextEditingController();
-            final _pw = TextEditingController();
-            bool _busy=false;
+    - cloud_functions_latency
+    - perf_observability
+  milestone_3:
+    - parity_a11y
+    - docs_pr_hygiene
 
-            @override void dispose(){ _email.dispose(); _pw.dispose(); super.dispose(); }
-
-            String? _emailV(String? v){
-              if(v==null||v.isEmpty) return 'Email required';
-              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-              if(!re.hasMatch(v)) return 'Please enter a valid email address';
-              return null;
-            }
-
-            Future<void> _submit() async {
-              if(!_form.currentState!.validate()) return;
-              setState(()=>_busy=true);
-              final auth = ref.read(authControllerProvider);
-              try{
-                await auth.signIn(email:_email.text.trim(), password:_pw.text);
-                if(!mounted) return;
-                Navigator.of(context).pushReplacementNamed('/dashboard');
-              } catch(e){
-                final s = e.toString().toLowerCase();
-                final msg = s.contains('user-not-found') || s.contains('wrong-password')
-                  ? 'Email or password is incorrect'
-                  : s.contains('network')
-                    ? 'Network error. Please try again later.'
-                    : 'Login failed. Please try again.';
-                if(!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-              } finally { if(mounted) setState(()=>_busy=false); }
-            }
-
-            @override
-            Widget build(BuildContext c){
-              return Scaffold(
-                appBar: AppBar(title: const Text('Log in')),
-                body: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Form(
-                        key: _form,
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          TextFormField(controller:_email, decoration: const InputDecoration(labelText:'Email'), validator:_emailV, keyboardType: TextInputType.emailAddress),
-                          const SizedBox(height:12),
-                          TextFormField(controller:_pw, decoration: const InputDecoration(labelText:'Password'), obscureText:true, validator:(v)=> (v==null||v.isEmpty)?'Password required':null),
-                          const SizedBox(height:20),
-                          SizedBox(width:double.infinity, child: FilledButton(onPressed:_busy?null:_submit, child:_busy?const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2)):const Text('Log In'))),
-                          TextButton(onPressed: ()=>Navigator.pushNamed(context,'/forgot'), child: const Text('Forgot password?')),
-                          TextButton(onPressed: ()=>Navigator.pushReplacementNamed(context,'/signup'), child: const Text('Create account')),
-                        ]),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }
-          }
-  - id: A1_04_forgot_password
-    action: "Create Forgot Password screen"
-    patches:
-      - path: "lib/features/auth/view/forgot_password_screen.dart"
-        create: true
-        lang: "dart"
-        content: |
-          import 'package:flutter/material.dart';
-          import 'package:flutter_riverpod/flutter_riverpod.dart';
-          import '../logic/auth_controller.dart';
-
-          class ForgotPasswordScreen extends ConsumerStatefulWidget {
-            const ForgotPasswordScreen({super.key});
-            @override ConsumerState<ForgotPasswordScreen> createState()=>_S();
-          }
-
-          class _S extends ConsumerState<ForgotPasswordScreen> {
-            final _form = GlobalKey<FormState>();
-            final _email = TextEditingController();
-            bool _busy=false;
-
-            @override void dispose(){ _email.dispose(); super.dispose(); }
-
-            String? _emailV(String? v){
-              if(v==null||v.isEmpty) return 'Email required';
-              final re = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-              if(!re.hasMatch(v)) return 'Please enter a valid email address';
-              return null;
-            }
-
-            Future<void> _submit() async {
-              if(!_form.currentState!.validate()) return;
-              setState(()=>_busy=true);
-              try{
-                await ref.read(authControllerProvider).sendPasswordReset(_email.text.trim());
-                if(!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset email sent')));
-                Navigator.pop(context);
-              } catch(e){
-                if(!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not send reset email')));
-              } finally { if(mounted) setState(()=>_busy=false); }
-            }
-
-            @override
-            Widget build(BuildContext c){
-              return Scaffold(
-                appBar: AppBar(title: const Text('Reset password')),
-                body: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key:_form,
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      TextFormField(controller:_email, decoration: const InputDecoration(labelText:'Email'), validator:_emailV, keyboardType: TextInputType.emailAddress),
-                      const SizedBox(height:16),
-                      FilledButton(onPressed:_busy?null:_submit, child:_busy?const SizedBox(height:18,width:18,child:CircularProgressIndicator(strokeWidth:2)):const Text('Send reset link')),
-                    ]),
-                  ),
-                ),
-              );
-            }
-          }
-  - id: A1_05_router
-    action: "Wire routes to new screens"
-    patches:
-      - path: "lib/router.dart"
-        create_if_missing: true
-        lang: "dart"
-        content: |
-          import 'package:flutter/material.dart';
-          import 'features/auth/view/signup_screen.dart';
-          import 'features/auth/view/login_screen.dart';
-          import 'features/auth/view/forgot_password_screen.dart';
-
-          // TODO: replace with your real dashboard widget
-          class DashboardScreen extends StatelessWidget {
-            const DashboardScreen({super.key});
-            @override Widget build(BuildContext c)=> const Scaffold(body: Center(child: Text('Dashboard')));}
-          
-          Route<dynamic>? onGenerateRoute(RouteSettings s){
-            switch (s.name) {
-              case '/signup': return MaterialPageRoute(builder:(_)=>const SignUpScreen());
-              case '/login': return MaterialPageRoute(builder:(_)=>const LoginScreen());
-              case '/forgot': return MaterialPageRoute(builder:(_)=>const ForgotPasswordScreen());
-              case '/dashboard': return MaterialPageRoute(builder:(_)=>const DashboardScreen());
-            }
-            return null;
-          }
-    acceptance:
-      - "Build succeeds on web + mobile"
-      - "Forms validate inputs and show friendly messages within 1s"
-      - "Successful sign-up/login navigates to /dashboard"
-      - "Forgot password sends email and returns to login"
-    run:
-      - "flutter pub get"
-      - "flutter analyze"
-      - "flutter run -d chrome"
-outputs:
-  - "lib/features/auth/logic/auth_controller.dart"
-  - "lib/features/auth/view/{signup_screen.dart,login_screen.dart,forgot_password_screen.dart}"
-  - "lib/router.dart"
+risk_notes:
+  - "Rule tightening can surface missing indexes and unmodeled access patterns—expect to add indexes and small repo touches."
+  - "minInstances incurs cost; set small values and monitor."

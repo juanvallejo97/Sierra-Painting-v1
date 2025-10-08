@@ -58,7 +58,10 @@ class MotionUtils {
   /// Get appropriate curve based on motion preference
   ///
   /// Returns linear curve if motion is reduced, otherwise returns the normal curve
-  static Curve getCurve(BuildContext context, {Curve normal = Curves.easeInOut}) {
+  static Curve getCurve(
+    BuildContext context, {
+    Curve normal = Curves.easeInOut,
+  }) {
     final disableAnimations = MediaQuery.of(context).disableAnimations;
     return disableAnimations ? Curves.linear : normal;
   }
@@ -91,7 +94,13 @@ class AccessibleAnimatedOpacity extends StatelessWidget {
   final Duration? duration;
   final Curve? curve;
 
-  const AccessibleAnimatedOpacity({super.key, required this.opacity, required this.child, this.duration, this.curve});
+  const AccessibleAnimatedOpacity({
+    super.key,
+    required this.opacity,
+    required this.child,
+    this.duration,
+    this.curve,
+  });
 
   @override
   Widget build(BuildContext context) {

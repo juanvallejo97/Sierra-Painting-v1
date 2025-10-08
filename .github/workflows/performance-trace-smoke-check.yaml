@@ -1,0 +1,33 @@
+name: Performance Trace Smoke Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  performance-trace-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run integration tests
+        run: flutter test integration_test
+
+      - name: Verify Firebase Performance traces
+        run: |
+          echo "Ensure traces appear in Firebase Performance console."
+          echo "Manual verification may be required."

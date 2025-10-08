@@ -4,7 +4,10 @@ class LoadingView extends StatelessWidget {
   const LoadingView({super.key});
   @override
   Widget build(BuildContext context) => const Center(
-    child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()),
+    child: Padding(
+      padding: EdgeInsets.all(24),
+      child: CircularProgressIndicator(),
+    ),
   );
 }
 
@@ -30,7 +33,8 @@ class ErrorView extends StatelessWidget {
         children: [
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          if (onRetry != null) ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          if (onRetry != null)
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     ),

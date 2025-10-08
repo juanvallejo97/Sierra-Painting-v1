@@ -75,7 +75,12 @@ class GlobalSyncIndicator extends StatelessWidget {
   final bool isSyncing;
   final VoidCallback? onTap;
 
-  const GlobalSyncIndicator({super.key, required this.pendingCount, this.isSyncing = false, this.onTap});
+  const GlobalSyncIndicator({
+    super.key,
+    required this.pendingCount,
+    this.isSyncing = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -88,11 +93,17 @@ class GlobalSyncIndicator extends StatelessWidget {
         label: Text('$pendingCount'),
         isLabelVisible: pendingCount > 0,
         child: isSyncing
-            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
             : const Icon(Icons.cloud_upload),
       ),
       onPressed: onTap,
-      tooltip: pendingCount > 0 ? '$pendingCount item${pendingCount == 1 ? '' : 's'} pending sync' : 'Syncing...',
+      tooltip: pendingCount > 0
+          ? '$pendingCount item${pendingCount == 1 ? '' : 's'} pending sync'
+          : 'Syncing...',
     );
   }
 }

@@ -32,9 +32,15 @@ void main() {
       final success = Result<int, String>.success(42);
       final failure = Result<int, String>.failure('error');
 
-      final successResult = success.when(success: (value) => 'Got $value', failure: (error) => 'Error: $error');
+      final successResult = success.when(
+        success: (value) => 'Got $value',
+        failure: (error) => 'Error: $error',
+      );
 
-      final failureResult = failure.when(success: (value) => 'Got $value', failure: (error) => 'Error: $error');
+      final failureResult = failure.when(
+        success: (value) => 'Got $value',
+        failure: (error) => 'Error: $error',
+      );
 
       expect(successResult, 'Got 42');
       expect(failureResult, 'Error: error');

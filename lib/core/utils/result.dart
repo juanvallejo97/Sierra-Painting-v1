@@ -46,10 +46,12 @@ sealed class Result<T, E> {
   bool get isFailure => this is Failure<T, E>;
 
   /// Get the success value or null
-  T? get valueOrNull => this is Success<T, E> ? (this as Success<T, E>).value : null;
+  T? get valueOrNull =>
+      this is Success<T, E> ? (this as Success<T, E>).value : null;
 
   /// Get the error or null
-  E? get errorOrNull => this is Failure<T, E> ? (this as Failure<T, E>).error : null;
+  E? get errorOrNull =>
+      this is Failure<T, E> ? (this as Failure<T, E>).error : null;
 
   /// Get the value or throw
   T get value {
@@ -68,7 +70,10 @@ sealed class Result<T, E> {
   }
 
   /// Pattern matching
-  R when<R>({required R Function(T value) success, required R Function(E error) failure}) {
+  R when<R>({
+    required R Function(T value) success,
+    required R Function(E error) failure,
+  }) {
     if (this is Success<T, E>) {
       return success((this as Success<T, E>).value);
     } else {
@@ -115,7 +120,10 @@ final class Success<T, E> extends Result<T, E> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is Success<T, E> && runtimeType == other.runtimeType && value == other.value;
+      identical(this, other) ||
+      other is Success<T, E> &&
+          runtimeType == other.runtimeType &&
+          value == other.value;
 
   @override
   int get hashCode => value.hashCode;
@@ -131,7 +139,10 @@ final class Failure<T, E> extends Result<T, E> {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is Failure<T, E> && runtimeType == other.runtimeType && error == other.error;
+      identical(this, other) ||
+      other is Failure<T, E> &&
+          runtimeType == other.runtimeType &&
+          error == other.error;
 
   @override
   int get hashCode => error.hashCode;

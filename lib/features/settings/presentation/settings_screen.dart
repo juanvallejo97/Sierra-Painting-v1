@@ -47,7 +47,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // Show confirmation
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(value ? 'Haptic feedback enabled' : 'Haptic feedback disabled'),
+                  content: Text(
+                    value
+                        ? 'Haptic feedback enabled'
+                        : 'Haptic feedback disabled',
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -66,7 +70,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () {
               hapticService.light();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Theme selection coming soon'), duration: Duration(seconds: 2)),
+                const SnackBar(
+                  content: Text('Theme selection coming soon'),
+                  duration: Duration(seconds: 2),
+                ),
               );
             },
           ),
@@ -74,7 +81,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // About Section
           _buildSectionHeader(context, 'About'),
-          const ListTile(leading: Icon(Icons.info_outline), title: Text('Version'), subtitle: Text('1.0.0+1')),
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('Version'),
+            subtitle: Text('1.0.0+1'),
+          ),
           ListTile(
             leading: const Icon(Icons.policy),
             title: const Text('Privacy Policy'),
@@ -103,9 +114,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
         title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
