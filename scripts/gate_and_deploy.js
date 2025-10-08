@@ -21,12 +21,26 @@ try { j = JSON.parse(fs.readFileSync(logPath, 'utf8')); } catch (e) { fail(`Fail
 if (!(j.id && j.app)) { console.error('Token validation did not pass. Aborting deploy.'); process.exit(2); }
 
 // Allow FIREBASE_PROJECT or fallback to FIREBASE_PROJECT_ID from .env
-const token = process.env.FIREBASE_TOKEN;
 const proj = process.env.FIREBASE_PROJECT || process.env.FIREBASE_PROJECT_ID;
-if (!token) fail('FIREBASE_TOKEN required', 3);
 if (!proj) fail('FIREBASE_PROJECT required', 3);
 
-console.log('Tokens validated; running firebase deploy for project', proj);
+// Prefer Application Default Credentials (GOOGLE_APPLICATION_CREDENTIALS) for CI/service accounts
+// If not available, fall back to FIREBASE_TOKEN for backward compatibility.
+const adcPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const token = process.env.FIREBASE_TOKEN;
+
+if (adcPath) {
+	console.log('Using Application Default Credentials from', adcPath);
+	console.log('Tokens validated; running firebase deploy for project', proj);
+	const r = spawnSync('npx', ['firebase', 'deploy', '--project', proj, '--non-interactive'], { stdio: 'inherit' });
+	if ((r.status ?? 1) !== 0) fail(`firebase deploy failed with exit code ${r.status}`, r.status || 1);
+	console.log('✅ Deploy completed');
+	process.exit(0);
+}
+
+if (!token) fail('FIREBASE_TOKEN required when GOOGLE_APPLICATION_CREDENTIALS is not set', 3);
+
+console.log('Using FIREBASE_TOKEN from environment; running firebase deploy for project', proj);
 const r = spawnSync('npx', ['firebase', 'deploy', '--project', proj, '--token', token, '--non-interactive'], { stdio: 'inherit' });
 if ((r.status ?? 1) !== 0) fail(`firebase deploy failed with exit code ${r.status}`, r.status || 1);
 console.log('✅ Deploy completed');
