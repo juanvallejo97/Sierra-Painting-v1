@@ -118,6 +118,12 @@ flutter run                       # Terminal 2
 - **[Testing](docs/Testing.md)** — Unit, integration, and smoke test strategies
 
 ### Additional Resources
+
+## Web Target
+The canonical web target is **Flutter Web** in `/web`.  
+See [DECISION_RECORD_WEB_TARGET.md](docs/DECISION_RECORD_WEB_TARGET.md) for rationale and enforcement.  
+Deprecated paths (`/web_react`, `/webapp`) are blocked by CI.
+
 - **[ADRs](docs/adrs/)** — Architecture decision records
 - **[Migration Guide](docs/MIGRATION.md)** — V1 ship-readiness refactor notes
 - **[Feature Flags](docs/FEATURE_FLAGS.md)** — Feature flag management

@@ -1,3 +1,8 @@
+# Require Platform review for canonical web target
+/web/**    @platform-team
+# Deprecated paths — still require review if someone tries to add them back
+/web_react/**  @platform-team
+/webapp/**     @platform-team
 # Default ownership
 * @juanvallejo97
 
