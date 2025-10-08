@@ -2,6 +2,7 @@ module.exports = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/test'],
+  testPathIgnorePatterns: ['<rootDir>/test/jest.teardown.ts'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/test/**/*.ts'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   collectCoverageFrom: [
@@ -23,4 +24,5 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  globalTeardown: '<rootDir>/test/jest.teardown.ts',
 };
