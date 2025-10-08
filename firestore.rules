@@ -1,204 +1,73 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function authed() { return request.auth != null; }
-    function claimCompany() { return authed() && request.auth.token.company_id; }
-    function isRole(r) { return authed() && request.auth.token.role in r; }
 
-    match /companies/{companyId}/{coll}/{doc} {
-      allow read: if authed() && claimCompany() == companyId;
-      allow create: if authed() && claimCompany() == companyId && (isRole(["admin","manager"]) || request.resource.data.ownerId == request.auth.uid);
-      allow update, delete: if authed() && claimCompany() == companyId && (
-        isRole(["admin","manager"]) ||
-        (request.auth.uid == resource.data.ownerId &&
-          request.resource.data.diff(resource.data).changedKeys().hasOnly(["title","notes","status","images","updatedAt","hours"]))
+    // ---- helpers -----------------------------------------------------------
+    function authed() {
+      return request.auth != null;
+    }
+
+    // Return company_id claim or null
+    function claimCompany() {
+      return authed() && request.auth.token.company_id != null
+        ? request.auth.token.company_id
+        : null;
+    }
+
+    // Check the authenticated user's company matches the path
+    function isCompany(companyId) {
+      return claimCompany() == companyId;
+    }
+
+    // Role checks: support either `role: "admin"` or `roles: ["admin", ...]`
+    function hasRole(role) {
+      return authed() && (
+        request.auth.token.role == role ||
+        (request.auth.token.roles != null && role in request.auth.token.roles)
+      );
+    }
+    function hasAnyRole(roles) {
+      return authed() && (
+        (request.auth.token.role != null && request.auth.token.role in roles) ||
+        (request.auth.token.roles != null && roles.hasAny(request.auth.token.roles))
       );
     }
 
-    match /{document=**} { allow read, write: if false; }
-  }
-}
-rules_version = '2';
-
-/**
- * Firestore Security Rules for Sierra Painting
- * 
- * SECURITY POSTURE (P0 HARDENED):
- * - Deny-by-default: All access denied unless explicitly allowed
- * - Authentication required: All operations require authenticated user
- * - Role-based access control: Admin role checked via custom claims
- * - Organization scoping: Multi-tenant data isolation via orgId
- * - App Check: Enforced at Cloud Functions level; available for Firestore rules
- * 
- * P0 CHANGES:
- * - Enhanced org scoping with roles in custom claims
- * - Stricter least-privilege patterns
- * - All write operations locked to admins or server-side functions
- * 
- * NOTE: Original rules backed up to firestore.rules.bak
- */
-
-service cloud.firestore {
-  // Helper functions
-  function isAuthed() { 
-    return request.auth != null; 
-  }
-  
-  function hasRole(role) { 
-    return isAuthed() && request.auth.token.roles != null && role in request.auth.token.roles; 
-  }
-  
-  function inOrg(orgId) { 
-    return isAuthed() && 
-           request.auth.token.orgs != null && 
-           orgId in request.auth.token.orgs && 
-           request.auth.token.orgs[orgId] == true; 
-  }
-  
-  // Schema validation helpers
-  function hasRequiredField(data, field) {
-    return field in data && data[field] != null;
-  }
-  
-  function isString(value) {
-    return value is string;
-  }
-  
-  function isNumber(value) {
-    return value is number;
-  }
-  
-  function isTimestamp(value) {
-    return value is timestamp;
-  }
-  
-  // Server timestamp validation - ensure updatedAt is set by server only
-  function hasValidTimestamps(data) {
-    return (!('updatedAt' in data) || data.updatedAt == request.time);
-  }
-  
-  // Jobs schema validation
-  function isValidJobSchema(data) {
-    return hasRequiredField(data, 'orgId') && isString(data.orgId) &&
-           hasRequiredField(data, 'status') && isString(data.status) &&
-           hasRequiredField(data, 'ownerId') && isString(data.ownerId) &&
-           hasValidTimestamps(data);
-  }
-  
-  function isJobOwner(data) {
-    return isAuthed() && data.ownerId == request.auth.uid;
-  }
-
-  match /databases/{db}/documents {
-    // Example multi-tenant pattern - adjust as needed for actual schema
-    // This provides a baseline hardened pattern; adapt to existing collections as needed
-    match /orgs/{orgId}/{collection}/{docId} {
-      allow read: if isAuthed() && inOrg(orgId);
-      allow write: if hasRole('admin') && inOrg(orgId);
+    function isOwner() {
+      return authed() && resource.data.ownerId == request.auth.uid;
     }
-    
-    // Preserve existing collection patterns with hardened org checks
-    // Users collection
-    match /users/{userId} {
-      allow read: if isAuthed() && (request.auth.uid == userId || hasRole('admin'));
-      allow create: if isAuthed() && request.auth.uid == userId;
-      allow update: if isAuthed() && request.auth.uid == userId && 
-                       (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'orgId']));
-      allow delete: if hasRole('admin');
+
+    // Only allow specific fields to change on self-edits
+    function willOnlyChange(allowedKeys) {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly(allowedKeys);
     }
-    
-    // Jobs collection with schema validation
-    match /jobs/{jobId} {
-      allow read: if isAuthed() && 
-                     (hasRole('admin') || 
-                      (resource.data.orgId != null && inOrg(resource.data.orgId)) ||
-                      isJobOwner(resource.data));
-      
-      // Create: must be owner and pass schema validation
-      allow create: if isAuthed() && 
-                       isValidJobSchema(request.resource.data) &&
-                       request.resource.data.ownerId == request.auth.uid &&
-                       inOrg(request.resource.data.orgId);
-      
-      // Update: owner or admin, preserve ownerId, pass schema validation
-      allow update: if (isAuthed() && 
-                        isJobOwner(resource.data) && 
-                        request.resource.data.ownerId == resource.data.ownerId &&
-                        isValidJobSchema(request.resource.data)) ||
-                       hasRole('admin');
-      
-      // Delete: owner or admin only
-      allow delete: if (isAuthed() && isJobOwner(resource.data)) || hasRole('admin');
-      
-      match /timeEntries/{entryId} {
-        allow create: if isAuthed() && 
-                         request.resource.data.userId == request.auth.uid &&
-                         (request.resource.data.orgId != null && inOrg(request.resource.data.orgId));
-        allow read: if isAuthed() && 
-                       (request.auth.uid == resource.data.userId || hasRole('admin'));
-        allow update, delete: if false; // Server-side only
+
+    // ---- company-scoped documents -----------------------------------------
+    match /companies/{companyId} {
+      // company document itself
+      allow read: if authed() && isCompany(companyId);
+
+      // all subcollections under a company (e.g., projects, jobs, estimates, invoices…)
+      match /{collection}/{docId} {
+        // Everyone in the company can read
+        allow read: if authed() && isCompany(companyId);
+
+        // Creates: staff/admin OR owner creating their own doc
+        allow create: if authed() && isCompany(companyId) && (
+          hasAnyRole(["admin", "manager", "staff"]) ||
+          request.resource.data.ownerId == request.auth.uid
+        );
+
+        // Updates/deletes: admin/manager OR owner with limited self fields
+        allow update, delete: if authed() && isCompany(companyId) && (
+          hasAnyRole(["admin", "manager"]) ||
+          (isOwner() && willOnlyChange(["title","notes","status","images","updatedAt","hours"]))
+        );
       }
     }
-    
-    // Projects collection
-    match /projects/{projectId} {
-      allow read: if isAuthed() && 
-                     (hasRole('admin') || 
-                      (resource.data.orgId != null && inOrg(resource.data.orgId)));
-      allow create, update, delete: if hasRole('admin');
-    }
-    
-    // Payments - READ-ONLY to clients
-    match /payments/{paymentId} {
-      allow read: if isAuthed() && 
-                     (hasRole('admin') || request.auth.uid == resource.data.userId);
-      allow write: if false; // Server-side only
-      
-      match /audit/{auditId} {
-        allow read: if hasRole('admin');
-        allow write: if false;
-      }
-    }
-    
-    // Invoices
-    match /invoices/{invoiceId} {
-      allow read: if isAuthed() && 
-                     (hasRole('admin') || request.auth.uid == resource.data.userId);
-      allow create: if hasRole('admin');
-      allow update: if hasRole('admin') && 
-                       !request.resource.data.diff(resource.data).affectedKeys()
-                         .hasAny(['paid', 'paidAt', 'total', 'amount']);
-      allow delete: if false; // Audit trail
-    }
-    
-    // Estimates
-    match /estimates/{estimateId} {
-      allow read: if isAuthed() && 
-                     (hasRole('admin') || 
-                      (resource.data.orgId != null && inOrg(resource.data.orgId)));
-      allow create, update: if hasRole('admin');
-      allow delete: if false;
-    }
-    
-    // Leads - server-side only
-    match /leads/{leadId} {
-      allow read: if hasRole('admin');
-      allow write: if false; // Via Cloud Function only
-    }
-    
-    // Activity logs - server-side only
-    match /activity_logs/{logId} {
-      allow read: if hasRole('admin');
-      allow write: if false;
-    }
-    
-    // Idempotency - server-side only
-    match /idempotency/{key} {
-      allow read: if hasRole('admin');
-      allow write: if false;
-    }
 
-    // Deny by default for anything not matched above
+    // ---- default deny ------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }
