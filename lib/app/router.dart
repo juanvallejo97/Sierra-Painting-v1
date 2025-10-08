@@ -10,6 +10,7 @@ import 'package:sierra_painting/features/estimates/presentation/estimates_screen
 import 'package:sierra_painting/features/invoices/presentation/invoices_screen.dart';
 import 'package:sierra_painting/features/jobs/presentation/jobs_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/timeclock_screen.dart';
+import 'package:sierra_painting/features/jobs/presentation/jobs_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
