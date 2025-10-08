@@ -46,7 +46,7 @@ usage() {
 check_firebase_cli() {
   if ! command -v firebase &> /dev/null; then
     echo -e "${RED}❌ Error: Firebase CLI not found${NC}"
-    echo "Install with: npm install -g firebase-tools"
+  echo "Install with: npm install -g firebase-tools@13.23.1"
     exit 1
   fi
 }

@@ -5,7 +5,7 @@ This guide explains how to run Firebase Emulators for local development and test
 ## Prerequisites
 
 - Node.js 18+ installed
-- Firebase CLI installed globally: `npm install -g firebase-tools`
+- Firebase CLI installed globally: `npm install -g firebase-tools@13.23.1`
 - Project dependencies installed: `npm install` in the `functions/` directory
 - Flutter dependencies installed: `flutter pub get`
 

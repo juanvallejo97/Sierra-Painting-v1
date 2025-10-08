@@ -44,7 +44,7 @@ flutter run               # Terminal 2
 - **Flutter SDK** ≥ 3.8.0
 - **Dart SDK** ≥ 3.8.0
 - **Node.js** ≥ 18
-- **Firebase CLI** - `npm install -g firebase-tools`
+- **Firebase CLI** - `npm install -g firebase-tools@13.23.1`
 - **Git**
 - **VS Code** (recommended) or your preferred IDE
 

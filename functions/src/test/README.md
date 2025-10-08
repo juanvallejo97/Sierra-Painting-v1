@@ -34,7 +34,7 @@ If you prefer manual control:
 
 ```bash
 # Install Firebase CLI (if not already installed)
-npm install -g firebase-tools
+npm install -g firebase-tools@13.23.1
 
 # Terminal 1: Start emulator
 firebase emulators:start --only firestore --project sierra-painting-test

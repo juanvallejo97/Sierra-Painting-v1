@@ -26,9 +26,9 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+          uses: actions/setup-node@v4
         with:
-          node-version: '20'
+            node-version: '20'
 
       - name: Setup Java (for Firebase Emulator)
         uses: actions/setup-java@v5

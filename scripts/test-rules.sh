@@ -9,7 +9,7 @@ echo "🔥 Starting Firebase Firestore Emulator..."
 # Check if firebase-tools is installed
 if ! command -v firebase &> /dev/null; then
     echo "❌ Firebase CLI not found. Installing locally..."
-    npm install -g firebase-tools
+    npm install -g firebase-tools@13.23.1
 fi
 
 # Start emulator in background

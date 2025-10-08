@@ -82,7 +82,7 @@ Sierra Painting is a **production-ready mobile application** for painting contra
 ### Prerequisites
 - **Flutter SDK** ≥ 3.8.0 — [Install](https://flutter.dev/docs/get-started/install)
 - **Node.js** ≥ 18 — [Install](https://nodejs.org/)
-- **Firebase CLI** — `npm install -g firebase-tools`
+- **Firebase CLI** — `npm install -g firebase-tools@13.23.1`
 
 ### Setup (3 commands)
 > **Automated Setup:** Use `./scripts/setup_env.sh` to automatically verify and install dependencies. See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for details.

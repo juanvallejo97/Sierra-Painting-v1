@@ -126,7 +126,7 @@ if [ "$SKIP_FIREBASE" = false ]; then
   else
     echo -e "${YELLOW}⚠ Firebase CLI not found${NC}"
     echo -e "${YELLOW}  Installing Firebase CLI...${NC}"
-    npm install -g firebase-tools
+  npm install -g firebase-tools@13.23.1
     if [ $? -eq 0 ]; then
       echo -e "${GREEN}✓ Firebase CLI installed successfully${NC}"
     else

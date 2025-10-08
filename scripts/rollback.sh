@@ -62,7 +62,8 @@ check_requirements() {
     echo ""
     echo "Install instructions:"
     echo "  gcloud: https://cloud.google.com/sdk/docs/install"
-    echo "  firebase-tools: npm install -g firebase-tools"
+  echo "  firebase-tools: npm install -g firebase-tools@13.23.1"
+  echo "  firebase-tools: npm install -g firebase-tools@13.23.1"
     exit 1
   fi
 }

@@ -26,7 +26,7 @@
 - **Flutter SDK** ≥ 3.8.0 — [Install](https://flutter.dev/docs/get-started/install)
 - **Dart SDK** ≥ 3.8.0 (bundled with Flutter)
 - **Node.js** ≥ 18 — [Install](https://nodejs.org/)
-- **Firebase CLI** — `npm install -g firebase-tools`
+- **Firebase CLI** — `npm install -g firebase-tools@13.23.1`
 - **Git** and a code editor (VS Code recommended)
 
 **Recommended VS Code Extensions**:

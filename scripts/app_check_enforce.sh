@@ -98,7 +98,7 @@ log_error() {
 check_firebase_cli() {
     if ! command -v firebase &> /dev/null; then
         log_error "Firebase CLI is not installed. Please install it first:"
-        log_error "  npm install -g firebase-tools"
+    log_error "  npm install -g firebase-tools@13.23.1"
         exit 1
     fi
     

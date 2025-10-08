@@ -610,7 +610,7 @@ chmod +x scripts/path/to/script.sh
 ### Firebase CLI Not Found
 
 ```bash
-npm install -g firebase-tools
+npm install -g firebase-tools@13.23.1
 ```
 
 ### Script Fails in CI

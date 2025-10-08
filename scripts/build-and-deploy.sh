@@ -142,7 +142,7 @@ if [ "$1" == "--deploy" ]; then
   
   # Check if Firebase CLI is installed
   if ! command -v firebase &> /dev/null; then
-    echo -e "${RED}❌ Firebase CLI not found. Install with: npm install -g firebase-tools${NC}"
+  echo -e "${RED}❌ Firebase CLI not found. Install with: npm install -g firebase-tools@13.23.1${NC}"
     exit 1
   fi
   

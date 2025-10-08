@@ -36,17 +36,18 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install root dependencies
         run: npm ci || npm install
-      
+
       - name: Install test dependencies
         working-directory: firestore-tests
         run: npm ci || npm install
-      
+
       - name: Run Firestore rules tests
         working-directory: firestore-tests
         run: npm test
@@ -111,69 +112,69 @@ jobs:
     permissions:
       contents: read
     steps:
-    - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v5
-      with:
-        node-version: '20'
+      - name: Check Functions dependencies
+        working-directory: functions
+        run: |
+          if [ -f "package.json" ]; then
+            echo "🔍 Checking npm dependencies for vulnerabilities"
+            
+            # Install dependencies
+            npm ci || npm install
+            
+            # Run audit (moderate level)
+            echo ""
+            echo "Running npm audit..."
+            npm audit --audit-level=moderate || {
+              echo "⚠️  Vulnerabilities found - review and fix with 'npm audit fix'"
+              exit 1
+            }
+            
+            echo "✅ No moderate or higher vulnerabilities found"
+          fi
     
-    - name: Check Functions dependencies
-      working-directory: functions
-      run: |
-        if [ -f "package.json" ]; then
-          echo "🔍 Checking npm dependencies for vulnerabilities"
+      - name: Check root dependencies
+        run: |
+          if [ -f "package.json" ]; then
+            echo "🔍 Checking root npm dependencies"
+            npm ci || npm install
+            npm audit --audit-level=high || true
+          fi
+    
+      - name: Verify lockfiles present
+        run: |
+          echo "🔍 Checking for dependency lockfiles..."
           
-          # Install dependencies
-          npm ci || npm install
+          MISSING=0
           
-          # Run audit (moderate level)
-          echo ""
-          echo "Running npm audit..."
-          npm audit --audit-level=moderate || {
-            echo "⚠️  Vulnerabilities found - review and fix with 'npm audit fix'"
+          if [ ! -f "pubspec.lock" ]; then
+            echo "⚠️  Missing pubspec.lock for Flutter dependencies"
+            MISSING=1
+          fi
+          
+          if [ -f "functions/package.json" ] && [ ! -f "functions/package-lock.json" ]; then
+            echo "⚠️  Missing functions/package-lock.json"
+            MISSING=1
+          fi
+          
+          if [ -f "package.json" ] && [ ! -f "package-lock.json" ]; then
+            echo "⚠️  Missing root package-lock.json"
+            MISSING=1
+          fi
+          
+          if [ $MISSING -eq 1 ]; then
+            echo ""
+            echo "❌ Lockfiles missing - these are required for reproducible builds"
             exit 1
-          }
+          fi
           
-          echo "✅ No moderate or higher vulnerabilities found"
-        fi
-    
-    - name: Check root dependencies
-      run: |
-        if [ -f "package.json" ]; then
-          echo "🔍 Checking root npm dependencies"
-          npm ci || npm install
-          npm audit --audit-level=high || true
-        fi
-    
-    - name: Verify lockfiles present
-      run: |
-        echo "🔍 Checking for dependency lockfiles..."
-        
-        MISSING=0
-        
-        if [ ! -f "pubspec.lock" ]; then
-          echo "⚠️  Missing pubspec.lock for Flutter dependencies"
-          MISSING=1
-        fi
-        
-        if [ -f "functions/package.json" ] && [ ! -f "functions/package-lock.json" ]; then
-          echo "⚠️  Missing functions/package-lock.json"
-          MISSING=1
-        fi
-        
-        if [ -f "package.json" ] && [ ! -f "package-lock.json" ]; then
-          echo "⚠️  Missing root package-lock.json"
-          MISSING=1
-        fi
-        
-        if [ $MISSING -eq 1 ]; then
-          echo ""
-          echo "❌ Lockfiles missing - these are required for reproducible builds"
-          exit 1
-        fi
-        
-        echo "✅ All lockfiles present"
+          echo "✅ All lockfiles present"
 
   secret-scanning-legacy:
     name: Additional Secret Checks

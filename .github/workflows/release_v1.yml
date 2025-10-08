@@ -53,7 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install firebase-tools
-        run: npm i -g firebase-tools
+        run: npm i -g firebase-tools@13.23.1
       - name: Ensure Hosting site exists
         run: firebase hosting:sites:create "$FIREBASE_HOSTING_SITE" --project "$FIREBASE_PROJECT_ID" || true
       - name: Deploy to Hosting (explicit flags)

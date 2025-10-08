@@ -146,7 +146,7 @@ if [ "$SKIP_FIREBASE" = false ]; then
     echo -e "${GREEN}✓ Firebase CLI available: $FIREBASE_VERSION${NC}"
   else
     echo -e "${RED}✗ Firebase CLI not found${NC}"
-    echo -e "${YELLOW}  Install: npm install -g firebase-tools${NC}"
+  echo -e "${YELLOW}  Install: npm install -g firebase-tools@13.23.1${NC}"
     ERRORS=$((ERRORS+1))
   fi
   

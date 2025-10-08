@@ -57,7 +57,7 @@ for the first time.
 1. Install Firebase CLI:
 
    ```bash
-   npm install -g firebase-tools
+   npm install -g firebase-tools@13.23.1
    ```
 
 2. Verify installation:
