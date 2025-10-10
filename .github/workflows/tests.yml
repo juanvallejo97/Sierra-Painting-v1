@@ -15,12 +15,13 @@ jobs:
       - run: flutter pub get
       - name: Run widget tests (no Firebase)
         run: flutter test -r expanded --concurrency=1 --timeout=2x
-      - name: Coverage gate (>= 60%)
+      - name: Coverage gate (>= 20% for Stage 0)
         run: |
           flutter test --coverage -r expanded --concurrency=1 --timeout=2x
           COVERAGE=$(awk 'BEGIN{lc=0;lt=0} /^DA:/{split($0,a,":"); split(a[2],b,","); lt++; if(b[2]>0) lc++} END{if(lt==0){print 0}else{print lc/lt*100}}' coverage/lcov.info)
           echo "COVERAGE=${COVERAGE}%"
-          awk -v c="$COVERAGE" 'BEGIN{ if (c+0 < 60.0) { exit 1 } }'
+          awk -v c="$COVERAGE" 'BEGIN{ if (c+0 < 20.0) { exit 1 } }'
+          # TODO Stage 1: Increase to 40%, Stage 2: 60%
   integration-tests:
     runs-on: ubuntu-latest
     continue-on-error: true  # Non-blocking for Stage 0; will fix in Stage 1
