@@ -76,7 +76,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
+    # SECURITY: Do NOT add .env to assets - it bundles secrets into the app!
+    # Use flutter_dotenv.load() which reads from filesystem instead
     - assets/config/public.env
     - assets/images/
     - assets/icons/

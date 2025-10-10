@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

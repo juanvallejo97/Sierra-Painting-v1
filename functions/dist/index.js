@@ -6,6 +6,8 @@ export const healthCheck = async (req, res) => {
         version: process.env.npm_package_version || 'dev',
     });
 };
+// Auth functions
+export { setUserRole } from './auth/setUserRole';
 import * as logger from "firebase-functions/logger";
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
