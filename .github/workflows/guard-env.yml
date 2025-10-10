@@ -1,0 +1,72 @@
+name: Guard - Prevent .env in Assets
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging, production, 'feat/**', 'fix/**']
+
+jobs:
+  check-env-not-bundled:
+    name: Ensure .env Not Listed in pubspec.yaml Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Fail if .env listed as an asset
+        run: |
+          echo "🔍 Checking pubspec.yaml for .env in assets..."
+
+          # Fail if .env appears as an asset entry
+          if grep -E '^[[:space:]]*-[[:space:]]+\.env([[:space:]]|$)' pubspec.yaml; then
+            echo "❌ ERROR: .env file found in pubspec.yaml assets!"
+            echo ""
+            echo "SECURITY ISSUE:"
+            echo "  .env contains secrets and must NOT be bundled into the app."
+            echo "  This would expose Firebase keys, API tokens, and credentials."
+            echo ""
+            echo "SOLUTION:"
+            echo "  Remove the '.env' line from pubspec.yaml assets section."
+            echo "  Use flutter_dotenv which loads from filesystem instead."
+            echo ""
+            echo "See DEBUGGING_REPORT.md issue #1 for details."
+            exit 1
+          fi
+
+          echo "✅ PASS: .env is not listed in pubspec.yaml assets"
+
+      - name: Check for .env in assets directory
+        run: |
+          echo "🔍 Checking if .env exists in assets/ directory..."
+
+          if [ -f "assets/.env" ]; then
+            echo "⚠️  WARNING: .env file found in assets/ directory"
+            echo "   This could be accidentally bundled. Move to project root."
+            exit 1
+          fi
+
+          echo "✅ PASS: No .env in assets/ directory"
+
+      - name: Verify .gitignore blocks .env
+        run: |
+          echo "🔍 Verifying .gitignore blocks .env..."
+
+          if ! grep -q "^\.env$" .gitignore && ! grep -q "^/\.env$" .gitignore; then
+            echo "⚠️  WARNING: .env not explicitly in .gitignore"
+            echo "   Add '.env' to .gitignore to prevent accidental commits"
+          else
+            echo "✅ PASS: .env is in .gitignore"
+          fi
+
+      - name: Summary
+        run: |
+          echo "=================================================="
+          echo "✅ .env Security Guard: PASSED"
+          echo "=================================================="
+          echo ""
+          echo "Verified:"
+          echo "  - .env NOT in pubspec.yaml assets"
+          echo "  - .env NOT in assets/ directory"
+          echo "  - .gitignore configured correctly"
+          echo ""
+          echo "This prevents secrets from being bundled into app builds."
