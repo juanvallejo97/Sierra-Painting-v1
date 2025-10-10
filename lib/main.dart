@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/env/build_flags.dart';
 import 'package:sierra_painting/firebase_options.dart';
 import 'package:sierra_painting/infra/perf/performance_monitor.dart';
 import 'package:sierra_painting/router.dart';
@@ -28,16 +29,20 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       await _initializeApp();
-      if (!kIsWeb && !kFlutterTestMode) {
+
+      // Only set up Crashlytics error handlers when NOT in test mode
+      if (!kIsWeb && !isUnderTest) {
         FlutterError.onError = (FlutterErrorDetails details) {
           FlutterError.presentError(details);
           FirebaseCrashlytics.instance.recordFlutterFatalError(details);
         };
+
         PlatformDispatcher.instance.onError = (error, stack) {
           FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
           return true;
         };
       }
+
       runApp(const ProviderScope(child: SierraPaintingApp()));
 
       // Stop after first frame (app "visually ready")
@@ -46,14 +51,13 @@ Future<void> main() async {
       });
     },
     (error, stack) async {
-      if (!kIsWeb && !kFlutterTestMode) {
+      if (!kIsWeb && !isUnderTest) {
         await FirebaseCrashlytics.instance.recordError(
           error,
           stack,
           fatal: true,
         );
       } else {
-        // ignore: avoid_print
         debugPrint('Top-level error (web/test): $error\n$stack');
       }
     },
@@ -63,7 +67,7 @@ Future<void> main() async {
 Future<void> _initializeApp() async {
   debugPrint('Initializing app...'); // Debug print
   // Load env only when not running tests; ignore missing file quietly.
-  if (!kFlutterTestMode) {
+  if (!isUnderTest) {
     final envFile = kIsWeb ? 'assets/config/public.env' : '.env';
     try {
       await dotenv.load(fileName: envFile);
@@ -80,15 +84,19 @@ Future<void> _initializeApp() async {
     }
   }
 
-  // Firebase core
-  debugPrint('Initializing Firebase...'); // Debug print
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Skip App Check & Performance during tests
-  if (!kFlutterTestMode) {
+  // Firebase core - skip entirely in test mode
+  if (!isUnderTest) {
+    debugPrint('Initializing Firebase...'); // Debug print
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // App Check & Performance
     await _activateAppCheck();
-  }
-  if (!kIsWeb && kReleaseMode && !kFlutterTestMode) {
-    await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+    if (!kIsWeb && kReleaseMode) {
+      await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+    }
+  } else {
+    debugPrint('Skipping Firebase initialization in test mode.');
   }
   debugPrint('App initialization complete.'); // Debug print
 }
