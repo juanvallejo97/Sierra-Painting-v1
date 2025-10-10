@@ -24,7 +24,7 @@ import { z } from 'zod';
 const SetUserRoleSchema = z.object({
   uid: z.string().min(1, 'User ID is required'),
   role: z.enum(['admin', 'manager', 'staff', 'crew'], {
-    errorMap: () => ({ message: 'Invalid role. Must be: admin, manager, staff, or crew' }),
+    message: 'Invalid role. Must be: admin, manager, staff, or crew',
   }),
   companyId: z.string().min(1, 'Company ID is required'),
 });
@@ -60,9 +60,9 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     let validatedData: SetUserRoleRequest;
     try {
       validatedData = SetUserRoleSchema.parse(request.data);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new HttpsError('invalid-argument', error.errors[0].message);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw new HttpsError('invalid-argument', err.issues[0].message);
       }
       throw new HttpsError('invalid-argument', 'Invalid request data');
     }
@@ -74,7 +74,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       let user: admin.auth.UserRecord;
       try {
         user = await admin.auth().getUser(uid);
-      } catch (error) {
+      } catch {
         throw new HttpsError('not-found', `User with ID ${uid} not found`);
       }
 
