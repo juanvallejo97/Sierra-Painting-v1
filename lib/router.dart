@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sierra_painting/features/auth/view/forgot_password_screen.dart';
-import 'package:sierra_painting/features/auth/view/login_screen.dart';
-import 'package:sierra_painting/features/auth/view/signup_screen.dart';
+import 'package:sierra_painting/features/auth/presentation/forgot_password_screen.dart';
+import 'package:sierra_painting/features/auth/presentation/login_screen.dart';
+import 'package:sierra_painting/features/auth/presentation/signup_screen.dart';
 import 'package:sierra_painting/features/settings/privacy_screen.dart';
 
 // Temporary placeholder until your real dashboard widget is wired

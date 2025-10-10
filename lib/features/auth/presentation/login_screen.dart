@@ -1,158 +1,173 @@
-/// Login Screen
-///
-/// PURPOSE:
-/// Authentication screen for user sign-in.
-/// Entry point for unauthenticated users.
-///
-/// FEATURES:
-/// - Email/password authentication via Firebase Auth
-/// - Form validation
-/// - Haptic feedback for interactions
-/// - Loading states
-/// - Error handling with user-friendly messages
-///
-/// NAVIGATION:
-/// - On successful login: redirects to /timeclock
-/// - On failed login: shows error message
-library;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sierra_painting/core/providers/auth_provider.dart';
-import 'package:sierra_painting/core/services/haptic_service.dart';
-import 'package:sierra_painting/design/design.dart';
+import 'package:sierra_painting/features/auth/logic/auth_controller.dart';
+import 'package:sierra_painting/infra/perf/performance_monitor.dart';
+import 'package:sierra_painting/ui/desktop_web_scaffold.dart';
+import 'package:sierra_painting/ui/responsive.dart';
+import 'package:sierra_painting/ui/ui_keys.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
-
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _S();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+class _S extends ConsumerState<LoginScreen> {
+  static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+');
+  final _form = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _pw = TextEditingController();
+  bool _busy = false;
+  TraceHandle? _firstFrame;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _email.dispose();
+    _pw.dispose();
     super.dispose();
   }
 
-  Future<void> _signIn() async {
-    // Light haptic on button press
-    await ref.read(hapticServiceProvider).light();
+  @override
+  void initState() {
+    super.initState();
+    () async {
+      _firstFrame = await PerformanceMonitor.instance.start(
+        'login_screen_first_frame',
+      );
+    }();
 
-    if (!_formKey.currentState!.validate()) {
-      // Heavy haptic on validation failure
-      await ref.read(hapticServiceProvider).heavy();
-      return;
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // First stable frame reached
+      await _firstFrame?.stop();
+    });
+  }
 
-    setState(() => _isLoading = true);
+  String? _emailV(String? v) {
+    if (v == null || v.isEmpty) return 'Email required';
+    if (!_emailRe.hasMatch(v)) return 'Please enter a valid email address';
+    return null;
+  }
 
+  Future<void> _submit() async {
+    if (!_form.currentState!.validate()) return;
+    setState(() => _busy = true);
+    final auth = ref.read(authControllerProvider);
     try {
-      await ref
-          .read(firebaseAuthProvider)
-          .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-      // Medium haptic on successful login
-      await ref.read(hapticServiceProvider).medium();
+      await auth.signIn(email: _email.text.trim(), password: _pw.text);
+      if (!mounted) return;
+      await Navigator.of(context).pushReplacementNamed('/dashboard');
     } catch (e) {
-      // Heavy haptic on error
-      await ref.read(hapticServiceProvider).heavy();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
-        );
-      }
+      final s = e.toString().toLowerCase();
+      final msg = s.contains('user-not-found') || s.contains('wrong-password')
+          ? 'Email or password is incorrect'
+          : s.contains('network')
+          ? 'Network error. Please try again later.'
+          : 'Login failed. Please try again.';
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
+  Widget build(BuildContext c) {
+    final bp = bpOf(context);
+    final maxW = bp == Breakpoint.desktop
+        ? 560.0
+        : (bp == Breakpoint.tablet ? 480.0 : 420.0);
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(DesignTokens.spaceLG),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  Icons.format_paint,
-                  size: 100,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: DesignTokens.spaceLG),
-                Text(
-                  'Sierra Painting',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+      appBar: AppBar(title: const Text('Log in')),
+      resizeToAvoidBottomInset: true,
+      body: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: DesktopWebScaffold(
+          child: SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxW),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: _form,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Semantics(
+                            label: 'Email input field',
+                            child: TextFormField(
+                              key: UIKeys.email,
+                              controller: _email,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                              ),
+                              validator: _emailV,
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Semantics(
+                            label: 'Password input field',
+                            child: TextFormField(
+                              key: UIKeys.password,
+                              controller: _pw,
+                              decoration: const InputDecoration(
+                                labelText: 'Password',
+                              ),
+                              obscureText: true,
+                              validator: (v) => (v == null || v.isEmpty)
+                                  ? 'Password required'
+                                  : null,
+                              onFieldSubmitted: (_) => _submit(),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              key: UIKeys.signIn,
+                              onPressed: _busy ? null : _submit,
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                              ),
+                              child: _busy
+                                  ? const SizedBox(
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Log In'),
+                            ),
+                          ),
+                          TextButton(
+                            key: UIKeys.forgot,
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/forgot'),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                            ),
+                            child: const Text('Forgot password?'),
+                          ),
+                          TextButton(
+                            key: UIKeys.create,
+                            onPressed: () => Navigator.pushReplacementNamed(
+                              context,
+                              '/signup',
+                            ),
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                            ),
+                            child: const Text('Create account'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: DesignTokens.spaceSM),
-                Text(
-                  'Professional painting services',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: DesignTokens.spaceXXL),
-                AppInput(
-                  controller: _emailController,
-                  label: 'Email',
-                  prefixIcon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: DesignTokens.spaceMD),
-                AppInput(
-                  controller: _passwordController,
-                  label: 'Password',
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: DesignTokens.spaceXL),
-                AppButton(
-                  label: 'Sign In',
-                  icon: Icons.login,
-                  onPressed: _signIn,
-                  isLoading: _isLoading,
-                ),
-              ],
+              ),
             ),
           ),
         ),
