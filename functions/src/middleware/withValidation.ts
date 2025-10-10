@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import type { ZodSchema, ZodError } from 'zod';
 import admin from 'firebase-admin';
 
-const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10MiB
 
 export type ValidationSchemas<
   TBody = unknown,

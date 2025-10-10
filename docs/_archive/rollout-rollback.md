@@ -1,6 +1,7 @@
 # Rollout & Rollback Strategy
 
-> **Purpose**: Deployment strategy, canary rollout procedures, and rollback plans for Sierra Painting
+> **Purpose**: Deployment strategy, canary rollout procedures, and rollback plans for Sierra
+> Painting
 >
 > **Last Updated**: 2024
 >
@@ -11,6 +12,7 @@
 ## Overview
 
 This document defines the deployment strategy for Sierra Painting, including:
+
 - Staged rollouts with canary cohorts
 - Feature flag management
 - Rollback procedures
@@ -25,6 +27,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Purpose**: Local development and testing
 
 **Configuration**:
+
 - Firebase emulators (Auth, Firestore, Functions, Storage)
 - Local Flutter debug build
 
@@ -41,19 +44,22 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Purpose**: Integration testing and QA
 
 **Configuration**:
+
 - Firebase project: `sierra-painting-staging`
 - Branch: `main`
 - Flutter debug/profile builds
 
 **Access**: Development team, QA team
 
-**Deployment**: 
+**Deployment**:
+
 - Automatic on push to `main`
 - Via GitHub Actions (`.github/workflows/ci.yml`)
 
 **Data**: Synthetic test data, anonymized production data
 
-**URL**: N/A (mobile app), Cloud Functions: `https://us-central1-sierra-painting-staging.cloudfunctions.net`
+**URL**: N/A (mobile app), Cloud Functions:
+`https://us-east4-sierra-painting-staging.cloudfunctions.net`
 
 ---
 
@@ -62,6 +68,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Purpose**: Live customer-facing application
 
 **Configuration**:
+
 - Firebase project: `sierra-painting-prod`
 - Tags: `v*` (e.g., `v1.0.0`, `v1.1.0`)
 - Flutter release builds (APK/IPA)
@@ -69,13 +76,15 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Access**: All users
 
 **Deployment**:
+
 - Manual trigger after staging validation
 - Tag creation triggers build via GitHub Actions
 - Manual app store submission (Android Play Store, Apple App Store)
 
 **Data**: Live production data
 
-**URL**: N/A (mobile app), Cloud Functions: `https://us-central1-sierra-painting-prod.cloudfunctions.net`
+**URL**: N/A (mobile app), Cloud Functions:
+`https://us-east4-sierra-painting-prod.cloudfunctions.net`
 
 ---
 
@@ -84,24 +93,28 @@ This document defines the deployment strategy for Sierra Painting, including:
 ### Flag Types
 
 #### 1. Development Flags
+
 - **Purpose**: Hide incomplete features
 - **Default**: `false`
 - **Audience**: Developers only (via config override)
 - **Example**: `feature_new_scheduler_enabled`
 
 #### 2. Release Flags
+
 - **Purpose**: Control feature rollout
 - **Default**: `false` initially, `true` after validation
 - **Audience**: Canary → stable cohorts
 - **Example**: `feature_c3_mark_paid_enabled`
 
 #### 3. Operational Flags
+
 - **Purpose**: Runtime behavior control
 - **Default**: `true` (safe defaults)
 - **Audience**: All users
 - **Example**: `offline_mode_enabled`, `gps_tracking_enabled`
 
 #### 4. Kill Switches
+
 - **Purpose**: Emergency feature disable
 - **Default**: `true`
 - **Audience**: All users
@@ -114,6 +127,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Location**: Firebase Remote Config
 
 **Update Process**:
+
 1. Update flag in Firebase Console
 2. Publish changes
 3. Apps fetch new config (1-hour cache, or manual refresh)
@@ -131,16 +145,19 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Duration**: 1-3 days
 
 **Audience**:
+
 - Development team
 - Internal beta testers
 
 **Actions**:
+
 1. Deploy to staging
 2. Enable feature flag for internal users
 3. Run smoke tests
 4. Monitor dashboards
 
 **Success Criteria**:
+
 - No P0/P1 bugs
 - All smoke tests pass
 - No performance regressions
@@ -154,22 +171,26 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Duration**: 3-7 days
 
 **Audience**:
+
 - Small cohort of production users
 - Selected by Remote Config conditions (e.g., user ID hash)
 
 **Actions**:
+
 1. Deploy to production (feature flag OFF)
 2. Enable feature flag for canary cohort (5%)
 3. Monitor metrics for 24-48 hours
 4. Expand to 20% if green
 
 **Success Criteria**:
+
 - Error rate < baseline + 5%
 - P95 latency < baseline + 10%
 - No critical bugs reported
 - User feedback positive
 
 **Monitoring**:
+
 - Firebase Crashlytics (crash rate)
 - Firebase Performance (latency)
 - Cloud Logging (error logs)
@@ -186,16 +207,19 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Duration**: 7-14 days
 
 **Audience**:
+
 - Gradual expansion to all users
 - Schedule: 20% → 50% → 100%
 
 **Actions**:
+
 1. Monitor 20% cohort for 48 hours
 2. Expand to 50% if green
 3. Monitor 50% cohort for 48 hours
 4. Expand to 100% if green
 
 **Success Criteria** (same as canary):
+
 - Error rate < baseline + 5%
 - P95 latency < baseline + 10%
 - No critical bugs
@@ -216,11 +240,13 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Audience**: All users
 
 **Actions**:
+
 1. Feature flag set to 100% (or `true` default)
 2. Update app with flag hardcoded to `true` in next release
 3. Remove flag from Remote Config after 2-4 weeks
 
 **Success Criteria**:
+
 - Stable error rates
 - Stable performance
 - Positive user feedback
@@ -238,6 +264,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Time**: Immediate (< 5 minutes)
 
 **Steps**:
+
 1. Open Firebase Remote Config console
 2. Set feature flag to `false` (or reduce percentage)
 3. Publish changes
@@ -257,6 +284,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Time**: 5-10 minutes
 
 **Steps**:
+
 1. List recent deployments:
    ```bash
    firebase functions:list
@@ -281,6 +309,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Time**: Depends on app store review (hours to days)
 
 **Steps**:
+
 1. **Immediate**: Disable all new feature flags
 2. **Short-term**: Deploy previous release to staging
 3. **Medium-term**: Tag previous stable version and redeploy
@@ -291,7 +320,8 @@ This document defines the deployment strategy for Sierra Painting, including:
 4. **Long-term**: Submit rollback build to app stores
 5. Monitor for resolution
 
-**Limitations**: 
+**Limitations**:
+
 - Android: Can take 2-24 hours for review
 - iOS: Can take 24-48 hours for review
 - Users need to update app
@@ -307,6 +337,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Time**: 5-10 minutes
 
 **Steps**:
+
 1. Revert `firestore.rules` to previous version:
    ```bash
    git checkout HEAD~1 firestore.rules
@@ -327,27 +358,27 @@ This document defines the deployment strategy for Sierra Painting, including:
 
 #### Application Health
 
-| Metric | Baseline | Alert Threshold | Action |
-|--------|----------|-----------------|--------|
-| Crash-free rate | > 99% | < 98% | Investigate, consider rollback |
-| Error rate | < 1% | > 2% | Investigate, consider rollback |
-| ANR rate | < 0.5% | > 1% | Investigate performance |
+| Metric          | Baseline | Alert Threshold | Action                         |
+| --------------- | -------- | --------------- | ------------------------------ |
+| Crash-free rate | > 99%    | < 98%           | Investigate, consider rollback |
+| Error rate      | < 1%     | > 2%            | Investigate, consider rollback |
+| ANR rate        | < 0.5%   | > 1%            | Investigate performance        |
 
 #### Performance
 
-| Metric | Baseline | Alert Threshold | Action |
-|--------|----------|-----------------|--------|
-| Screen load (P95) | < 2s | > 3s | Investigate, optimize |
-| API latency (P95) | < 1s | > 2s | Check backend, network |
-| Frame rate | 60fps | < 55fps | Profile, optimize |
+| Metric            | Baseline | Alert Threshold | Action                 |
+| ----------------- | -------- | --------------- | ---------------------- |
+| Screen load (P95) | < 2s     | > 3s            | Investigate, optimize  |
+| API latency (P95) | < 1s     | > 2s            | Check backend, network |
+| Frame rate        | 60fps    | < 55fps         | Profile, optimize      |
 
 #### Business Metrics
 
-| Metric | Baseline | Alert Threshold | Action |
-|--------|----------|-----------------|--------|
-| Clock-in success rate | > 99% | < 95% | Check function, network |
-| Payment success rate | > 95% | < 90% | Check Stripe, function |
-| Offline sync failures | < 5% | > 10% | Check queue service |
+| Metric                | Baseline | Alert Threshold | Action                  |
+| --------------------- | -------- | --------------- | ----------------------- |
+| Clock-in success rate | > 99%    | < 95%           | Check function, network |
+| Payment success rate  | > 95%    | < 90%           | Check Stripe, function  |
+| Offline sync failures | < 5%     | > 10%           | Check queue service     |
 
 ---
 
@@ -365,6 +396,7 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Location**: Firebase Console
 
 **Panels**:
+
 1. **Crashlytics**: Crash-free rate, top crashes
 2. **Performance**: Screen traces, network traces
 3. **Analytics**: Feature usage, user flows
@@ -372,7 +404,8 @@ This document defines the deployment strategy for Sierra Painting, including:
 
 **Access**: Development team, product owner
 
-**Review Cadence**: 
+**Review Cadence**:
+
 - Real-time during rollout
 - Daily during canary
 - Weekly after GA
@@ -454,12 +487,12 @@ This document defines the deployment strategy for Sierra Painting, including:
 
 ## Rollback Decision Matrix
 
-| Severity | Error Rate | Latency | Crashes | Action | Timeline |
-|----------|-----------|---------|---------|--------|----------|
-| P0 | > 10% | > 5s P95 | > 5% | **Immediate rollback** | < 15 min |
-| P1 | 5-10% | 3-5s P95 | 2-5% | **Rollback if not fixed in 1 hour** | < 1 hour |
-| P2 | 2-5% | 2-3s P95 | 1-2% | **Monitor, fix in next release** | 1-7 days |
-| P3 | < 2% | < 2s P95 | < 1% | **Monitor, fix when convenient** | > 7 days |
+| Severity | Error Rate | Latency  | Crashes | Action                              | Timeline |
+| -------- | ---------- | -------- | ------- | ----------------------------------- | -------- |
+| P0       | > 10%      | > 5s P95 | > 5%    | **Immediate rollback**              | < 15 min |
+| P1       | 5-10%      | 3-5s P95 | 2-5%    | **Rollback if not fixed in 1 hour** | < 1 hour |
+| P2       | 2-5%       | 2-3s P95 | 1-2%    | **Monitor, fix in next release**    | 1-7 days |
+| P3       | < 2%       | < 2s P95 | < 1%    | **Monitor, fix when convenient**    | > 7 days |
 
 ---
 
@@ -472,11 +505,13 @@ This document defines the deployment strategy for Sierra Painting, including:
 **Audience**: Development team, QA, product owner
 
 **Frequency**:
+
 - Pre-deployment: Deployment notification
 - During rollout: Daily status updates
 - Post-deployment: Final summary
 
 **Template**:
+
 ```
 🚀 Deployment Status: [Feature Name]
 
@@ -503,6 +538,7 @@ Next: Expand to 20% on [Date]
 **Frequency**: Major feature launches only
 
 **Template**:
+
 ```
 🎉 New Feature: [Feature Name]
 
@@ -519,12 +555,12 @@ Questions? Contact support@sierrapainting.com
 
 ## Emergency Contacts
 
-| Role | Contact | Availability |
-|------|---------|--------------|
-| Engineering Lead | [Name/Email] | 24/7 during rollout |
-| Product Owner | [Name/Email] | Business hours |
-| DevOps | [Name/Email] | On-call rotation |
-| Firebase Support | Firebase Console | 24/7 (paid plan) |
+| Role             | Contact          | Availability        |
+| ---------------- | ---------------- | ------------------- |
+| Engineering Lead | [Name/Email]     | 24/7 during rollout |
+| Product Owner    | [Name/Email]     | Business hours      |
+| DevOps           | [Name/Email]     | On-call rotation    |
+| Firebase Support | Firebase Console | 24/7 (paid plan)    |
 
 ---
 
@@ -542,29 +578,36 @@ Questions? Contact support@sierrapainting.com
 # Post-Mortem: [Incident Title]
 
 ## Summary
+
 Brief description of what happened
 
 ## Timeline
+
 - [Time]: Event 1
 - [Time]: Event 2
 - ...
 
 ## Root Cause
+
 Technical explanation of the issue
 
 ## Impact
+
 - Users affected: [Number/Percentage]
 - Duration: [Time]
 - Business impact: [Description]
 
 ## Resolution
+
 How the issue was resolved
 
 ## Action Items
+
 1. [ ] Action 1 - Owner: [Name] - Due: [Date]
 2. [ ] Action 2 - Owner: [Name] - Due: [Date]
 
 ## Lessons Learned
+
 What we learned and how to prevent in future
 ```
 
@@ -577,16 +620,19 @@ What we learned and how to prevent in future
 **File**: `.github/workflows/ci.yml`
 
 **Triggers**:
+
 - Push to `main` → Deploy to staging
 - Tag `v*` → Deploy to production (manual approval)
 
 **Jobs**:
+
 1. **Test**: Run unit tests, integration tests
 2. **Lint**: Run Flutter analyzer, ESLint
 3. **Build**: Build APK/IPA
 4. **Deploy**: Deploy Cloud Functions, Firestore rules
 
 **Secrets Required**:
+
 - `FIREBASE_TOKEN`: Firebase CLI token
 - `ANDROID_KEYSTORE`: Android signing key
 - `IOS_CERTIFICATE`: iOS signing certificate
@@ -600,6 +646,7 @@ What we learned and how to prevent in future
 **Format**: `MAJOR.MINOR.PATCH`
 
 **Examples**:
+
 - `v1.0.0`: Initial release
 - `v1.1.0`: New feature (backward compatible)
 - `v1.1.1`: Bug fix (backward compatible)
@@ -616,21 +663,25 @@ What we learned and how to prevent in future
 ### Smoke Tests (Required)
 
 1. **Authentication**
+
    - Sign up new user
    - Log in existing user
    - Log out
 
 2. **Time Clock**
+
    - Clock in to job
    - Clock out from job
    - View time entries
 
 3. **Estimates**
+
    - Create estimate
    - View estimate
    - Edit estimate
 
 4. **Invoices**
+
    - Create invoice
    - View invoice
    - Mark as paid (admin)

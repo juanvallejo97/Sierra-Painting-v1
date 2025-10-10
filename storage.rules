@@ -50,11 +50,22 @@ service firebase.storage {
     }
     
     /**
-     * Check if authenticated user has admin role
-     * WARNING: Firestore read counts toward quota
+     * Check if authenticated user has admin role via custom claims
+     * Uses custom claims to avoid Firestore quota consumption
+     * Custom claims should be set when user role is assigned/updated
      */
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
+             request.auth.token.role == 'admin';
+    }
+
+    /**
+     * DEPRECATED: Legacy Firestore-based admin check
+     * WARNING: Each call consumes Firestore read quota
+     * Use isAdmin() instead which checks custom claims
+     */
+    function isAdminLegacy() {
+      return isAuthenticated() &&
              firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
@@ -147,15 +158,31 @@ service firebase.storage {
     // JOB SITE PHOTOS (Crew Uploads)
     // Path: /jobs/{jobId}/photos/{photoId}
     // Read: Authenticated users in the same org
-    // Write: Crew members assigned to the job (TODO: add job assignment check)
+    // Write: Crew members assigned to the job OR admins
     // ============================================================
-    
+
     match /jobs/{jobId}/photos/{photoId} {
       allow read: if isAuthenticated();
-      // TODO: Add check for crew assignment to jobId
-      allow write: if isAuthenticated() && 
-                      isValidImageFile() && 
-                      isUnder10MB();
+
+      // Allow writes if:
+      // 1. User is an admin (can upload to any job), OR
+      // 2. User is assigned to this specific job
+      allow write: if isAuthenticated() &&
+                      isValidImageFile() &&
+                      isUnder10MB() &&
+                      (isAdmin() || isAssignedToJob(jobId));
+    }
+
+    /**
+     * Check if authenticated user is assigned to a specific job
+     * Validates crew assignment via Firestore lookup
+     * WARNING: This consumes Firestore read quota - consider caching job assignments
+     * in custom claims for high-volume scenarios
+     */
+    function isAssignedToJob(jobId) {
+      let job = firestore.get(/databases/(default)/documents/jobs/$(jobId));
+      return job.data.assignedCrew != null &&
+             request.auth.uid in job.data.assignedCrew;
     }
   }
 }

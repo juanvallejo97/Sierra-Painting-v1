@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_PAYLOAD_BYTES = 10 * 1024 * 1024; // 10MiB
 /**
  * Small helper used by callers to mark an endpoint as admin-only.
  * Example: withValidation(schema, adminEndpoint({ functionName: 'foo' }))(handler)

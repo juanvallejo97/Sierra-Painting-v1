@@ -10,7 +10,8 @@
 
 ## Overview
 
-This document provides strategies for optimizing Firebase Cloud Functions performance, focusing on reducing cold start times and improving execution speed.
+This document provides strategies for optimizing Firebase Cloud Functions performance, focusing on
+reducing cold start times and improving execution speed.
 
 ---
 
@@ -19,6 +20,7 @@ This document provides strategies for optimizing Firebase Cloud Functions perfor
 ### Problem
 
 Cold starts occur when:
+
 - Function instance is created for the first time
 - Function has been idle and scaled to zero
 - New version is deployed
@@ -27,7 +29,8 @@ Cold starts occur when:
 
 ### Solution: Minimum Instances
 
-Set `minInstances` for critical functions to keep them warm. Sierra Painting uses centralized deployment configuration:
+Set `minInstances` for critical functions to keep them warm. Sierra Painting uses centralized
+deployment configuration:
 
 ```typescript
 // functions/src/config/deployment.ts
@@ -35,15 +38,15 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
   clockIn: {
     minInstances: 1,
     maxInstances: 20,
-    region: 'us-central1',
-    memory: '256MB',
+    region: "us-east4",
+    memory: "256MB",
     timeoutSeconds: 30,
   },
   createLead: {
     minInstances: 1,
     maxInstances: 10,
-    region: 'us-central1',
-    memory: '256MB',
+    region: "us-east4",
+    memory: "256MB",
     timeoutSeconds: 30,
   },
   // ... other functions
@@ -52,7 +55,7 @@ export const DEPLOYMENT_CONFIG: Record<string, FunctionDeploymentConfig> = {
 // Apply to functions using withValidation middleware:
 export const clockIn = withValidation(
   TimeInSchema,
-  authenticatedEndpoint({ functionName: 'clockIn' })
+  authenticatedEndpoint({ functionName: "clockIn" })
 )(async (data, context) => {
   // Function implementation
 });
@@ -60,7 +63,7 @@ export const clockIn = withValidation(
 // Or apply directly to functions:
 export const createLead = functions
   .runWith({
-    ...getDeploymentConfig('createLead'),
+    ...getDeploymentConfig("createLead"),
     enforceAppCheck: true,
     consumeAppCheckToken: true,
   })
@@ -71,15 +74,16 @@ export const createLead = functions
 
 ### Recommended Configuration
 
-| Function Type | minInstances | maxInstances | Memory | Timeout |
-|---------------|--------------|--------------|--------|---------|
-| **Auth (critical)** | 1 | 20 | 256MB | 30s |
-| **Payments** | 1 | 10 | 512MB | 60s |
-| **Search/List** | 1 | 15 | 256MB | 30s |
-| **Background jobs** | 0 | 5 | 256MB | 540s |
-| **Webhooks** | 0 | 10 | 256MB | 60s |
+| Function Type       | minInstances | maxInstances | Memory | Timeout |
+| ------------------- | ------------ | ------------ | ------ | ------- |
+| **Auth (critical)** | 1            | 20           | 256MB  | 30s     |
+| **Payments**        | 1            | 10           | 512MB  | 60s     |
+| **Search/List**     | 1            | 15           | 256MB  | 30s     |
+| **Background jobs** | 0            | 5            | 256MB  | 540s    |
+| **Webhooks**        | 0            | 10           | 256MB  | 60s     |
 
-**Cost Note**: `minInstances: 1` costs ~$5-10/month per function but eliminates cold starts for users.
+**Cost Note**: `minInstances: 1` costs ~$5-10/month per function but eliminates cold starts for
+users.
 
 ---
 
@@ -88,10 +92,11 @@ export const createLead = functions
 ### Problem
 
 Heavy imports increase cold start time:
+
 ```typescript
 // ❌ Bad - Imports happen on every cold start
-import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 
 export const myFunction = functions.https.onCall(async (data, context) => {
   const db = admin.firestore(); // Initialized on each call
@@ -102,8 +107,8 @@ export const myFunction = functions.https.onCall(async (data, context) => {
 
 ```typescript
 // ✅ Good - Imports happen once per instance
-import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 
 // Initialize once at module load
 admin.initializeApp();
@@ -111,7 +116,7 @@ const db = admin.firestore();
 
 export const myFunction = functions.https.onCall(async (data, context) => {
   // Use pre-initialized db
-  await db.collection('users').doc(context.auth!.uid).get();
+  await db.collection("users").doc(context.auth!.uid).get();
 });
 ```
 
@@ -127,7 +132,7 @@ Even with `minInstances: 0`, functions can be kept warm with scheduled pings.
 
 ```typescript
 // functions/src/ops/warmup.ts
-import * as functions from 'firebase-functions';
+import * as functions from "firebase-functions";
 
 /**
  * Scheduled function to warm up critical endpoints
@@ -135,17 +140,13 @@ import * as functions from 'firebase-functions';
  */
 export const warmupCriticalFunctions = functions
   .runWith({
-    memory: '128MB',
+    memory: "128MB",
     timeoutSeconds: 60,
   })
-  .pubsub.schedule('*/5 6-20 * * *') // Every 5 min, 6am-8pm
-  .timeZone('America/Los_Angeles')
+  .pubsub.schedule("*/5 6-20 * * *") // Every 5 min, 6am-8pm
+  .timeZone("America/Los_Angeles")
   .onRun(async (context) => {
-    const functions = [
-      'clockIn',
-      'clockOut',
-      'createLead',
-    ];
+    const functions = ["clockIn", "clockOut", "createLead"];
 
     const warmups = functions.map(async (name) => {
       try {
@@ -162,6 +163,7 @@ export const warmupCriticalFunctions = functions
 ```
 
 **Schedule Patterns:**
+
 - `*/5 * * * *` - Every 5 minutes (aggressive, for critical)
 - `*/15 * * * *` - Every 15 minutes (moderate)
 - `0 * * * *` - Every hour (light)
@@ -177,7 +179,7 @@ Cross-region latency adds 100-500ms to requests.
 ### Solution: Deploy in User's Region
 
 ```bash
-# Default region (us-central1)
+# Default region (us-east4)
 firebase deploy --only functions
 
 # Deploy to specific region
@@ -185,9 +187,10 @@ firebase functions:config:set regions.primary=us-west1
 ```
 
 **Configure in code:**
+
 ```typescript
 // functions/src/index.ts
-const region = 'us-west1'; // or from config
+const region = "us-west1"; // or from config
 
 export const clockIn = functions
   .region(region)
@@ -198,9 +201,10 @@ export const clockIn = functions
 ```
 
 **Region Selection:**
+
 - `us-west1` - California (best for West Coast US)
 - `us-east1` - South Carolina (best for East Coast US)
-- `us-central1` - Iowa (default, good for nationwide)
+- `us-east4` - Virginia (default, good for east coast)
 
 ---
 
@@ -213,18 +217,20 @@ Large request/response payloads increase latency.
 ### Solution: Compress and Prune
 
 **Server-side:**
+
 ```typescript
-import * as functions from 'firebase-functions';
+import * as functions from "firebase-functions";
 
 export const getJobs = functions.https.onCall(async (data, context) => {
-  const jobs = await db.collection('jobs')
-    .where('userId', '==', context.auth!.uid)
-    .select('id', 'title', 'status', 'scheduledDate') // ✅ Only needed fields
+  const jobs = await db
+    .collection("jobs")
+    .where("userId", "==", context.auth!.uid)
+    .select("id", "title", "status", "scheduledDate") // ✅ Only needed fields
     .limit(50) // ✅ Limit results
     .get();
 
   return {
-    jobs: jobs.docs.map(doc => ({
+    jobs: jobs.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     })),
@@ -233,6 +239,7 @@ export const getJobs = functions.https.onCall(async (data, context) => {
 ```
 
 **Response Compression:**
+
 ```typescript
 // Enable gzip compression (automatic for Cloud Functions)
 // Firebase automatically compresses responses > 1KB
@@ -250,7 +257,7 @@ Creating new connections for each request is slow.
 
 ```typescript
 // ✅ Good - Connection pool initialized once
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -263,7 +270,7 @@ db.settings({
 
 export const myFunction = functions.https.onCall(async (data, context) => {
   // Reuse existing connection
-  await db.collection('items').add(data);
+  await db.collection("items").add(data);
 });
 ```
 
@@ -274,6 +281,7 @@ export const myFunction = functions.https.onCall(async (data, context) => {
 ### Firebase Console Metrics
 
 **View Performance:**
+
 1. Firebase Console → Functions
 2. Select function → Metrics tab
 3. Monitor:
@@ -285,18 +293,20 @@ export const myFunction = functions.https.onCall(async (data, context) => {
 ### Cloud Trace
 
 **Enable Tracing:**
+
 ```typescript
 // Already configured in functions/src/lib/ops/
-import { withSpan } from './lib/ops';
+import { withSpan } from "./lib/ops";
 
 export const myFunction = functions.https.onCall(
-  withSpan('myFunction', async (data, context) => {
+  withSpan("myFunction", async (data, context) => {
     // Function body automatically traced
   })
 );
 ```
 
 **View Traces:**
+
 - Cloud Console → Trace → Trace List
 - Filter by function name
 - Analyze latency breakdown
@@ -316,18 +326,21 @@ export const myFunction = functions.https.onCall(
 ## Implementation Checklist
 
 ### Phase 1: Quick Wins (Week 1)
+
 - [ ] Add `minInstances: 1` to auth functions (clockIn, clockOut)
 - [ ] Hoist all imports to global scope
 - [ ] Configure regional deployment (us-west1 or primary region)
 - [ ] Enable compression (verify in Network tab)
 
 ### Phase 2: Advanced (Week 2-3)
+
 - [ ] Implement scheduled warm-ups for critical functions
 - [ ] Add Firebase Performance traces
 - [ ] Set up Cloud Monitoring alerts
 - [ ] Profile with Cloud Trace
 
 ### Phase 3: Optimization (Month 1)
+
 - [ ] Analyze cold start patterns
 - [ ] Optimize heavy imports (lazy load if needed)
 - [ ] Implement response caching where safe
@@ -343,7 +356,7 @@ export const myFunction = functions.https.onCall(
 export interface FunctionConfig {
   minInstances: number;
   maxInstances: number;
-  memory: '128MB' | '256MB' | '512MB' | '1GB' | '2GB';
+  memory: "128MB" | "256MB" | "512MB" | "1GB" | "2GB";
   timeoutSeconds: number;
 }
 
@@ -352,29 +365,29 @@ export const FUNCTION_CONFIGS: Record<string, FunctionConfig> = {
   clockIn: {
     minInstances: 1,
     maxInstances: 20,
-    memory: '256MB',
+    memory: "256MB",
     timeoutSeconds: 30,
   },
   clockOut: {
     minInstances: 1,
     maxInstances: 20,
-    memory: '256MB',
+    memory: "256MB",
     timeoutSeconds: 30,
   },
-  
+
   // Important (moderate latency ok)
   createLead: {
     minInstances: 1,
     maxInstances: 10,
-    memory: '256MB',
+    memory: "256MB",
     timeoutSeconds: 30,
   },
-  
+
   // Background (latency not critical)
   cleanupOldData: {
     minInstances: 0,
     maxInstances: 5,
-    memory: '256MB',
+    memory: "256MB",
     timeoutSeconds: 540,
   },
 };
@@ -400,12 +413,14 @@ export const clockIn = functions
 ### Cost Optimization
 
 **minInstances Impact:**
+
 ```
 1 instance × 256MB × 24h × 30 days = ~5GB-hours/day
 = ~$0.30/day = ~$9/month per function
 ```
 
 **Trade-off:**
+
 - Without minInstances: $0 idle cost + cold start latency
 - With minInstances: ~$9/month + no cold starts
 
@@ -424,6 +439,7 @@ export const clockIn = functions
 ## Quick Reference
 
 **Add minInstances:**
+
 ```typescript
 export const myFunction = functions
   .runWith({ minInstances: 1 })
@@ -433,9 +449,10 @@ export const myFunction = functions
 ```
 
 **Hoist imports:**
+
 ```typescript
 // Top of file
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -443,6 +460,7 @@ const db = admin.firestore();
 ```
 
 **Check performance:**
+
 ```bash
 # Firebase Console
 firebase console functions

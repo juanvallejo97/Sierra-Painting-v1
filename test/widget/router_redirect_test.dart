@@ -62,9 +62,21 @@ void main() {
     expect(find.text('Log In'), findsOneWidget);
   });
 
-  testWidgets('Authenticated user is redirected', (tester) async {
-    await pumpLogin(tester, authenticated: true);
-    // Adjust the text/locator below to match your dashboard or timeclock landing
-    expect(find.text('Dashboard'), findsOneWidget);
+  testWidgets('Authenticated user sees timeclock screen', (tester) async {
+    final fakeUser = _FakeUser('user@domain.com');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWithValue(AsyncValue.data(fakeUser)),
+        ],
+        child: const SierraPaintingApp(),
+      ),
+    );
+
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Authenticated users should see timeclock screen with welcome text
+    expect(find.byKey(const Key('welcomeText')), findsOneWidget);
   });
 }

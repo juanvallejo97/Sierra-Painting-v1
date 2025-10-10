@@ -46,7 +46,7 @@ class _S extends ConsumerState<SignUpScreen> {
     try {
       await auth.signUp(email: _email.text.trim(), password: _pw.text);
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      await Navigator.of(context).pushReplacementNamed('/dashboard');
     } catch (e) {
       final txt = e.toString().contains('email-already-in-use')
           ? 'An account with this email already exists'

@@ -125,3 +125,9 @@ pnpm-lock.yaml
 .vscode/
 .idea/
 # Ignore local secret JSONs\nsecrets/*.json
+
+# Test temporary directory
+.test_temp/
+
+# Functions build output
+functions/dist/

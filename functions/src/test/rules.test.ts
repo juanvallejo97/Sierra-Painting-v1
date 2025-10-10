@@ -696,7 +696,7 @@ if (!RUN_RULES) {
           ownerId: 'user1',
           title: 'Paint House',
         });
-        
+
         await context
           .firestore()
           .collection('jobs')
@@ -719,6 +719,579 @@ if (!RUN_RULES) {
           .collection('timeEntries')
           .doc('entry1')
           .delete()
+      );
+    });
+  });
+
+  // ============================================================================
+  // Company-Scoped Structure Tests
+  // Tests for /companies/{companyId}/{collection}/{docId} structure
+  // ============================================================================
+
+  describe('Firestore Rules - Tenant Isolation (Company-Scoped)', () => {
+    test('User from company A cannot read documents from company B', async () => {
+      const company1User = testEnv
+        .authenticatedContext('user1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create document in company B
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-b')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'user2',
+          });
+      });
+
+      // Test: User from company A cannot read company B's invoice
+      await assertFails(
+        company1User
+          .collection('companies')
+          .doc('company-b')
+          .collection('invoices')
+          .doc('inv1')
+          .get()
+      );
+    });
+
+    test('User from company A cannot write to company B', async () => {
+      const company1User = testEnv
+        .authenticatedContext('user1', {
+          role: 'admin',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Test: User from company A cannot create document in company B
+      await assertFails(
+        company1User
+          .collection('companies')
+          .doc('company-b')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'user1',
+          })
+      );
+    });
+
+    test('User can read documents from their own company', async () => {
+      const companyAUser = testEnv
+        .authenticatedContext('user1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create document in company A
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'user2',
+          });
+      });
+
+      // Test: User from company A can read their company's invoice
+      await assertSucceeds(
+        companyAUser
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .get()
+      );
+    });
+  });
+
+  describe('Firestore Rules - Invoice/Estimate RBAC', () => {
+    test('Admin can create invoices', async () => {
+      const adminDb = testEnv
+        .authenticatedContext('admin1', {
+          role: 'admin',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        adminDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'admin1',
+            title: 'Paint Job Invoice',
+          })
+      );
+    });
+
+    test('Manager can create invoices', async () => {
+      const managerDb = testEnv
+        .authenticatedContext('manager1', {
+          role: 'manager',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        managerDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'manager1',
+            title: 'Paint Job Invoice',
+          })
+      );
+    });
+
+    test('Staff can create invoices', async () => {
+      const staffDb = testEnv
+        .authenticatedContext('staff1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        staffDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff1',
+            title: 'Paint Job Invoice',
+          })
+      );
+    });
+
+    test('Crew can create invoice if they are the owner', async () => {
+      const crewDb = testEnv
+        .authenticatedContext('crew1', {
+          role: 'crew',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        crewDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'crew1', // Same as authenticated user
+            title: 'Paint Job Invoice',
+          })
+      );
+    });
+
+    test('Crew cannot create invoice for someone else', async () => {
+      const crewDb = testEnv
+        .authenticatedContext('crew1', {
+          role: 'crew',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertFails(
+        crewDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'admin1', // Different from crew1
+            title: 'Paint Job Invoice',
+          })
+      );
+    });
+
+    test('Admin can update any invoice', async () => {
+      const adminDb = testEnv
+        .authenticatedContext('admin1', {
+          role: 'admin',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff1',
+          });
+      });
+
+      // Test: Admin can update
+      await assertSucceeds(
+        adminDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .update({
+            status: 'paid',
+          })
+      );
+    });
+
+    test('Manager can update any invoice', async () => {
+      const managerDb = testEnv
+        .authenticatedContext('manager1', {
+          role: 'manager',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff1',
+          });
+      });
+
+      // Test: Manager can update
+      await assertSucceeds(
+        managerDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .update({
+            status: 'sent',
+          })
+      );
+    });
+
+    test('Owner can update invoice with limited fields', async () => {
+      const staffDb = testEnv
+        .authenticatedContext('staff1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice owned by staff1
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff1',
+            title: 'Original',
+          });
+      });
+
+      // Test: Owner can update allowed fields
+      await assertSucceeds(
+        staffDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .update({
+            title: 'Updated Title',
+            notes: 'Added notes',
+          })
+      );
+    });
+
+    test('Staff cannot update invoices owned by others', async () => {
+      const staff1Db = testEnv
+        .authenticatedContext('staff1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice owned by staff2
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff2', // Different owner
+          });
+      });
+
+      // Test: staff1 cannot update staff2's invoice
+      await assertFails(
+        staff1Db
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .update({
+            status: 'paid',
+          })
+      );
+    });
+
+    test('Admin can delete invoices', async () => {
+      const adminDb = testEnv
+        .authenticatedContext('admin1', {
+          role: 'admin',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'staff1',
+          });
+      });
+
+      // Test: Admin can delete
+      await assertSucceeds(
+        adminDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .delete()
+      );
+    });
+
+    test('Crew cannot delete invoices they own', async () => {
+      const crewDb = testEnv
+        .authenticatedContext('crew1', {
+          role: 'crew',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create invoice owned by crew1
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .set({
+            amount: 1000,
+            status: 'pending',
+            ownerId: 'crew1',
+          });
+      });
+
+      // Test: Crew cannot delete even their own invoice
+      await assertFails(
+        crewDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('invoices')
+          .doc('inv1')
+          .delete()
+      );
+    });
+  });
+
+  describe('Firestore Rules - Estimates RBAC', () => {
+    test('Admin can create estimates', async () => {
+      const adminDb = testEnv
+        .authenticatedContext('admin1', {
+          role: 'admin',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        adminDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .set({
+            amount: 500,
+            status: 'draft',
+            ownerId: 'admin1',
+            title: 'Exterior Paint Estimate',
+          })
+      );
+    });
+
+    test('Manager can create estimates', async () => {
+      const managerDb = testEnv
+        .authenticatedContext('manager1', {
+          role: 'manager',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        managerDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .set({
+            amount: 500,
+            status: 'draft',
+            ownerId: 'manager1',
+          })
+      );
+    });
+
+    test('Staff can create estimates', async () => {
+      const staffDb = testEnv
+        .authenticatedContext('staff1', {
+          role: 'staff',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertSucceeds(
+        staffDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .set({
+            amount: 500,
+            status: 'draft',
+            ownerId: 'staff1',
+          })
+      );
+    });
+
+    test('Crew cannot create estimates for others', async () => {
+      const crewDb = testEnv
+        .authenticatedContext('crew1', {
+          role: 'crew',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      await assertFails(
+        crewDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .set({
+            amount: 500,
+            status: 'draft',
+            ownerId: 'admin1', // Different from crew1
+          })
+      );
+    });
+
+    test('All users in company can read estimates', async () => {
+      const crewDb = testEnv
+        .authenticatedContext('crew1', {
+          role: 'crew',
+          companyId: 'company-a',
+          company_id: 'company-a',
+        })
+        .firestore();
+
+      // Setup: Create estimate
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await context
+          .firestore()
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .set({
+            amount: 500,
+            status: 'draft',
+            ownerId: 'admin1',
+          });
+      });
+
+      // Test: Even crew can read estimates
+      await assertSucceeds(
+        crewDb
+          .collection('companies')
+          .doc('company-a')
+          .collection('estimates')
+          .doc('est1')
+          .get()
       );
     });
   });

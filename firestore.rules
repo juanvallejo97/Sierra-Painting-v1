@@ -20,12 +20,22 @@ service cloud.firestore {
       return claimCompany() == companyId;
     }
 
-    function isAdmin() {
-      return authed() && request.auth.token.role in ['admin'];
+    // Role checks: Uses custom claims from Firebase Auth tokens
+    // Custom claims should be set via setUserRole Cloud Function
+    // This eliminates Firestore reads and improves performance
+    function hasRole(role) {
+      return authed() && request.auth.token.role == role;
     }
 
-    function isManager() {
-      return authed() && request.auth.token.role in ['admin','manager'];
+    function hasAnyRole(roles) {
+      return authed() &&
+             request.auth.token.role != null &&
+             request.auth.token.role in roles;
+    }
+
+    // Check if user belongs to a specific company (via custom claims)
+    function belongsToCompany(companyId) {
+      return authed() && request.auth.token.companyId == companyId;
     }
 
     function isOwner(uid) {

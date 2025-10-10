@@ -2,11 +2,13 @@
 
 ## Overview
 
-Canary deployments allow you to test changes with a small subset of users before rolling out to all users. This document describes the canary deployment process for Sierra Painting v1.
+Canary deployments allow you to test changes with a small subset of users before rolling out to all
+users. This document describes the canary deployment process for Sierra Painting v1.
 
 ## What is a Canary Deployment?
 
 A canary deployment is a release strategy where:
+
 1. New version is deployed to a small percentage of traffic (e.g., 10%)
 2. Metrics are monitored closely
 3. If successful, traffic is gradually increased
@@ -38,18 +40,21 @@ A canary deployment is a release strategy where:
 Monitor the following metrics in [Cloud Console](https://console.cloud.google.com):
 
 **Required Checks:**
+
 - Error rate < 1%
 - P95 latency < 2s
 - No critical errors in logs
 - User-reported issues: 0
 
 **Monitoring Links:**
+
 - [Cloud Functions Metrics](https://console.cloud.google.com/functions)
 - [Error Reporting](https://console.cloud.google.com/errors)
 - [Cloud Logging](https://console.cloud.google.com/logs)
 - [Crashlytics](https://console.firebase.google.com)
 
 **What to Watch:**
+
 ```bash
 # Check error rate
 gcloud logging read "severity>=ERROR AND resource.type=cloud_function" --limit 50 --format json
@@ -87,6 +92,7 @@ gcloud functions describe FUNCTION_NAME --format="get(httpsTrigger.url)"
 ## Canary Checklist
 
 ### Pre-Deployment
+
 - [ ] Code reviewed and approved
 - [ ] All tests passing
 - [ ] VERIFICATION_CHECKLIST.md completed
@@ -95,6 +101,7 @@ gcloud functions describe FUNCTION_NAME --format="get(httpsTrigger.url)"
 - [ ] Team notified of canary deployment
 
 ### During Canary (first 30 minutes)
+
 - [ ] Monitor error rate every 5 minutes
 - [ ] Check Cloud Logging for errors
 - [ ] Monitor P95 latency
@@ -103,6 +110,7 @@ gcloud functions describe FUNCTION_NAME --format="get(httpsTrigger.url)"
 - [ ] Verify critical user flows work
 
 ### Post-Promotion (if successful)
+
 - [ ] Monitor for 2 hours
 - [ ] Update deployment docs
 - [ ] Notify team of success
@@ -110,6 +118,7 @@ gcloud functions describe FUNCTION_NAME --format="get(httpsTrigger.url)"
 - [ ] Update CHANGELOG
 
 ### Post-Rollback (if issues found)
+
 - [ ] Document issues found
 - [ ] Create incident report
 - [ ] Create bug fixes
@@ -145,7 +154,7 @@ For Cloud Functions (Gen 2), traffic splitting is managed via Cloud Run revision
 # Set traffic split manually
 gcloud run services update-traffic FUNCTION_NAME \
   --to-revisions=REVISION_NEW=10,REVISION_OLD=90 \
-  --region=us-central1 \
+  --region=us-east4 \
   --project=sierra-painting-prod
 ```
 
@@ -154,6 +163,7 @@ gcloud run services update-traffic FUNCTION_NAME \
 ### Key Metrics Dashboard
 
 Create a dashboard with:
+
 - Error rate (target: < 1%)
 - Latency P50, P95, P99 (target: < 2s)
 - Invocation count
@@ -164,6 +174,7 @@ Create a dashboard with:
 ### Alerting Rules
 
 Set up alerts for:
+
 - Error rate > 2% (critical)
 - P95 latency > 3s (warning)
 - Cold starts > 10s (warning)
@@ -172,6 +183,7 @@ Set up alerts for:
 ## Rollback Criteria
 
 Immediately rollback if:
+
 - Error rate > 5%
 - P95 latency > 5s
 - Critical errors in logs

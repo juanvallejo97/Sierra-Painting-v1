@@ -26,7 +26,7 @@ void main() {
   group('Login Flow', () {
     testWidgets('User can sign in with valid credentials', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation depends on actual login screen
@@ -49,7 +49,7 @@ void main() {
 
     testWidgets('Invalid credentials show error message', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -61,7 +61,7 @@ void main() {
 
     testWidgets('Network error shows appropriate message', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -76,7 +76,7 @@ void main() {
   group('Clock In/Out Flow', () {
     testWidgets('User can clock in successfully', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -99,7 +99,7 @@ void main() {
 
     testWidgets('User can clock out after clocking in', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -113,7 +113,7 @@ void main() {
 
     testWidgets('Clock in shows pending status when offline', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -134,7 +134,7 @@ void main() {
       tester,
     ) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -150,7 +150,7 @@ void main() {
 
     testWidgets('Failed sync operations can be retried', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -164,7 +164,7 @@ void main() {
 
     testWidgets('Global sync indicator shows correct count', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -183,7 +183,7 @@ void main() {
   group('Form Validation Flow', () {
     testWidgets('Empty required fields show validation errors', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -196,7 +196,7 @@ void main() {
 
     testWidgets('Invalid email format shows error', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -211,7 +211,7 @@ void main() {
   group('Navigation Flow', () {
     testWidgets('Bottom navigation switches between screens', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -233,7 +233,7 @@ void main() {
 
     testWidgets('Back button navigates correctly', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -246,7 +246,7 @@ void main() {
       tester,
     ) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation
@@ -257,7 +257,7 @@ void main() {
 
     testWidgets('Text scales correctly with system settings', (tester) async {
       // Start the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // TODO: Implementation

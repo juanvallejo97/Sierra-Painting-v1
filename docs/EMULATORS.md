@@ -20,6 +20,7 @@ firebase emulators:start
 ```
 
 This will start all configured emulators:
+
 - **Authentication**: http://localhost:9099
 - **Firestore**: http://localhost:8080
 - **Cloud Functions**: http://localhost:5001
@@ -63,19 +64,19 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 Future<void> _connectToEmulators() async {
   const useEmulator = bool.fromEnvironment('USE_EMULATOR', defaultValue: false);
-  
+
   if (useEmulator) {
     const emulatorHost = 'localhost';
-    
+
     // Connect to Auth emulator
     await FirebaseAuth.instance.useAuthEmulator(emulatorHost, 9099);
-    
+
     // Connect to Firestore emulator
     FirebaseFirestore.instance.useFirestoreEmulator(emulatorHost, 8080);
-    
+
     // Connect to Storage emulator
     await FirebaseStorage.instance.useStorageEmulator(emulatorHost, 9199);
-    
+
     print('✅ Connected to Firebase Emulators');
   }
 }
@@ -93,17 +94,18 @@ flutter run --dart-define=USE_EMULATOR=true
 
 ```bash
 # Health check
-curl http://localhost:5001/<project-id>/us-central1/healthCheck
+curl http://localhost:5001/<project-id>/us-east4/healthCheck
 
 # Stripe webhook (test)
-curl -X POST http://localhost:5001/<project-id>/us-central1/stripeWebhook \
+curl -X POST http://localhost:5001/<project-id>/us-east4/stripeWebhook \
   -H "Content-Type: application/json" \
   -d '{"test": "data"}'
 ```
 
 ### Call Callable Functions
 
-Use the Firebase Functions SDK in your app, it will automatically connect to the emulator when configured.
+Use the Firebase Functions SDK in your app, it will automatically connect to the emulator when
+configured.
 
 ```dart
 final callable = FirebaseFunctions.instance.httpsCallable('markPaymentPaid');
@@ -125,12 +127,14 @@ try {
 Access the Emulator UI at http://localhost:4000
 
 ### Features:
+
 - **Firestore**: View and edit documents in real-time
 - **Authentication**: Create test users, view tokens
 - **Functions**: View function logs and execution history
 - **Storage**: Upload/download test files
 
 ### Useful Actions:
+
 1. **Clear all data**: Click "Clear all data" in the UI
 2. **Export data**: File → Export data
 3. **View logs**: Switch to Logs tab for real-time function logs
@@ -140,35 +144,35 @@ Access the Emulator UI at http://localhost:4000
 Create a script to seed test data. Example `scripts/seed-emulator.ts`:
 
 ```typescript
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 
 admin.initializeApp({
-  projectId: 'demo-project',
+  projectId: "demo-project",
 });
 
 // Connect to emulator
-process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8080';
+process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 async function seed() {
   const db = admin.firestore();
-  
+
   // Create test admin user
-  await db.collection('users').doc('admin-test-1').set({
-    email: 'admin@test.com',
-    role: 'admin',
-    displayName: 'Test Admin',
+  await db.collection("users").doc("admin-test-1").set({
+    email: "admin@test.com",
+    role: "admin",
+    displayName: "Test Admin",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-  
+
   // Create test invoice
-  await db.collection('invoices').doc('invoice-test-1').set({
-    userId: 'user-test-1',
+  await db.collection("invoices").doc("invoice-test-1").set({
+    userId: "user-test-1",
     amount: 1000,
-    status: 'pending',
+    status: "pending",
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-  
-  console.log('✅ Emulator seeded with test data');
+
+  console.log("✅ Emulator seeded with test data");
 }
 
 seed().catch(console.error);
@@ -194,30 +198,28 @@ npx ts-node scripts/seed-emulator.ts
 Create `firestore.rules.test.ts`:
 
 ```typescript
-import * as testing from '@firebase/rules-unit-testing';
+import * as testing from "@firebase/rules-unit-testing";
 
-const PROJECT_ID = 'test-project';
+const PROJECT_ID = "test-project";
 
-describe('Firestore Rules', () => {
+describe("Firestore Rules", () => {
   let testEnv: testing.RulesTestEnvironment;
 
   beforeAll(async () => {
     testEnv = await testing.initializeTestEnvironment({
       projectId: PROJECT_ID,
       firestore: {
-        rules: fs.readFileSync('firestore.rules', 'utf8'),
+        rules: fs.readFileSync("firestore.rules", "utf8"),
       },
     });
   });
 
-  test('Deny invoice.paid writes from clients', async () => {
-    const admin = testEnv.authenticatedContext('admin-id');
-    const invoice = admin.firestore().doc('invoices/test-invoice-1');
-    
+  test("Deny invoice.paid writes from clients", async () => {
+    const admin = testEnv.authenticatedContext("admin-id");
+    const invoice = admin.firestore().doc("invoices/test-invoice-1");
+
     // This should be denied
-    await testing.assertFails(
-      invoice.update({ paid: true })
-    );
+    await testing.assertFails(invoice.update({ paid: true }));
   });
 });
 ```
@@ -255,6 +257,7 @@ If function changes aren't reflected:
 ### Auth Emulator Connection Issues
 
 Ensure you're using the correct host:
+
 - **Mobile/Web Emulators**: Use `10.0.2.2` instead of `localhost` on Android emulator
 - **Physical devices**: Use your computer's IP address
 

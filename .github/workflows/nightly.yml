@@ -61,7 +61,7 @@ jobs:
       security-events: write
     strategy:
       matrix:
-        target: [root, functions, webapp]
+        target: [root, functions]
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -82,13 +82,6 @@ jobs:
         working-directory: ./functions
         run: |
           npm audit --json > ../audit-functions.json || true
-          npm audit
-
-      - name: Audit webapp dependencies
-        if: matrix.target == 'webapp'
-        working-directory: ./webapp
-        run: |
-          npm audit --json > ../audit-webapp.json || true
           npm audit
 
       - name: Upload audit report
@@ -158,21 +151,12 @@ jobs:
           license-checker --json --out ../functions-licenses.json || true
           license-checker --summary
 
-      - name: Check WebApp licenses
-        working-directory: ./webapp
-        run: |
-          npm ci
-          license-checker --json --out ../webapp-licenses.json || true
-          license-checker --summary
-
       - name: Upload license reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: license-reports
-          path: |
-            functions-licenses.json
-            webapp-licenses.json
+          path: functions-licenses.json
           retention-days: 14
 
   # Summary

@@ -1,10 +1,9 @@
 {
   "projects": {
-    "default": "to-do-app-ac602",
+    "default": "sierra-painting-dev",
     "dev": "sierra-painting-dev",
     "staging": "sierra-painting-staging",
-    "production": "sierra-painting-prod",
-    "sierrapainting": "to-do-app-ac602"
+    "production": "sierra-painting-prod"
   },
   "targets": {
     "sierra-painting-dev": {

@@ -22,7 +22,7 @@ Future<void> activateAppCheck() async {
       );
     }
     await FirebaseAppCheck.instance.activate(
-      webProvider: ReCaptchaV3Provider(webKey),
+      providerWeb: ReCaptchaV3Provider(webKey),
     );
     return;
   }

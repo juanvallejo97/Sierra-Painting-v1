@@ -23,24 +23,92 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sierra_painting/core/widgets/app_navigation.dart';
 import 'package:sierra_painting/design/design.dart';
+import 'package:sierra_painting/features/estimates/data/estimate_repository.dart';
+import 'package:sierra_painting/features/estimates/domain/estimate.dart';
 // import 'package:sierra_painting/core/widgets/paginated_list_view.dart'; // Uncomment when implementing list
 
-class EstimatesScreen extends StatelessWidget {
+class EstimatesScreen extends ConsumerWidget {
   const EstimatesScreen({super.key});
 
+  Future<void> _createEstimate(BuildContext context, WidgetRef ref) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You must be logged in to create estimates'),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Get companyId from custom claims
+    final idTokenResult = await user.getIdTokenResult();
+    final companyId = idTokenResult.claims?['companyId'] as String?;
+
+    if (companyId == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Company ID not found. Please contact support.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    // TODO: Show estimate creation form dialog
+    // For now, create a sample estimate for demonstration
+    final repository = ref.read(estimateRepositoryProvider);
+    final request = CreateEstimateRequest(
+      companyId: companyId,
+      customerId: 'sample-customer', // TODO: Select from customer list
+      items: [
+        EstimateItem(
+          description: 'Sample Service',
+          quantity: 1.0,
+          unitPrice: 100.0,
+        ),
+      ],
+      validUntil: DateTime.now().add(const Duration(days: 30)),
+      notes: 'Sample estimate - please replace with actual form',
+    );
+
+    final result = await repository.createEstimate(request);
+
+    if (context.mounted) {
+      result.when(
+        success: (estimate) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Estimate created: ${estimate.id}')),
+          );
+          // TODO: Navigate to estimate detail screen
+        },
+        failure: (error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error creating estimate: $error')),
+          );
+        },
+      );
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: const Text('Estimates')),
       drawer: const AppDrawer(),
-      body: const _EstimatesBody(),
+      body: _EstimatesBody(
+        onCreateEstimate: () => _createEstimate(context, ref),
+      ),
       bottomNavigationBar: const AppNavigationBar(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Create new estimate
-        },
+        onPressed: () => _createEstimate(context, ref),
         tooltip: 'Create Estimate',
         child: const Icon(Icons.add),
       ),
@@ -50,7 +118,9 @@ class EstimatesScreen extends StatelessWidget {
 
 /// Estimates body - separated for better rebuild isolation
 class _EstimatesBody extends StatelessWidget {
-  const _EstimatesBody();
+  final VoidCallback onCreateEstimate;
+
+  const _EstimatesBody({required this.onCreateEstimate});
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +128,12 @@ class _EstimatesBody extends StatelessWidget {
     final hasEstimates = false;
 
     if (!hasEstimates) {
-      return const AppEmpty(
+      return AppEmpty(
         icon: Icons.description,
         title: 'No Estimates Yet',
         description: 'Create an estimate to send to potential customers.',
         actionLabel: 'Create Estimate',
-        onAction: null, // TODO: Wire to create estimate action
+        onAction: onCreateEstimate,
       );
     }
 

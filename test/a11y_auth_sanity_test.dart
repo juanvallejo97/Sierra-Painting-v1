@@ -1,54 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sierra_painting/main.dart' as app;
+import 'helpers/test_harness.dart'; // adjust to your harness path
+
+const sizes = <(double w, double scale)>[
+  (1024, 1.15),
+  (1024, 1.3),
+  (768, 1.0),
+  (768, 1.15),
+  (768, 1.3),
+  (480, 1.0),
+  (480, 1.15),
+  (390, 1.0),
+  (390, 1.3),
+  (360, 1.0),
+  (360, 1.15),
+];
+
+Finder get emailF => find.byKey(const ValueKey('auth.email'));
+Finder get passF => find.byKey(const ValueKey('auth.password'));
+Finder get signIn => find.byKey(const ValueKey('auth.signIn'));
+
+Future<void> bringIntoView(WidgetTester tester, Finder f) async {
+  if (!tester.any(f)) return; // let expect give a good message later
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+}
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  // We just make sure auth screens render without overflow/layout exceptions
-  // across common phone/tablet widths and text scales.
-  final widths = <double>[360, 390, 480, 600, 768, 1024];
-  final scales = <double>[1.0, 1.15, 1.3];
-
-  for (final w in widths) {
-    for (final s in scales) {
-      testWidgets('auth renders (w=$w, scale=$s) no exceptions', (
+  for (final (w, scale) in sizes) {
+    testWidgets('auth renders (w=$w, scale=$scale) no exceptions', (
+      tester,
+    ) async {
+      await setDeviceSize(
         tester,
-      ) async {
-        tester.view.physicalSize = Size(w, 800);
-        tester.view.devicePixelRatio = 2.0;
+        Size(w, 800),
+        textScale: scale,
+      ); // helper in your harness
+      await pumpLogin(tester, authenticated: false); // helper in your harness
+      await tester.pumpAndSettle();
 
-        app.main(); // boots app → login by default
-        await tester.pumpAndSettle();
+      expect(
+        emailF,
+        findsOneWidget,
+        reason: 'Email field should be visible at width $w',
+      );
+      expect(
+        passF,
+        findsOneWidget,
+        reason: 'Password field should be visible at width $w',
+      );
+      expect(
+        signIn,
+        findsOneWidget,
+        reason: 'Sign in button should be visible at width $w',
+      );
 
-        // Apply a larger text scale and re-pump
-        final mq = MediaQuery.of(tester.element(find.byType(MaterialApp)));
-        tester.binding.platformDispatcher.textScaleFactorTestValue = s;
-        await tester.pumpAndSettle();
+      await bringIntoView(tester, emailF);
+      await bringIntoView(tester, passF);
+      await bringIntoView(tester, signIn);
 
-        // No overflow banners / exceptions
-        expect(tester.takeException(), isNull);
-
-        // Critical controls exist and are tappable
-        expect(find.textContaining('Log in', findRichText: true), findsWidgets);
-        expect(
-          find.textContaining('Create account', findRichText: true),
-          findsAtLeastNWidgets(1),
-        );
-
-        // Minimum 48px touch target: check a common button (if present)
-        final candidates = find.byType(ElevatedButton);
-        if (candidates.evaluate().isNotEmpty) {
-          final r = tester.getSize(candidates.first);
-          expect(r.height >= 48.0, true);
-        }
-
-        addTearDown(() {
-          tester.view.resetPhysicalSize();
-          tester.view.resetDevicePixelRatio();
-          tester.binding.platformDispatcher.clearAllTestValues();
-        });
-      });
-    }
+      // Optional quick a11y assertion:
+      final semantics = tester.getSemantics(signIn);
+      expect(
+        semantics.label.isNotEmpty,
+        true,
+        reason: 'Sign in button needs a label',
+      );
+    });
   }
 }

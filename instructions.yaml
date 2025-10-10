@@ -1,131 +1,34 @@
-id: next_steps_roadmap
-title: "Next Steps: Security hardening, perf/latency, CI/CD, parity & docs"
-owner: platform
-labels: [roadmap, security, performance, ci-cd, docs]
-timeframe: "ship across 2–3 short iterations"
+name: p0.5_functions_build_green
+goal: "TypeScript compiles with no errors; predeploy guard in place."
+why: "Prevents stale/broken Functions from deploying."
 
-context:
-  done_now:
-    - A1 Kickoff & Tooling
-    - A2 Screens & Logic (login/forgot/signup scaffold, routes) with perf traces in place
-    - A3/A4 basic parity checks + first integration test path (Android)
-  drivers:
-    - Firestore rules regression flagged (subcollection read overly permissive under `companies/{companyId}/{collection}/{docId}`).
-    - CI YAML sprawl & duplicate/invalid jobs.
-    - Cold starts on Cloud Functions (and potential long tail on first API).
-    - Need a clean security/observability posture before widening feature work.
+touches:
+  - functions/package.json
+  - functions/tsconfig.json
+  - functions/src/**/*.ts
 
-workstreams:
+prechecks:
+  - "Node 18+ or 20+, npm 9+ available."
+  - "From repo root: run all commands with --prefix functions."
 
-  - id: secure_firestore_rules
-    title: "Lock down Firestore rules for companies"
-    files_touch:
-      - firestore.rules
-      - firestore.indexes.json
-      - tool/rules/rules_test.mjs (Node) or test/firestore_rules_test.dart (Flutter)
-    actions:
-      - "Remove blanket `allow read: if request.auth.token.company_id == companyId` on all subcollections."
-      - "Refactor shared predicates:"
-        functions: |
-          function isCompany(companyId) { return request.auth != null
-            && request.auth.token.company_id == companyId; }
-          function isAdmin() { return request.auth.token.role in ['admin']; }
-          function isManager() { return request.auth.token.role in ['admin','manager']; }
-          function isOwner(uid) { return request.auth.uid == uid; }
-      - "Per subcollection, be explicit (examples):"
-        examples: |
-          match /companies/{companyId}/invoices/{doc} {
-            allow read: if isCompany(companyId) && (isManager() || isAdmin());
-            allow create,update,delete: if isCompany(companyId) && isAdmin();
-          }
-          match /companies/{companyId}/users/{uid} {
-            allow read: if isCompany(companyId) && (isOwner(uid) || isAdmin());
-            allow update: if isCompany(companyId) && (isOwner(uid) || isAdmin());
-            allow create,delete: if isCompany(companyId) && isAdmin();
-          }
-      - "Add a rules test harness that proves non-admin employees cannot read invoices/payments of peers."
-    acceptance_criteria:
-      - "Rules unit tests: ✅ pass (deny cross-user reads; allow admin reads)."
-      - "Manual spot checks in the emulator match expectations."
-      - "No regression in app’s normal reads for correct roles."
+steps:
+  - "Install clean deps: npm --prefix functions ci"
 
-  - id: cloud_functions_latency
-    title: "Latency hardening for serverless"
-    files_touch:
-      - functions/package.json
-      - functions/src/index.ts
-      - .github/workflows/deploy.yml
-    actions:
-      - "Pin region: `us-central1` (or team’s region) and set `minInstances` for hot paths to 1–2."
-      - "Enable HTTP keep-alive & set sensible timeouts/retries in client SDK."
-      - "Emit perf metrics (custom trace) around first API call."
-    acceptance_criteria:
-      - "First call p95 < 1.5s on warm, p95 < 3s on cold (measured in Integration Test)."
+  - "Ensure scripts exist (edit package.json if missing): scripts: build: tsc -p . typecheck: tsc
+    --noEmit -p . lint: eslint . --ext .ts || echo 'eslint not configured'"
 
-  - id: ci_cd_consolidation
-    title: "Consolidate & lint GitHub Actions YAML"
-    files_touch:
-      - .github/workflows/{deploy.yml,hosting.yml,production.yml,nightly.yml,updates.yml}  # consolidate
-      - .github/workflows/ci.yml  # new unified CI
-    actions:
-      - "Create a single `ci.yml` with jobs: analyze → test → build (web, android)."
-      - "Create a single `deploy.yml` gated by branch/tag with environments (staging/production)."
-      - "Remove duplicate steps & invalid YAML; add `actionlint` / `yamllint` step."
-      - "Reference secrets by required names only (FIREBASE_SERVICE_ACCOUNT, FIREBASE_PROJECT_ID, GCP_WORKLOAD_IDENTITY_PROVIDER)."
-    acceptance_criteria:
-      - "CI green pipeline on PR."
-      - "Deploy job runs only on protected branches/tags."
+  - "Compile: npm --prefix functions run build"
 
-  - id: perf_observability
-    title: "Observability & perf dashboards"
-    files_touch:
-      - lib/perf/performance_monitor.dart
-      - firebase.json / remote config defaults
-    actions:
-      - "Promote the existing perf trace (boot_ms) to a dashboard; add traces for: login_route_ms, first_query_ms."
-      - "Remote‑config kill‑switch for Crashlytics/AppCheck in production."
-    acceptance_criteria:
-      - "Perf chart in Firebase Performance shows the 3 key traces."
-      - "Toggling RC kill‑switch disables Crashlytics collection at runtime in a test build."
+  - "If build fails, fix errors in src until exit code 0."
 
-  - id: parity_a11y
-    title: "A11y + parity audit (A3 continuation)"
-    files_touch:
-      - lib/features/auth/view/login_screen.dart
-      - lib/l10n/ (if present)
-    actions:
-      - "Add semantics labels to buttons/fields."
-      - "Ensure tap targets >= 48dp and color contrast is AA."
-      - "Hook `onTapOutside` → unfocus to improve keyboard flow."
-    acceptance_criteria:
-      - "TalkBack/VoiceOver can navigate and announce all controls."
-      - "No a11y issues in `flutter analyze --no-fatal-infos --no-fatal-warnings`."
+  - 'Verify predeploy hook (firebase.json): hosting/functions predeploy should include: ''npm
+    --prefix "$RESOURCE_DIR" run build'' # If absent, add under ''functions'': { ''predeploy'':
+    [''npm --prefix "$RESOURCE_DIR" run build''] }'
 
-  - id: docs_pr_hygiene
-    title: "Docs & PR hygiene"
-    files_touch:
-      - CONTRIBUTING.md
-      - docs/DEVELOPMENT.md
-      - docs/TESTING.md
-    actions:
-      - "Add runbooks for: local Android build, test harness usage, and the Windows TMP/TEMP note."
-      - "Define PR checklist (analyze, tests green, rule tests green, blueprint link)."
-    acceptance_criteria:
-      - "New contributors can clone → run → test without backchanneling."
-      - "PRs consistently include checklist ticks."
+validation:
+  - "Exit code 0 from: npm --prefix functions run build"
+  - "Optional: npm --prefix functions run typecheck returns 0"
+  - "Optional: npm --prefix functions run lint returns 0"
 
-timeline:
-  milestone_1:
-    - secure_firestore_rules
-    - ci_cd_consolidation
-  milestone_2:
-
-    - cloud_functions_latency
-    - perf_observability
-  milestone_3:
-    - parity_a11y
-    - docs_pr_hygiene
-
-risk_notes:
-  - "Rule tightening can surface missing indexes and unmodeled access patterns—expect to add indexes and small repo touches."
-  - "minInstances incurs cost; set small values and monitor."
+deliverable:
+  - "Commit: chore(functions): build green & enforce predeploy build"

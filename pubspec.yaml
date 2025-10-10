@@ -1,10 +1,10 @@
 name: sierra_painting
 description: Professional painting services management application
-publish_to: 'none'
+publish_to: "none"
 version: 0.0.12+12
 
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -63,6 +63,9 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  fake_cloud_firestore: 4.0.0
+
+  firebase_core_platform_interface: ^6.0.1
 
   # Code Generation
   build_runner: ^2.5.7
@@ -76,7 +79,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
+    # SECURITY: Do NOT add .env to assets - it bundles secrets into the app!
+    # Use flutter_dotenv.load() which reads from filesystem instead
     - assets/config/public.env
     - assets/images/
     - assets/icons/

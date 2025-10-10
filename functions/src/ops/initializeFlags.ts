@@ -9,7 +9,8 @@
  * firebase deploy --only functions:initializeFlags
  * 
  * Then call from Firebase Console or via API:
- * POST https://us-central1-<project-id>.cloudfunctions.net/initializeFlags
+ * POST https://us-east4-<project-id>.cloudfunctions.net/initializeFlags
+ * POST https://us-east4-<project-id>.cloudfunctions.net/initializeFlags
  */
 
 import { z } from 'zod';

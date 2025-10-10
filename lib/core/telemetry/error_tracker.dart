@@ -30,6 +30,8 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:sierra_painting/core/env/build_flags.dart';
 
 /// Error severity levels
 enum ErrorSeverity { info, warning, error, fatal }
@@ -87,7 +89,23 @@ class ErrorTracker {
         '[ErrorTracker] User context set: userId=$userId, orgId=$orgId',
       );
     }
-    // TODO: Set user context in Firebase Crashlytics
+
+    // Set user context in Firebase Crashlytics
+    if (!kIsWeb && !isUnderTest) {
+      try {
+        if (userId != null) {
+          FirebaseCrashlytics.instance.setUserIdentifier(userId);
+        }
+        if (orgId != null) {
+          FirebaseCrashlytics.instance.setCustomKey('orgId', orgId);
+        }
+        if (email != null) {
+          FirebaseCrashlytics.instance.setCustomKey('email', email);
+        }
+      } catch (e) {
+        debugPrint('[ErrorTracker] Failed to set Crashlytics user context: $e');
+      }
+    }
   }
 
   /// Clear user context (on logout)
@@ -97,7 +115,20 @@ class ErrorTracker {
     if (kDebugMode) {
       debugPrint('[ErrorTracker] User context cleared');
     }
-    // TODO: Clear user context in Firebase Crashlytics
+
+    // Clear user context in Firebase Crashlytics
+    if (!kIsWeb && !isUnderTest) {
+      try {
+        FirebaseCrashlytics.instance.setUserIdentifier('');
+        // Clear custom keys by setting them to empty
+        FirebaseCrashlytics.instance.setCustomKey('orgId', '');
+        FirebaseCrashlytics.instance.setCustomKey('email', '');
+      } catch (e) {
+        debugPrint(
+          '[ErrorTracker] Failed to clear Crashlytics user context: $e',
+        );
+      }
+    }
   }
 
   /// Record a non-fatal error
@@ -119,12 +150,29 @@ class ErrorTracker {
       debugPrint('Context: ${mergedContext.toMap()}');
     }
 
-    // TODO: Send to Firebase Crashlytics
-    // if (fatal) {
-    //   FirebaseCrashlytics.instance.recordFatalError(error, stackTrace);
-    // } else {
-    //   FirebaseCrashlytics.instance.recordError(error, stackTrace);
-    // }
+    // Send to Firebase Crashlytics
+    if (!kIsWeb && !isUnderTest) {
+      try {
+        // Set context as custom keys before recording error
+        final contextMap = mergedContext.toMap();
+        for (final entry in contextMap.entries) {
+          FirebaseCrashlytics.instance.setCustomKey(
+            entry.key,
+            entry.value.toString(),
+          );
+        }
+
+        // Record the error
+        FirebaseCrashlytics.instance.recordError(
+          error,
+          stackTrace,
+          fatal: fatal,
+          reason: 'Severity: ${severity.name}',
+        );
+      } catch (e) {
+        debugPrint('[ErrorTracker] Failed to record error to Crashlytics: $e');
+      }
+    }
   }
 
   /// Record a message
@@ -141,8 +189,21 @@ class ErrorTracker {
       debugPrint('Context: ${mergedContext.toMap()}');
     }
 
-    // TODO: Send to Firebase Crashlytics
-    // FirebaseCrashlytics.instance.log(message);
+    // Send to Firebase Crashlytics
+    if (!kIsWeb && !isUnderTest) {
+      try {
+        final contextStr = mergedContext
+            .toMap()
+            .entries
+            .map((e) => '${e.key}=${e.value}')
+            .join(', ');
+        FirebaseCrashlytics.instance.log(
+          '[${severity.name.toUpperCase()}] $message | Context: $contextStr',
+        );
+      } catch (e) {
+        debugPrint('[ErrorTracker] Failed to log message to Crashlytics: $e');
+      }
+    }
   }
 
   /// Set a custom key-value pair
@@ -150,8 +211,17 @@ class ErrorTracker {
     if (kDebugMode) {
       debugPrint('[ErrorTracker] Custom key: $key = $value');
     }
-    // TODO: Set custom key in Firebase Crashlytics
-    // FirebaseCrashlytics.instance.setCustomKey(key, value);
+
+    // Set custom key in Firebase Crashlytics
+    if (!kIsWeb && !isUnderTest) {
+      try {
+        FirebaseCrashlytics.instance.setCustomKey(key, value.toString());
+      } catch (e) {
+        debugPrint(
+          '[ErrorTracker] Failed to set custom key in Crashlytics: $e',
+        );
+      }
+    }
   }
 
   /// Merge global and local contexts

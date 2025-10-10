@@ -10,7 +10,8 @@
 
 ## Overview
 
-This document provides step-by-step rollback procedures when performance optimizations cause issues in production.
+This document provides step-by-step rollback procedures when performance optimizations cause issues
+in production.
 
 ---
 
@@ -43,12 +44,14 @@ This document provides step-by-step rollback procedures when performance optimiz
 #### Steps:
 
 1. **Access Firebase Console**
+
    ```
    https://console.firebase.google.com
    → Project → Remote Config
    ```
 
 2. **Update Flag**
+
    - Find the relevant feature flag
    - Set to `false` (disabled)
    - Click "Publish changes"
@@ -59,6 +62,7 @@ This document provides step-by-step rollback procedures when performance optimiz
    - Wait 5-10 minutes for changes to propagate
 
 **Example Flags:**
+
 ```
 enable_performance_monitoring: false
 enable_new_caching: false
@@ -66,6 +70,7 @@ enable_isolate_compute: false
 ```
 
 #### Affected Areas:
+
 - Performance monitoring
 - Caching strategies
 - Compute-intensive operations
@@ -81,16 +86,19 @@ enable_isolate_compute: false
 #### Steps:
 
 1. **Play Store Console**
+
    ```
    https://play.google.com/console
    → Your App → Release → Production
    ```
 
 2. **Halt Current Rollout**
+
    - Click "Halt rollout" on active release
    - Confirm action
 
 3. **Rollback to Previous Version**
+
    - Select previous stable version
    - Click "Resume rollout" or "Create new release"
    - Set rollout to 100% (or staged: 10% → 50% → 100%)
@@ -101,6 +109,7 @@ enable_isolate_compute: false
    - Monitor user reviews
 
 **Timeline:**
+
 - Halt: Immediate
 - Rollback initiated: 15 minutes
 - 50% users updated: 2-6 hours
@@ -116,43 +125,48 @@ enable_isolate_compute: false
 #### Steps:
 
 1. **List Deployed Versions**
+
    ```bash
    firebase functions:log --only clockIn
    gcloud functions list --project=sierra-painting
    ```
 
 2. **Identify Previous Version**
+
    ```bash
    # Check Git history
    git log --oneline functions/src/
-   
+
    # Find stable commit
    git show <commit-hash>:functions/src/index.ts
    ```
 
 3. **Rollback Code**
+
    ```bash
    # Option A: Git revert (recommended)
    git revert <bad-commit-hash>
    git push origin main
-   
+
    # Option B: Deploy previous version
    git checkout <previous-commit-hash> -- functions/
    firebase deploy --only functions
    ```
 
 4. **Verify Deployment**
+
    ```bash
    # Check logs
    firebase functions:log --only clockIn --lines 50
-   
+
    # Test function
-   curl -X POST https://us-central1-sierra-painting.cloudfunctions.net/clockIn \
+   curl -X POST https://us-east4-sierra-painting.cloudfunctions.net/clockIn \
      -H "Content-Type: application/json" \
      -d '{"test": true}'
    ```
 
 **What Gets Rolled Back:**
+
 - Function logic changes
 - Performance optimizations
 - minInstances configuration
@@ -168,21 +182,25 @@ enable_isolate_compute: false
 #### Steps:
 
 1. **Access Firebase Console**
+
    ```
    Firebase Console → Firestore → Rules
    ```
 
 2. **View History**
+
    - Click "History" tab
    - Find last known good version
    - Note timestamp
 
 3. **Rollback**
+
    - Click on previous version
    - Click "Restore"
    - Confirm
 
 4. **Alternative: CLI**
+
    ```bash
    # Deploy previous rules from git
    git checkout <previous-commit> -- firestore.rules
@@ -270,12 +288,14 @@ Updates will be posted here as we work to resolve this.
 # Incident Report: [Brief Title]
 
 ## Summary
+
 - **Date**: [YYYY-MM-DD]
 - **Duration**: [Start] to [End] ([Duration])
 - **Severity**: [Critical/High/Medium/Low]
 - **Affected**: [Number of users / % of traffic]
 
 ## Timeline
+
 - **HH:MM** - Issue detected
 - **HH:MM** - Incident declared
 - **HH:MM** - Rollback initiated
@@ -283,37 +303,44 @@ Updates will be posted here as we work to resolve this.
 - **HH:MM** - Incident closed
 
 ## Root Cause
+
 [Detailed explanation of what went wrong]
 
 ## Impact
+
 - **Users Affected**: [Number/percentage]
 - **Services**: [List affected services]
 - **Revenue**: [If applicable]
 
 ## Resolution
+
 [How the issue was resolved]
 
 ## Rollback Performed
+
 - **Method**: [Feature flag/App version/Functions/Rules]
 - **Time to Rollback**: [Duration]
 - **Verification**: [How we confirmed it worked]
 
 ## Prevention
+
 - [ ] [Action item 1]
 - [ ] [Action item 2]
 - [ ] [Action item 3]
 
 ## Learnings
+
 - [Key learning 1]
 - [Key learning 2]
 - [Key learning 3]
 
 ## Action Items
-| Item | Owner | Due Date | Status |
-|------|-------|----------|--------|
-| Fix root cause | @engineer | YYYY-MM-DD | Open |
-| Add monitoring | @engineer | YYYY-MM-DD | Open |
-| Update docs | @engineer | YYYY-MM-DD | Open |
+
+| Item           | Owner     | Due Date   | Status |
+| -------------- | --------- | ---------- | ------ |
+| Fix root cause | @engineer | YYYY-MM-DD | Open   |
+| Add monitoring | @engineer | YYYY-MM-DD | Open   |
+| Update docs    | @engineer | YYYY-MM-DD | Open   |
 ```
 
 ---
@@ -321,6 +348,7 @@ Updates will be posted here as we work to resolve this.
 ## Rollback Checklist
 
 ### Pre-Rollback
+
 - [ ] Identify issue and severity
 - [ ] Notify team (Slack/email)
 - [ ] Choose rollback method
@@ -328,6 +356,7 @@ Updates will be posted here as we work to resolve this.
 - [ ] Document current state
 
 ### During Rollback
+
 - [ ] Execute rollback procedure
 - [ ] Monitor metrics in real-time
 - [ ] Update status page
@@ -335,6 +364,7 @@ Updates will be posted here as we work to resolve this.
 - [ ] Take screenshots/logs
 
 ### Post-Rollback
+
 - [ ] Verify service restored
 - [ ] Check metrics normalized
 - [ ] Update status page
@@ -342,6 +372,7 @@ Updates will be posted here as we work to resolve this.
 - [ ] Start incident report
 
 ### Follow-up
+
 - [ ] Complete incident report
 - [ ] Schedule postmortem
 - [ ] Create fix tasks
@@ -352,28 +383,31 @@ Updates will be posted here as we work to resolve this.
 
 ## Emergency Contacts
 
-| Role | Contact | Availability |
-|------|---------|--------------|
-| On-call Engineer | [Slack/Phone] | 24/7 |
+| Role             | Contact       | Availability   |
+| ---------------- | ------------- | -------------- |
+| On-call Engineer | [Slack/Phone] | 24/7           |
 | Engineering Lead | [Slack/Phone] | Business hours |
-| Product Manager | [Slack/Email] | Business hours |
-| DevOps | [Slack/Phone] | 24/7 |
+| Product Manager  | [Slack/Email] | Business hours |
+| DevOps           | [Slack/Phone] | 24/7           |
 
 ---
 
 ## Monitoring Dashboards
 
 ### Firebase Performance
+
 ```
 https://console.firebase.google.com/project/[PROJECT]/performance
 ```
 
 ### Cloud Monitoring
+
 ```
 https://console.cloud.google.com/monitoring/dashboards?project=[PROJECT]
 ```
 
 ### Error Tracking
+
 ```
 https://console.firebase.google.com/project/[PROJECT]/crashlytics
 ```
@@ -392,6 +426,7 @@ https://console.firebase.google.com/project/[PROJECT]/crashlytics
 ## Quick Commands
 
 **Check current metrics:**
+
 ```bash
 # Firebase Performance
 firebase performance:list --project sierra-painting
@@ -404,6 +439,7 @@ git log --oneline -10
 ```
 
 **Rollback via git:**
+
 ```bash
 # Revert last commit
 git revert HEAD
@@ -415,6 +451,7 @@ firebase deploy --only functions
 ```
 
 **Update feature flag:**
+
 ```bash
 # Via Firebase CLI (if configured)
 firebase remoteconfig:get
