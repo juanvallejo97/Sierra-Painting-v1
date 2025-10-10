@@ -1,0 +1,11 @@
+name: guard-widget-tests
+on: [pull_request]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if Firebase is used in widget tests (non-integration)
+        run: |
+          ! grep -RInE 'package:(firebase_|cloud_firestore|cloud_functions|firebase_)' \
+            --exclude-dir='integration_test' -- 'test' || (echo "❌ Firebase import found in widget tests" && exit 1)

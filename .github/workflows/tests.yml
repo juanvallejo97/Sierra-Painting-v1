@@ -1,0 +1,38 @@
+name: tests
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  widget-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: Run widget tests (no Firebase)
+        run: flutter test -r expanded --concurrency=1 --timeout=2x
+      - name: Coverage gate (>= 60%)
+        run: |
+          flutter test --coverage -r expanded --concurrency=1 --timeout=2x
+          COVERAGE=$(awk 'BEGIN{lc=0;lt=0} /^DA:/{split($0,a,":"); split(a[2],b,","); lt++; if(b[2]>0) lc++} END{if(lt==0){print 0}else{print lc/lt*100}}' coverage/lcov.info)
+          echo "COVERAGE=${COVERAGE}%"
+          awk -v c="$COVERAGE" 'BEGIN{ if (c+0 < 60.0) { exit 1 } }'
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Install Firebase CLI
+        run: curl -sL https://firebase.tools | bash
+      - run: flutter pub get
+      - name: Run integration tests on emulators
+        run: |
+          firebase emulators:exec --only firestore,functions,auth,storage -- \
+            flutter test integration_test -r expanded --concurrency=1 --timeout=3x \
+            --dart-define=USE_EMULATORS=true
