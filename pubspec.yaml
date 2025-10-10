@@ -63,6 +63,9 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  fake_cloud_firestore: 4.0.0
+
+  firebase_core_platform_interface: ^6.0.1
 
   # Code Generation
   build_runner: ^2.5.7

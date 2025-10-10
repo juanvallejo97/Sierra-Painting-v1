@@ -21,6 +21,7 @@ import 'package:sierra_painting/core/models/queue_item.dart';
 import 'package:sierra_painting/core/network/api_client.dart';
 import 'package:sierra_painting/core/providers/firestore_provider.dart';
 import 'package:sierra_painting/core/services/queue_service.dart';
+import 'package:sierra_painting/core/services/network_status.dart';
 import 'package:sierra_painting/core/utils/result.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
 import 'package:uuid/uuid.dart';
@@ -69,6 +70,7 @@ class TimeclockRepository {
   final ApiClient _apiClient;
   final FirebaseFirestore _firestore;
   final QueueService? _queueService;
+  final NetworkStatus? _networkStatus;
   final Uuid _uuid = const Uuid();
 
   /// Default pagination limit to prevent unbounded queries
@@ -81,9 +83,11 @@ class TimeclockRepository {
     required ApiClient apiClient,
     required FirebaseFirestore firestore,
     QueueService? queueService,
+    NetworkStatus? networkStatus,
   }) : _apiClient = apiClient,
        _firestore = firestore,
-       _queueService = queueService;
+       _queueService = queueService,
+       _networkStatus = networkStatus;
 
   /// Clock in to a job
   ///
@@ -103,8 +107,8 @@ class TimeclockRepository {
       geo: geo,
     );
 
-    // Check if online
-    final online = isOnline ?? true; // TODO: Add network connectivity check
+    // Check if online - use provided value or check network status
+    final online = isOnline ?? await _checkConnectivity();
 
     if (!online && _queueService != null) {
       // Queue for offline sync
@@ -256,6 +260,23 @@ class TimeclockRepository {
     }
   }
 
+  /// Check network connectivity
+  /// Returns true if online, false if offline
+  /// Falls back to true if NetworkStatus is not available
+  Future<bool> _checkConnectivity() async {
+    if (_networkStatus == null) {
+      // NetworkStatus not provided, assume online
+      return true;
+    }
+
+    try {
+      return await _networkStatus.isOnline();
+    } catch (e) {
+      // If connectivity check fails, assume online to avoid blocking operations
+      return true;
+    }
+  }
+
   /// Map ApiError to user-friendly message
   String _mapApiError(ApiError error) {
     switch (error.type) {
@@ -289,10 +310,12 @@ final timeclockRepositoryProvider = Provider<TimeclockRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   final firestore = ref.watch(firestoreProvider);
   final queueService = ref.watch(queueServiceProvider);
+  final networkStatus = ref.watch(networkStatusProvider);
 
   return TimeclockRepository(
     apiClient: apiClient,
     firestore: firestore,
     queueService: queueService,
+    networkStatus: networkStatus,
   );
 });
