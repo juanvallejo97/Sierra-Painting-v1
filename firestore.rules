@@ -20,16 +20,26 @@ service cloud.firestore {
       return claimCompany() == companyId;
     }
 
-    function isAdmin() {
-      return authed() && request.auth.token.role in ['admin'];
+    // Role checks: Uses custom claims from Firebase Auth tokens
+    // Custom claims should be set via setUserRole Cloud Function
+    // This eliminates Firestore reads and improves performance
+    function hasRole(role) {
+      return authed() && request.auth.token.role == role;
     }
 
-    function isManager() {
-      return authed() && request.auth.token.role in ['admin','manager'];
+    function hasAnyRole(roles) {
+      return authed() &&
+             request.auth.token.role != null &&
+             request.auth.token.role in roles;
     }
 
-    function isOwner(uid) {
-      return authed() && request.auth.uid == uid;
+    // Check if user belongs to a specific company (via custom claims)
+    function belongsToCompany(companyId) {
+      return authed() && request.auth.token.companyId == companyId;
+    }
+
+    function isOwner() {
+      return authed() && resource.data.ownerId == request.auth.uid;
     }
 
     // Only allow specific fields to change on self-edits
@@ -61,46 +71,7 @@ service cloud.firestore {
       }
     }
 
-    match /companies/{companyId}/invoices/{doc} {
-      allow read: if isCompany(companyId) && (isManager() || isAdmin());
-      allow create, update, delete: if isCompany(companyId) && isAdmin();
-    }
-
-    match /companies/{companyId}/users/{uid} {
-      allow read: if isCompany(companyId) && (isOwner(uid) || isAdmin());
-      allow update: if isCompany(companyId) && (isOwner(uid) || isAdmin());
-      allow create, delete: if isCompany(companyId) && isAdmin();
-    }
-
-    // /users/{uid}
-    match /users/{uid} {
-      allow read: if isSelf(uid);
-      allow create: if isSelf(uid) && request.resource.data.keys().hasOnly(['displayName','email','photoURL','createdAt','updatedAt'])
-        && request.time == request.resource.data.createdAt
-        && request.resource.data.updatedAt == request.resource.data.createdAt;
-      allow update: if isSelf(uid)
-        && request.resource.data.keys().hasOnly(['displayName','photoURL','updatedAt'])
-        && request.resource.data.updatedAt == request.time;
-      allow delete: if false;
-    }
-
-    // /timeclockEntries/{entryId}
-    match /timeclockEntries/{entryId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['userId','jobId','clockIn','clockOut','notes','createdAt'])
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.clockIn is timestamp
-        && (!('clockOut' in request.resource.data) || request.resource.data.clockOut is timestamp)
-        && request.resource.data.createdAt == request.time;
-      allow update: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly(['clockOut','notes'])
-        && (('clockOut' in request.resource.data) ? request.resource.data.clockOut is timestamp : true);
-      allow delete: if false;
-    }
-
-    // Deny everything else by default
+    // ---- default deny ------------------------------------------------------
     match /{document=**} {
       allow read, write: if false;
     }

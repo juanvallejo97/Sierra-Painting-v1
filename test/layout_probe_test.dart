@@ -7,7 +7,7 @@ void main() {
   testWidgets('layout probe emits widget tree snapshot', (tester) async {
     tester.view.physicalSize = const Size(390, 800);
     tester.view.devicePixelRatio = 2.0;
-    app.main();
+    await app.main();
     await tester.pumpAndSettle();
     debugPrint('WIDGET_COUNT=${tester.allWidgets.length}');
     expect(tester.takeException(), isNull);

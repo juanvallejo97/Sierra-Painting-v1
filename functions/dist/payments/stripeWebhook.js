@@ -12,7 +12,7 @@ catch {
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 export const stripeWebhook = onRequest({
     // If you store the secret in Secret Manager, add: secrets: ['STRIPE_WEBHOOK_SECRET'],
-    region: 'us-central1',
+    region: 'us-east4',
 }, async (req, res) => {
     if (req.method !== 'POST') {
         res.set('Allow', 'POST').status(405).send('Method Not Allowed');

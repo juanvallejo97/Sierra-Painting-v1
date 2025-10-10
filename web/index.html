@@ -1,185 +1,34 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-  <meta name="description" content="Sierra Painting Business Management" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-  <meta name="apple-mobile-web-app-title" content="Sierra Painting" />
-  <title>Sierra Painting</title>
-  <base href="$FLUTTER_BASE_HREF" />
-  <link rel="manifest" href="manifest.json" />
-
-  <!-- One (and only one) App Check debug token. Keep ONLY for local dev. -->
-  <script>
-    // Remove or gate this for production builds.
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-  </script>
-
-  <!-- Early diagnostics (safe + minimal) -->
-  <script>
-    try {
-      console.log('SYNC-DIAG: start');
-      console.log('SYNC-DIAG: userAgent=' + navigator.userAgent);
-      console.log('SYNC-DIAG: document.readyState=' + document.readyState);
-      console.log('SYNC-DIAG: serviceWorkerSupported=' + ('serviceWorker' in navigator));
-      console.log('SYNC-DIAG: appCheckDebugFlag=' + (typeof self.FIREBASE_APPCHECK_DEBUG_TOKEN !== 'undefined'));
-    } catch (e) { try { console.error('SYNC-DIAG: error ' + e); } catch (_) { } }
-  </script>
-
-  <!-- Error tap + report (kept lightweight; endpoint optional on your side) -->
-  <script>
-    (function () {
-      if (window.__boot_error_installed__) return; window.__boot_error_installed__ = true;
-      let sent = false;
-      const post = (payload) => {
-        try {
-          if (sent) return; sent = true;
-          fetch('/api/reportWebBootError', {
-            method: 'POST', headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        } catch (_) { }
-      };
-      addEventListener('error', e => {
-        const msg = (e.error && e.error.message) || e.message || 'unknown';
-        console.error('[BOOT-ERROR]', msg, e.error || e);
-        post({ type: 'error', msg, stack: (e.error && e.error.stack) || null });
-      });
-      addEventListener('unhandledrejection', e => {
-        const msg = (e.reason && e.reason.message) || String(e.reason) || 'unknown';
-        console.error('[BOOT-REJECTION]', msg, e.reason || e);
-        post({ type: 'rejection', msg, stack: (e.reason && e.reason.stack) || null });
-      });
-    })();
-  </script>
-
-  <!-- Nuke any stale service workers to avoid old bundles -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      try {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (const r of regs) { try { r.unregister(); } catch (_) { } }
-        }).catch(() => { });
-      } catch (_) { }
-    }
-  </script>
-
-  <!-- Collect pre-init errors for overlay -->
-  <script>
-    try {
-      window.__preInitErrors = window.__preInitErrors || [];
-      addEventListener('error', function (e) {
-        try {
-          window.__preInitErrors.push({
-            type: 'error',
-            message: e && e.message,
-            filename: e && e.filename,
-            lineno: e && e.lineno,
-            colno: e && e.colno,
-            stack: e && e.error && e.error.stack
-          });
-        } catch (_) { }
-      });
-      addEventListener('unhandledrejection', function (e) {
-        try {
-          var reason = e && e.reason ? (e.reason.message || String(e.reason)) : String(e);
-          window.__preInitErrors.push({ type: 'unhandledrejection', message: reason });
-        } catch (_) { }
-      });
-      (function () {
-        var orig = console.error;
-        console.error = function () {
-          try {
-            var args = Array.prototype.slice.call(arguments).map(function (a) {
-              try { return (typeof a === 'string') ? a : JSON.stringify(a); } catch (e) { return String(a); }
-            }).join(' ');
-            window.__preInitErrors.push({ type: 'console.error', message: args });
-          } catch (_) { }
-          if (orig) orig.apply(console, arguments);
-        };
-      })();
-    } catch (_) { }
-  </script>
-
-  <!-- Flutter web loader -->
-  <script src="flutter.js" defer></script>
-
-  <!-- Security: basic CSP suitable for Flutter web -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self';
-               script-src 'self' 'wasm-unsafe-eval';
-               style-src 'self' 'unsafe-inline';
-               img-src 'self' data: https:;
-               connect-src 'self' https:;
-               font-src 'self' data:;
-               frame-ancestors 'none'">
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/" />
+    <meta name="flutter-service-worker-version" content="">
+    <link rel="manifest" href="manifest.json" />
+    <title>Sierra Painting</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://*.firebaseio.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://www.google-analytics.com https://www.googletagmanager.com ws://localhost:* http://localhost:*; worker-src 'self' blob:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; manifest-src 'self';">
 </head>
-
-<body>
-  <!-- Failure overlay -->
-  <div id="flutter-init-error"
-    style="display:none;position:fixed;inset:0;z-index:9999;background:#111;color:#fff;align-items:center;justify-content:center;">
-    <div style="max-width:720px;margin:0 auto;padding:24px;text-align:center;">
-      <h2 style="color:#ff6b6b">App failed to initialize</h2>
-      <p>The app failed to start correctly. Try a hard refresh (Ctrl+F5) or clear site data.</p>
-      <p><button onclick="location.reload();" style="padding:8px 16px">Reload</button></p>
-      <pre id="flutter-init-error-details"
-        style="text-align:left;background:#222;padding:12px;border-radius:6px;margin-top:12px;white-space:pre-wrap;max-height:240px;overflow:auto;font-size:12px"></pre>
-    </div>
-  </div>
-
-  <!-- Stable Flutter web bootstrap (OK to keep deprecation warning) -->
+  <body>
+  <!-- Load flutter.js FIRST, then a small compatibility shim, then bootstrap. -->
   <script>
-    // Match Flutter's generated template: use loadEntrypoint + serviceWorkerVersion.
-    var serviceWorkerVersion = null; // we unregister SW elsewhere for dev
-    addEventListener('load', function () {
-      try {
-        if (!window._flutter || !window._flutter.loader) {
-          console.error('Flutter loader not found.');
-          return;
+    window._flutter = window._flutter || {};
+    window._flutter.buildConfig = {
+      entrypointUrl: "main.dart.js",
+      baseUrl: "/",
+      flutterJsUrl: "flutter.js",
+      builds: [
+        {
+          entrypointUrl: "main.dart.js",
+          baseUrl: "/",
+          flutterJsUrl: "flutter.js"
         }
-        window._flutter.loader.load({
-          serviceWorker: { serviceWorkerVersion: serviceWorkerVersion }
-        }).then(function (engineInitializer) {
-          return engineInitializer.initializeEngine();
-        }).then(function (appRunner) {
-          console.log('[index] Flutter engine initialized, running app');
-          appRunner.runApp();
-        }).catch(function (e) {
-          console.error('Error during Flutter bootstrap', e);
-        });
-      } catch (e) {
-        console.error('Error during Flutter bootstrap', e);
-      }
-    });
+      ]
+    };
   </script>
-
-  <!-- Minimal error surfacing: only react to *real* boot errors. -->
-  <script>
-    function showFlutterInitError(msg) {
-      try {
-        var el = document.getElementById('flutter-init-error');
-        var details = document.getElementById('flutter-init-error-details');
-        if (el) el.style.display = 'flex';
-        if (details) details.textContent = (typeof msg === 'string') ? msg : JSON.stringify(msg, null, 2);
-      } catch (_) { }
-    }
-    addEventListener('error', function (evt) {
-      var m = evt.message || (evt.error && evt.error.message) || String(evt);
-      var s = evt.filename ? (evt.filename + ':' + evt.lineno + ':' + evt.colno) : '';
-      showFlutterInitError('Uncaught error: ' + m + (s ? ('\n' + s) : ''));
-    });
-    addEventListener('unhandledrejection', function (evt) {
-      var reason = evt.reason || 'Unhandled rejection';
-      showFlutterInitError('Unhandled promise rejection: ' + (reason.stack || reason));
-    });
-    // NOTE: We no longer mirror console.error to avoid false positives,
-    // and we no longer depend on window.flutterReady/polling timeouts.
-  </script>
-</body>
-
+  <script src="flutter.js" defer></script>
+  <script src="compat_loader.js" defer></script>
+  <script src="flutter_bootstrap.js" defer></script>
+  </body>
 </html>
+

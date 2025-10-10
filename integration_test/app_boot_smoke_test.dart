@@ -24,7 +24,7 @@ void main() {
       final startTime = DateTime.now();
 
       // Launch the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 10));
 
       final endTime = DateTime.now();

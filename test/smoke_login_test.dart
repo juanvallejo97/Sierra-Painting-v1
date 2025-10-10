@@ -1,8 +1,10 @@
+@Timeout(Duration(seconds: 25))
+library smoke_login_test;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'test_harness.dart';
 import 'firebase_test_setup.dart'; // <-- provides setupFirebaseForTesting()
 
-@Timeout(Duration(seconds: 25))
 void main() {
   // Ensure bootstrap is done once before any widget pumping.
   setUpAll(() async {

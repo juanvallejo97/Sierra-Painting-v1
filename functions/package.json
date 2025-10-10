@@ -58,7 +58,7 @@
   "functions": [
     {
       "name": "<function-name>",
-      "region": "us-central1",
+  "region": "us-east4",
       "minInstances": 1
     }
   ]

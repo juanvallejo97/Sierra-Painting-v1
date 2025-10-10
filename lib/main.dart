@@ -115,7 +115,7 @@ Future<void> _activateAppCheck() async {
       // Newer API (firebase_app_check >= 0.3): ReCaptchaV3Provider
       try {
         await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaV3Provider(v3Key),
+          providerWeb: ReCaptchaV3Provider(v3Key),
           androidProvider: AndroidProvider.debug, // or playIntegrity in prod
           appleProvider:
               AppleProvider.debug, // or appAttest/deviceCheck in prod
@@ -123,7 +123,7 @@ Future<void> _activateAppCheck() async {
       } catch (_) {
         // Back-compat API (older plugin versions use webRecaptchaSiteKey)
         await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaV3Provider(v3Key),
+          providerWeb: ReCaptchaV3Provider(v3Key),
           androidProvider: AndroidProvider.debug,
           appleProvider: AppleProvider.debug,
         );

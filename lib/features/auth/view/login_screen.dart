@@ -4,6 +4,7 @@ import 'package:sierra_painting/features/auth/logic/auth_controller.dart';
 import 'package:sierra_painting/infra/perf/performance_monitor.dart';
 import 'package:sierra_painting/ui/desktop_web_scaffold.dart';
 import 'package:sierra_painting/ui/responsive.dart';
+import 'package:sierra_painting/ui/ui_keys.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -54,7 +55,7 @@ class _S extends ConsumerState<LoginScreen> {
     try {
       await auth.signIn(email: _email.text.trim(), password: _pw.text);
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      await Navigator.of(context).pushReplacementNamed('/dashboard');
     } catch (e) {
       final s = e.toString().toLowerCase();
       final msg = s.contains('user-not-found') || s.contains('wrong-password')
@@ -96,6 +97,7 @@ class _S extends ConsumerState<LoginScreen> {
                           Semantics(
                             label: 'Email input field',
                             child: TextFormField(
+                              key: UIKeys.email,
                               controller: _email,
                               decoration: const InputDecoration(
                                 labelText: 'Email',
@@ -108,6 +110,7 @@ class _S extends ConsumerState<LoginScreen> {
                           Semantics(
                             label: 'Password input field',
                             child: TextFormField(
+                              key: UIKeys.password,
                               controller: _pw,
                               decoration: const InputDecoration(
                                 labelText: 'Password',
@@ -123,6 +126,7 @@ class _S extends ConsumerState<LoginScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton(
+                              key: UIKeys.signIn,
                               onPressed: _busy ? null : _submit,
                               style: FilledButton.styleFrom(
                                 minimumSize: const Size(48, 48),
@@ -139,6 +143,7 @@ class _S extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           TextButton(
+                            key: UIKeys.forgot,
                             onPressed: () =>
                                 Navigator.pushNamed(context, '/forgot'),
                             style: TextButton.styleFrom(
@@ -147,6 +152,7 @@ class _S extends ConsumerState<LoginScreen> {
                             child: const Text('Forgot password?'),
                           ),
                           TextButton(
+                            key: UIKeys.create,
                             onPressed: () => Navigator.pushReplacementNamed(
                               context,
                               '/signup',

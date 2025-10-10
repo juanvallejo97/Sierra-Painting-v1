@@ -10,12 +10,15 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   FlutterError.onError = FlutterError.dumpErrorToConsole;
 
   // Make test teardown robust even if extra async prints/errors happen.
-  await runZonedGuarded(() async {
-    await testMain();
-  }, (e, s) {
-    // Don’t crash the harness on stray async errors in teardown.
-    // They will still be printed by the default handler.
-  });
+  await runZonedGuarded(
+    () async {
+      await testMain();
+    },
+    (e, s) {
+      // Don’t crash the harness on stray async errors in teardown.
+      // They will still be printed by the default handler.
+    },
+  );
 
   // Restore original.
   FlutterError.onError = original;

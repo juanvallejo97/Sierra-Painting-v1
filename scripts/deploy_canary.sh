@@ -167,7 +167,8 @@ configure_traffic_split() {
         --to-revisions=LATEST=10 \
         --project="$project" \
         --platform=managed \
-        --region=us-central1
+  --region=us-east4
+    --region=us-east4
       echo -e "${GREEN}✅ Traffic split configured for $function${NC}"
     else
       echo -e "${YELLOW}⚠️  Service '$function' not found in Cloud Run${NC}"
@@ -181,7 +182,8 @@ configure_traffic_split() {
           --to-revisions=LATEST=10 \
           --project="$project" \
           --platform=managed \
-          --region=us-central1 2>/dev/null || {
+          --region=us-east4 2>/dev/null || {
+            --region=us-east4 2>/dev/null || {
             echo -e "${YELLOW}⚠️  Could not update traffic for $svc${NC}"
           }
       fi

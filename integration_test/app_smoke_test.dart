@@ -33,7 +33,7 @@ void main() {
       final startTime = DateTime.now();
 
       // Launch the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 10));
 
       // Measure startup time
@@ -71,7 +71,7 @@ void main() {
 
     testWidgets('Can navigate to key screens without crash', (tester) async {
       // Launch the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle(const Duration(seconds: 10));
 
       // Verify app is running (has a Scaffold or MaterialApp)
@@ -112,7 +112,7 @@ void main() {
 
     testWidgets('Frame rendering performance check', (tester) async {
       // Launch the app
-      app.main();
+      await app.main();
       await tester.pumpAndSettle();
 
       // Measure frame time by triggering a rebuild

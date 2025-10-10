@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sierra_painting/firebase_options.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -20,5 +21,5 @@ Future<void> main() async {
     'createdAt': FieldValue.serverTimestamp(),
   });
   await b.commit();
-  print('Seeded fixtures into emulator.');
+  debugPrint('Seeded fixtures into emulator.');
 }

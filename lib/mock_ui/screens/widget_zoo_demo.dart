@@ -179,17 +179,19 @@ class _ControlsTabState extends State<_ControlsTab> {
             const SizedBox(width: 12),
             Radio<int>(
               value: 1,
-              groupValue: seg,
-              onChanged: (v) => setState(() => seg = v!),
+              toggleable: true,
+              activeColor: Colors.blue,
+              onChanged: (v) {},
             ),
             Radio<int>(
               value: 2,
-              groupValue: seg,
-              onChanged: (v) => setState(() => seg = v!),
+              toggleable: true,
+              activeColor: Colors.blue,
+              onChanged: (v) {},
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Slider(value: slider, onChanged: (v) => setState(() => slider = v)),
         SegmentedButton<int>(
           segments: const [
@@ -200,7 +202,7 @@ class _ControlsTabState extends State<_ControlsTab> {
           selected: {seg},
           onSelectionChanged: (s) => setState(() => seg = s.first),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         TextField(
           controller: _ctl,
           decoration: const InputDecoration(
@@ -482,7 +484,12 @@ class _LayoutTab extends StatelessWidget {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(
+                          red: 255.0,
+                          green: 255.0,
+                          blue: 255.0,
+                          alpha: 0.2 * 255.0,
+                        ),
                         padding: const EdgeInsets.all(12),
                         child: const Text('Glassmorphism ✨'),
                       ),
@@ -559,7 +566,13 @@ class _RainbowPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8;
     for (int i = 0; i < colors.length; i++) {
-      paint.color = colors[i].withOpacity(.7);
+      final c = colors[i];
+      paint.color = c.withValues(
+        red: c.r * 255.0,
+        green: c.g * 255.0,
+        blue: c.b * 255.0,
+        alpha: 0.7 * 255.0,
+      );
       final rect = Rect.fromLTWH(
         10.0 + i * 8,
         10.0 + i * 8,
@@ -574,7 +587,7 @@ class _RainbowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 // -------------- MOTION / FX --------------

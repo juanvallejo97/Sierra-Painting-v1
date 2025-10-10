@@ -1,13 +1,27 @@
+// Health check function for smoke tests
+export const healthCheck = async (req: any, res: any) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || 'dev',
+  });
+};
+
+// Auth functions
+export { setUserRole } from './auth/setUserRole';
 import * as logger from "firebase-functions/logger";
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { setGlobalOptions } from 'firebase-functions/v2/options';
 import { defineString } from "firebase-functions/params";
 import fetch from "node-fetch";
 
+setGlobalOptions({ region: 'us-east4' });
+
 // Example API endpoint kept hot via minInstances
 export const api = onRequest(
-  { region: "us-central1", concurrency: 80, timeoutSeconds: 30, memory: "512MiB", minInstances: 1 },
-  async (req, res) => {
+  { region: "us-east4", concurrency: 80, timeoutSeconds: 30, memory: "512MiB", minInstances: 1 },
+  async (req: any, res: any) => {
     res.set("Cache-Control", "private, max-age=0, no-store");
     res.status(200).send({ ok: true });
   }
@@ -15,8 +29,8 @@ export const api = onRequest(
 
 // Background worker (no minInstances)
 export const taskWorker = onRequest(
-  { region: "us-central1", concurrency: 20, timeoutSeconds: 60, memory: "512MiB" },
-  async (_req, res) => {
+  { region: "us-east4", concurrency: 20, timeoutSeconds: 60, memory: "512MiB" },
+  async (_req: any, res: any) => {
     // lazy import heavy deps if needed
     res.status(200).send({ worker: "ok" });
   }
@@ -27,8 +41,8 @@ const API_URL = defineString("WARM_URL");
 export const warm = onSchedule(
   {
     schedule: "every 5 minutes",
-    region: "us-central1",
-    timeZone: "Etc/UTC"
+    region: "us-east4",
+  timeZone: "America/New_York"
   },
   async () => {
     const url = API_URL.value();

@@ -129,7 +129,8 @@ rollback_via_traffic() {
         --to-revisions=PREVIOUS=100 \
         --project="$project" \
         --platform=managed \
-        --region=us-central1
+  --region=us-east4
+    --region=us-east4
       echo -e "${GREEN}✅ Rolled back: $function${NC}"
     else
       echo -e "${YELLOW}⚠️  Service '$function' not found in Cloud Run${NC}"
@@ -145,7 +146,8 @@ rollback_via_traffic() {
           --to-revisions=PREVIOUS=100 \
           --project="$project" \
           --platform=managed \
-          --region=us-central1 2>/dev/null; then
+          --region=us-east4 2>/dev/null; then
+            --region=us-east4 2>/dev/null; then
           echo -e "${GREEN}✅ Rolled back: $svc${NC}"
         else
           echo -e "${YELLOW}⚠️  Could not rollback: $svc${NC}"

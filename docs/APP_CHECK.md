@@ -1,10 +1,12 @@
 # Firebase App Check Setup & Debug Guide
 
-Firebase App Check protects your backend resources from abuse by ensuring requests come from authentic instances of your app.
+Firebase App Check protects your backend resources from abuse by ensuring requests come from
+authentic instances of your app.
 
 ## Overview
 
 App Check works by:
+
 1. Verifying your app's authenticity with an attestation provider
 2. Issuing a time-limited token
 3. Validating the token on your backend before processing requests
@@ -21,6 +23,7 @@ dependencies:
 ```
 
 Run:
+
 ```bash
 flutter pub get
 ```
@@ -117,20 +120,23 @@ Future<void> main() async {
 Run your app in debug mode and check the logs:
 
 **Android (Logcat):**
+
 ```
 I/FirebaseAppCheck: App Check debug token: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
 **iOS (Console):**
+
 ```
 [Firebase/AppCheck][I-FAA001001] App Check debug token: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
 **Flutter Console:**
+
 ```dart
 void main() async {
   // ... Firebase init ...
-  
+
   if (kDebugMode) {
     final token = await FirebaseAppCheck.instance.getToken();
     print('🔐 App Check Debug Token: $token');
@@ -155,8 +161,8 @@ The token is now valid for 7 days.
 For HTTP functions (onRequest), use the `requireAppCheck` middleware:
 
 ```typescript
-import { requireAppCheck } from './middleware/appCheck';
-import * as functions from 'firebase-functions';
+import { requireAppCheck } from "./middleware/appCheck";
+import * as functions from "firebase-functions";
 
 export const myHttpEndpoint = functions.https.onRequest(
   requireAppCheck(async (req, res) => {
@@ -169,7 +175,8 @@ export const myHttpEndpoint = functions.https.onRequest(
 
 The middleware is located at `functions/src/middleware/appCheck.ts`.
 
-**Note**: For callable functions, use `enforceAppCheck: true` in runWith config (see below) instead of middleware.
+**Note**: For callable functions, use `enforceAppCheck: true` in runWith config (see below) instead
+of middleware.
 
 ### In Firestore Rules
 
@@ -182,7 +189,7 @@ service cloud.firestore {
     function hasValidAppCheck() {
       return request.app.appCheck.token.aud[0] == request.app.projectId;
     }
-    
+
     match /invoices/{invoiceId} {
       // Require App Check for all invoice operations
       allow read, write: if hasValidAppCheck() && isAdmin();
@@ -196,7 +203,7 @@ service cloud.firestore {
 Protect callable functions:
 
 ```typescript
-import * as functions from 'firebase-functions';
+import * as functions from "firebase-functions";
 
 export const markPaymentPaid = functions
   .runWith({
@@ -207,11 +214,11 @@ export const markPaymentPaid = functions
     // Verify App Check token exists
     if (!context.app) {
       throw new functions.https.HttpsError(
-        'failed-precondition',
-        'The function must be called from an App Check verified app.'
+        "failed-precondition",
+        "The function must be called from an App Check verified app."
       );
     }
-    
+
     // Your function logic here
   });
 ```
@@ -222,8 +229,8 @@ For HTTP functions:
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
   // App Check is not enforced for webhooks from external services
   // Use webhook signature verification instead
-  
-  const sig = req.headers['stripe-signature'];
+
+  const sig = req.headers["stripe-signature"];
   // ... verify signature ...
 });
 ```
@@ -235,7 +242,7 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /invoices/{invoiceId} {
-      allow read: if request.auth != null && 
+      allow read: if request.auth != null &&
                      request.app.appCheck.token.aud[0] == request.app.projectId;
     }
   }
@@ -268,7 +275,7 @@ print('Token: ${token?.token}');
 Use in API calls:
 
 ```bash
-curl -X POST https://us-central1-<project-id>.cloudfunctions.net/markPaymentPaid \
+curl -X POST https://us-east4-<project-id>.cloudfunctions.net/markPaymentPaid \
   -H "Content-Type: application/json" \
   -H "X-Firebase-AppCheck: <your-token>" \
   -d '{"invoiceId": "test", "amount": 100}'
@@ -288,6 +295,7 @@ curl -X POST https://us-central1-<project-id>.cloudfunctions.net/markPaymentPaid
 ### Set Up Alerts
 
 Create Cloud Monitoring alerts for:
+
 - High invalid request rate (potential abuse)
 - Low token generation (integration issues)
 - Failed attestations
@@ -316,12 +324,14 @@ export const sensitiveOperation = functions
 ### "App Check token is invalid"
 
 **Causes:**
+
 - Debug token not registered in Firebase Console
 - Debug token expired (7 days)
 - Wrong Firebase project ID
 - App Check not initialized in app
 
 **Solutions:**
+
 1. Check debug token is registered
 2. Generate new debug token if expired
 3. Verify `google-services.json` / `GoogleService-Info.plist` has correct project ID
@@ -330,6 +340,7 @@ export const sensitiveOperation = functions
 ### "Play Integrity API not enabled"
 
 **Solution:**
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Select your project
 3. Enable "Play Integrity API"
@@ -338,6 +349,7 @@ export const sensitiveOperation = functions
 ### "App not registered with App Check"
 
 **Solution:**
+
 1. Go to Firebase Console → App Check
 2. Click "Register app"
 3. Select your app (Android/iOS/Web)
@@ -346,6 +358,7 @@ export const sensitiveOperation = functions
 ### Tokens Not Generated
 
 **Check:**
+
 1. Internet connectivity
 2. Firebase project ID is correct
 3. App Check is initialized before Firebase operations
@@ -354,11 +367,13 @@ export const sensitiveOperation = functions
 ### High Invalid Request Rate
 
 **Investigate:**
+
 - Unauthorized apps accessing your backend
 - Compromised API keys
 - Bots/scrapers
 
 **Actions:**
+
 1. Review App Check metrics
 2. Rotate API keys if compromised
 3. Enforce App Check in all rules
@@ -406,12 +421,14 @@ flutter build apk --dart-define=ENABLE_APP_CHECK=true
 ```
 
 By default:
+
 - **Debug builds**: Use debug provider (or disabled)
 - **Release builds**: Always enabled with production providers (Play Integrity/App Attest)
 
 ### Phased Rollout Strategy
 
 **Phase 1: Staging Environment**
+
 1. Deploy app with `ENABLE_APP_CHECK=true` to staging
 2. Deploy Cloud Functions with `enforceAppCheck: true`
 3. Update Firestore and Storage rules with App Check validation
@@ -420,6 +437,7 @@ By default:
 6. Verify crash-free rate remains stable
 
 **Phase 2: Canary Environment**
+
 1. Deploy to canary with 5-10% of users
 2. Monitor Firebase DebugView for App Check tokens
 3. Check invalid request rates
@@ -427,6 +445,7 @@ By default:
 5. Monitor for 48-72 hours
 
 **Phase 3: Production Environment**
+
 1. Deploy to production with gradual rollout (10% → 50% → 100%)
 2. Monitor key metrics:
    - Crash-free rate
@@ -460,6 +479,7 @@ If App Check causes issues in production, follow these steps immediately:
 ### Step 1: Disable Enforcement in Backend (Immediate - 5 minutes)
 
 **Option A: Cloud Functions (Fastest)**
+
 ```typescript
 // Comment out enforceAppCheck in affected functions
 export const myFunction = functions
@@ -472,11 +492,13 @@ export const myFunction = functions
 ```
 
 Deploy functions only:
+
 ```bash
 firebase deploy --only functions
 ```
 
 **Option B: Security Rules (Firestore/Storage)**
+
 ```javascript
 // Comment out App Check validation temporarily
 // function hasValidAppCheck() {
@@ -490,6 +512,7 @@ match /collection/{doc} {
 ```
 
 Deploy rules:
+
 ```bash
 firebase deploy --only firestore:rules,storage
 ```
@@ -497,6 +520,7 @@ firebase deploy --only firestore:rules,storage
 ### Step 2: Disable in Mobile App (Next Release - Hours)
 
 Update `lib/main.dart`:
+
 ```dart
 // Temporarily disable App Check
 const enableAppCheck = String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 'false');
@@ -504,6 +528,7 @@ const enableAppCheck = String.fromEnvironment('ENABLE_APP_CHECK', defaultValue: 
 ```
 
 Or deploy with flag:
+
 ```bash
 flutter build apk --release --dart-define=ENABLE_APP_CHECK=false
 ```
@@ -547,6 +572,7 @@ Set up these alerts in Firebase Console:
 4. **Crash-free Rate** drop > 0.5% → Critical
 
 Monitor these metrics during rollout:
+
 - App Check verification success rate
 - Token generation latency
 - Backend request success rate
@@ -561,6 +587,7 @@ Monitor these metrics during rollout:
 - [App Check Monitoring](https://firebase.google.com/docs/app-check/monitor-metrics)
 
 # App Check
+
 - Local dev/tests: APP_CHECK_ENFORCE=false (or Debug Provider if true).
 - Staging/Prod: APP_CHECK_ENFORCE=true + web RECAPTCHA_V3_KEY set.
 - For long-running tests, keep enforce=false or supply a DEBUG token.
