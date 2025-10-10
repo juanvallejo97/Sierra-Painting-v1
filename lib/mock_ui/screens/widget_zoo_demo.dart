@@ -177,21 +177,24 @@ class _ControlsTabState extends State<_ControlsTab> {
             const SizedBox(width: 12),
             Checkbox(value: s1, onChanged: (v) => setState(() => s1 = v ?? s1)),
             const SizedBox(width: 12),
-            Radio<int>(
-              value: 1,
-              toggleable: true,
-              activeColor: Colors.blue,
-              onChanged: (v) {},
-            ),
-            Radio<int>(
-              value: 2,
-              toggleable: true,
-              activeColor: Colors.blue,
-              onChanged: (v) {},
+            Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('Option 1'),
+                  selected: seg == 1,
+                  onSelected: (s) => setState(() => seg = s ? 1 : seg),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Option 2'),
+                  selected: seg == 2,
+                  onSelected: (s) => setState(() => seg = s ? 2 : seg),
+                ),
+              ],
             ),
           ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Slider(value: slider, onChanged: (v) => setState(() => slider = v)),
         SegmentedButton<int>(
           segments: const [
@@ -202,7 +205,7 @@ class _ControlsTabState extends State<_ControlsTab> {
           selected: {seg},
           onSelectionChanged: (s) => setState(() => seg = s.first),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         TextField(
           controller: _ctl,
           decoration: const InputDecoration(
