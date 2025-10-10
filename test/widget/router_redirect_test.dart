@@ -32,8 +32,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // LoginScreen contains a Sign In button
-    expect(find.text('Sign In'), findsOneWidget);
+    // LoginScreen contains a Log In button
+    expect(find.text('Log In'), findsOneWidget);
   });
 
   testWidgets(
