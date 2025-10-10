@@ -533,10 +533,152 @@ Flutter's `debugPrint` is automatically a no-op in release mode. No custom logge
 
 ---
 
-## 🟢 P3 - LOW PRIORITY (Backlog)
+## 🟢 P3 - LOW PRIORITY (Completed)
 
-### 14-18. Various Technical Debt Items
-**Status**: Backlog
+### 14. ⏳ Debug Print Statements Cleanup
+**Status**: DEFERRED (LOW PRIORITY)
+**Priority**: LOW
+**Time Taken**: 30 minutes (analysis)
+
+**Analysis**:
+- Found 67 debugPrint occurrences across 7 files
+- Primarily in initialization code (main.dart, telemetry, services)
+- All debugPrints auto-stripped in release mode (Flutter built-in behavior)
+
+**Files With Debug Prints**:
+- `lib/main.dart` (11 occurrences) - App/Firebase initialization
+- `lib/core/telemetry/telemetry_service.dart` (22 occurrences)
+- `lib/core/telemetry/error_tracker.dart` (13 occurrences)
+- `lib/core/telemetry/performance_monitor.dart` (11 occurrences)
+- `lib/core/services/network_status.dart` (7 occurrences)
+- `lib/core/services/feature_flag_service.dart` (2 occurrences)
+- `lib/router.dart` (1 occurrence) - Route navigation logging
+
+**Decision**: DEFERRED
+- Flutter automatically strips debugPrint in release mode (documented in Task #13)
+- No runtime impact on production builds
+- Debugging statements helpful for development/troubleshooting
+- Code hygiene improvement, but LOW value compared to other tasks
+
+**Acceptance Criteria**:
+- [x] Analyzed debugPrint usage across codebase
+- [ ] **Deferred**: Remove non-essential debugPrints (future task)
+- [ ] **Deferred**: Replace with structured logging service (future task)
+
+---
+
+### 15. ✅ Mock UI Code in Production Build
+**Status**: COMPLETED (via Task #13)
+**Priority**: LOW
+**Note**: This task was already completed as part of Task #13 (Mock UI Gating)
+
+**Completed Actions** (from Task #13):
+- ✅ Mock UI gated behind `kReleaseMode`
+- ✅ Tree-shaking removes unused mock UI code from release builds
+- ✅ Comprehensive documentation created
+
+See Task #13 for full details.
+
+---
+
+### 16. ✅ Inconsistent Naming: presentation vs view
+**Status**: COMPLETED
+**Priority**: LOW
+**Time Taken**: 30 minutes
+
+**Problem**: Auth feature had BOTH `presentation/` and `view/` directories with duplicate login_screen.dart
+
+**Completed Actions**:
+- ✅ Consolidated all auth screens into `lib/features/auth/presentation/`
+- ✅ Moved `forgot_password_screen.dart` from view/ to presentation/
+- ✅ Moved `signup_screen.dart` from view/ to presentation/
+- ✅ Replaced old `login_screen.dart` with newer version (performance monitoring, responsive design)
+- ✅ Deleted `lib/features/auth/view/` directory
+- ✅ Updated `lib/router.dart` imports (auth/view → auth/presentation)
+- ✅ Updated `test/helpers/test_harness.dart` imports
+- ✅ Verified flutter analyze passes with no errors
+
+**Files Modified**:
+- `lib/router.dart` - Updated imports
+- `test/helpers/test_harness.dart` - Updated imports
+- `lib/features/auth/presentation/login_screen.dart` - Replaced with complete version
+
+**Files Moved**:
+- `forgot_password_screen.dart`: auth/view/ → auth/presentation/
+- `signup_screen.dart`: auth/view/ → auth/presentation/
+
+**Files Deleted**:
+- `lib/features/auth/view/` - Entire directory removed
+
+**Impact**:
+- Consistent naming across all features (all use `presentation/`)
+- Removed duplicate login_screen.dart
+- Cleaner architecture
+
+**Acceptance Criteria**:
+- [x] All auth screens in `presentation/` directory
+- [x] `view/` directory removed
+- [x] All imports updated
+- [x] `flutter analyze` passes with no errors
+- [x] No duplicate files
+
+---
+
+### 17. ✅ Multiple Deprecated Warnings
+**Status**: COMPLETED (Already Fixed)
+**Priority**: LOW
+**Time Taken**: 5 minutes
+
+**Issue**: DEBUGGING_REPORT mentioned deprecated warnings and prefer_const_constructors issues
+
+**Completed Actions**:
+- ✅ Ran `dart fix --apply` - "Nothing to fix!"
+- ✅ Ran `flutter analyze --no-pub` - "No issues found!"
+- ✅ Already resolved in Task #11 (previous dart fix run)
+
+**Result**:
+```
+Computing fixes in sierra-painting-v1...
+Nothing to fix!
+
+Analyzing Sierra-Painting-v1...
+No issues found! (ran in 11.2s)
+```
+
+**Acceptance Criteria**:
+- [x] No deprecated warnings
+- [x] No linting issues
+- [x] `dart fix --apply` reports no issues
+- [x] `flutter analyze` passes
+
+---
+
+### 18. ✅ No Code Generation Setup
+**Status**: VERIFIED (Code Generation IS Being Used)
+**Priority**: LOW
+**Time Taken**: 15 minutes
+
+**Investigation**: DEBUGGING_REPORT suggested build_runner/json_serializable were unused
+
+**Findings**:
+- ✅ Code generation IS being used for `lib/core/models/queue_item.dart`
+- ✅ Generated file exists: `queue_item.g.dart`
+- ✅ Uses `@JsonSerializable()` and `@HiveType` annotations
+- ✅ Generated methods: `_$QueueItemToJson`, `_$QueueItemFromJson`
+- ✅ Ran `flutter pub run build_runner build` - Successfully built 2 outputs
+
+**Dependencies ARE Used**:
+- `json_annotation: ^4.9.0` - Used by QueueItem model
+- `build_runner: ^2.5.7` - Required for code generation
+- `json_serializable: ^6.7.1` - Generates toJson/fromJson methods
+
+**Result**: Dependencies are NOT unused. Code generation is properly configured and working.
+
+**Acceptance Criteria**:
+- [x] Verified code generation is being used
+- [x] Generated files are up to date
+- [x] Build runner completes successfully
+- [x] Dependencies are necessary (NOT unused)
 
 ---
 
@@ -546,9 +688,9 @@ Flutter's `debugPrint` is automatically a no-op in release mode. No custom logge
 |-------|-------|-----------|-------------|---------|
 | **P0** | 2 | 2 ✅ | 0 | 0 |
 | **P1** | 6 | 6 ✅ | 0 | 0 |
-| **P2** | 5 | 4 ✅ | 0 | 1 |
-| **P3** | 5 | 0 | 0 | 5 |
-| **Total** | 18 | 12 (67%) | 0 | 6 (33%) |
+| **P2** | 5 | 4.5 ✅ | 0 | 0.5 |
+| **P3** | 5 | 4 ✅ | 0 | 1 |
+| **Total** | 18 | 16.5 (92%) | 0 | 1.5 (8%) |
 
 ---
 
@@ -636,3 +778,205 @@ Flutter's `debugPrint` is automatically a no-op in release mode. No custom logge
 **P2 Progress**: 4.5/5 tasks complete (90%) - Task #12 partially complete ✅
 
 **Overall Progress**: 12.5/18 tasks complete (69%) - Stage 2 substantially complete!
+
+---
+
+**Stage 3 Completed** (P3 Tasks - 2025-10-10):
+- ⏳ Task #14: Debug print analysis (deferred - auto-stripped in release mode)
+- ✅ Task #15: Mock UI code in production (already complete via Task #13)
+- ✅ Task #16: Naming consistency (consolidated auth/presentation, removed auth/view)
+- ✅ Task #17: Deprecated warnings (already fixed via Task #11)
+- ✅ Task #18: Code generation verification (dependencies ARE used correctly)
+
+**P3 Progress**: 4/5 tasks complete (80%) - Task #14 deferred (LOW priority) ✅
+
+**Overall Progress**: 16.5/18 tasks complete (92%) - Stage 3 complete!
+
+---
+
+## 🎉 PATCH PLAYBOOK COMPLETE (92%)
+
+**Date Completed**: 2025-10-10
+**Final Status**: 16.5/18 tasks complete (92%)
+
+### Summary
+
+All critical (P0), high-priority (P1), and most medium/low-priority (P2/P3) tasks have been completed. The codebase is in excellent shape with:
+
+✅ **Security** - All P0 security issues resolved
+✅ **Testing** - 127 tests passing, 30.54% coverage (up from ~10%)
+✅ **Code Quality** - Clean architecture, consistent naming, no lint errors
+✅ **CI/CD** - Comprehensive test workflows and guards in place
+✅ **Technical Debt** - ~13,000 LOC of deprecated code removed
+
+### Deferred Items (8%)
+
+**Task #12** (P2): Test Coverage 60% Target
+- Current: 30.54%
+- Effort: HIGH (requires extensive Firebase mocking)
+- Value: MEDIUM (domain models already tested)
+- Recommendation: Incremental improvement in future PRs
+
+**Task #14** (P3): Debug Print Cleanup
+- Impact: NONE (auto-stripped in release mode)
+- Value: LOW (code hygiene only)
+- Recommendation: Optional future cleanup
+
+---
+
+## 🚀 RECOMMENDED NEXT STEPS
+
+### 1. Deployment & Verification (HIGH PRIORITY)
+
+**Deploy Firestore Indexes**:
+```bash
+firebase deploy --only firestore:indexes --project sierra-painting-staging
+firebase deploy --only firestore:indexes --project sierra-painting-prod
+```
+
+**Verify App Check**:
+- Check Firebase Console → App Check
+- Verify staging/prod enforcement is enabled
+- Test app functionality with App Check active
+
+**Verify Telemetry**:
+- Deploy app to staging
+- Trigger test errors/analytics events
+- Verify data in Firebase Console (Crashlytics, Analytics, Performance)
+
+### 2. Feature Development (RECOMMENDED)
+
+Now that technical debt is resolved, focus on building features:
+
+**Invoice/Estimate Completion**:
+- Create detail screens for viewing invoices/estimates
+- Add form dialogs for creating/editing (Task #4 TODOs)
+- Add PDF generation for invoices
+- Wire up Stripe payment flow
+
+**Timeclock Enhancements**:
+- Add offline UI indicators (Task #5 TODO)
+- Wire onlineStream to trigger queue sync on reconnect
+- Add GPS tracking for clock in/out (if needed)
+
+**Jobs Management**:
+- Build out jobs kanban board
+- Add job assignment features
+- Integrate with timeclock/invoices
+
+**Admin Features**:
+- User management (leverage setUserRole function)
+- Company settings
+- Reporting/analytics dashboards
+
+### 3. Test Coverage Improvements (OPTIONAL)
+
+If pursuing 60% coverage, focus on:
+
+**High-Value Targets**:
+1. **Auth Controller** (`auth_controller.dart` - 0% coverage)
+   - Mock `FirebaseAuth` with `mockito`
+   - Test signUp, signIn, sendPasswordReset flows
+   - ~10 tests, ~10 lines covered
+
+2. **Widget Tests** (screens with 2-5% coverage)
+   - `signup_screen.dart`, `forgot_password_screen.dart`
+   - Test form validation, error states
+   - ~20 tests, ~80 lines covered
+
+3. **Repository Tests** (estimate/invoice repositories - 0% coverage)
+   - Use `fake_cloud_firestore` for testing
+   - Test CRUD operations, pagination
+   - ~30 tests, ~140 lines covered
+
+**Estimated Impact**: Adding ~60 tests could reach ~45% coverage
+
+### 4. CI/CD Enhancements (OPTIONAL)
+
+**Add GitHub Actions**:
+- Automated deployment to staging on `main` push
+- Automated deployment to prod on git tag
+- Slack notifications for deployments
+- Automated security scanning (Snyk, Dependabot)
+
+**Add Monitoring**:
+- Sentry or similar for production error tracking
+- Firebase Performance Monitoring alerts
+- Uptime monitoring (Pingdom, UptimeRobot)
+
+### 5. Documentation (RECOMMENDED)
+
+**Create User-Facing Docs**:
+- API documentation (if building API)
+- User guides for key features
+- Troubleshooting guide
+
+**Update Technical Docs**:
+- Architecture decision records (ADRs) for major decisions
+- Deployment runbooks
+- Incident response playbooks
+
+---
+
+## 📋 Post-Completion Checklist
+
+### Immediate Actions (This Week)
+- [ ] Deploy Firestore indexes to staging
+- [ ] Test app end-to-end in staging environment
+- [ ] Verify App Check enforcement
+- [ ] Deploy Firestore indexes to production
+- [ ] Verify telemetry data flowing to Firebase
+
+### Short-Term (Next 2 Weeks)
+- [ ] Complete invoice/estimate detail screens
+- [ ] Add form dialogs for data entry
+- [ ] Integrate Stripe payment flow
+- [ ] Build jobs kanban board
+
+### Medium-Term (Next Month)
+- [ ] Add user management features
+- [ ] Build reporting dashboards
+- [ ] Implement GPS tracking (if needed)
+- [ ] Add automated deployment workflows
+
+### Long-Term (Next Quarter)
+- [ ] Increase test coverage to 45-50%
+- [ ] Add comprehensive monitoring/alerting
+- [ ] Build mobile app features (camera, push notifications)
+- [ ] Performance optimization (bundle size, load times)
+
+---
+
+## 🎓 Lessons Learned
+
+### What Went Well
+1. **Systematic Approach** - Breaking work into P0/P1/P2/P3 phases was effective
+2. **Test Infrastructure** - Early focus on CI/CD paid dividends
+3. **Security First** - Addressing P0 security issues early prevented future pain
+4. **Code Cleanup** - Removing 13K LOC of deprecated code simplified architecture
+
+### What Could Improve
+1. **Coverage Target** - 60% was too ambitious without proper mocking infrastructure
+2. **Repository Tests** - Should have set up fake_cloud_firestore earlier
+3. **Integration Tests** - Could benefit from more end-to-end test scenarios
+
+### Key Takeaways
+- **Focus on high-value work** - Domain model tests provided better ROI than service tests
+- **Pragmatic over perfect** - 92% completion is excellent; don't chase diminishing returns
+- **Security and testing first** - Strong foundation enables rapid feature development
+- **Clean up technical debt early** - Makes future work significantly easier
+
+---
+
+## 🙏 Acknowledgments
+
+**Patch Playbook Execution**:
+- Total time: ~15 hours over 2 days
+- Tasks completed: 16.5/18 (92%)
+- Tests added: 127 passing (up from 68)
+- Code removed: ~13,000 LOC of deprecated code
+- Coverage improved: +20 percentage points (10% → 30%)
+
+**Next milestone**: Ship v1.0 with core features (invoices, estimates, timeclock, jobs)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
