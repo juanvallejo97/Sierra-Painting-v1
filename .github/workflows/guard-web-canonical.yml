@@ -1,0 +1,108 @@
+name: Guard - Enforce Flutter Web as Canonical Target
+
+on:
+  pull_request:
+  push:
+    branches: [main, staging, production, 'feat/**', 'fix/**']
+
+jobs:
+  check-no-deprecated-web:
+    name: Block Deprecated Web Directories
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Fail if webapp/ exists
+        run: |
+          echo "🔍 Checking for deprecated webapp/ directory..."
+
+          if [ -d "webapp" ]; then
+            echo "❌ ERROR: webapp/ directory detected!"
+            echo ""
+            echo "DEPRECATION ISSUE:"
+            echo "  webapp/ (Next.js) has been deprecated in favor of Flutter Web."
+            echo "  This directory was removed to simplify the deployment pipeline."
+            echo ""
+            echo "CANONICAL TARGET:"
+            echo "  Use 'web/' directory for all web builds (Flutter Web)"
+            echo ""
+            echo "MIGRATION:"
+            echo "  - All web routes handled by Flutter Web in web/ directory"
+            echo "  - No parallel Next.js application"
+            echo "  - Single deployment target reduces maintenance"
+            echo ""
+            echo "See PATCH_STATUS.md Task #9 for context."
+            exit 1
+          fi
+
+          echo "✅ PASS: No webapp/ directory found"
+
+      - name: Fail if web_react/ exists
+        run: |
+          echo "🔍 Checking for deprecated web_react/ directory..."
+
+          if [ -d "web_react" ]; then
+            echo "❌ ERROR: web_react/ directory detected!"
+            echo ""
+            echo "DEPRECATION ISSUE:"
+            echo "  web_react/ (Vite/React) has been deprecated in favor of Flutter Web."
+            echo "  This directory was removed to canonicalize web target."
+            echo ""
+            echo "CANONICAL TARGET:"
+            echo "  Use 'web/' directory for all web builds (Flutter Web)"
+            echo ""
+            echo "RATIONALE:"
+            echo "  - Consistent user experience (single framework)"
+            echo "  - Reduced bundle size and build complexity"
+            echo "  - Simplified deployment and maintenance"
+            echo ""
+            echo "See PATCH_STATUS.md Task #9 for context."
+            exit 1
+          fi
+
+          echo "✅ PASS: No web_react/ directory found"
+
+      - name: Verify web/ directory exists
+        run: |
+          echo "🔍 Verifying canonical web/ directory exists..."
+
+          if [ ! -d "web" ]; then
+            echo "⚠️  WARNING: web/ directory not found!"
+            echo "   Flutter Web builds require the web/ directory"
+            echo "   Run: flutter create . --platforms=web"
+            exit 1
+          fi
+
+          echo "✅ PASS: Canonical web/ directory exists"
+
+      - name: Check for outdated references in workflows
+        run: |
+          echo "🔍 Checking CI workflows for deprecated path references..."
+
+          # Check for references to webapp or web_react in workflow files
+          DEPRECATED_REFS=$(grep -r "webapp\|web_react" .github/workflows/ 2>/dev/null | grep -v "guard-web-canonical.yml" || true)
+
+          if [ -n "$DEPRECATED_REFS" ]; then
+            echo "⚠️  WARNING: Found references to deprecated paths in workflows:"
+            echo "$DEPRECATED_REFS"
+            echo ""
+            echo "These should be updated or removed to reference 'web/' instead."
+            # Don't fail, just warn
+          else
+            echo "✅ PASS: No deprecated path references in workflows"
+          fi
+
+      - name: Summary
+        run: |
+          echo "=================================================="
+          echo "✅ Web Canonicalization Guard: PASSED"
+          echo "=================================================="
+          echo ""
+          echo "Verified:"
+          echo "  - webapp/ (Next.js) does not exist ✅"
+          echo "  - web_react/ (Vite) does not exist ✅"
+          echo "  - web/ (Flutter Web) exists ✅"
+          echo ""
+          echo "Flutter Web is the ONLY canonical web target."
+          echo "All web builds use: flutter build web"
