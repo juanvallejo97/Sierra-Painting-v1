@@ -13,10 +13,7 @@ void main() {
     // Instead, directly pump the MaterialApp with router
     await tester.pumpWidget(
       const ProviderScope(
-        child: MaterialApp(
-          initialRoute: '/',
-          onGenerateRoute: onGenerateRoute,
-        ),
+        child: MaterialApp(initialRoute: '/', onGenerateRoute: onGenerateRoute),
       ),
     );
 
