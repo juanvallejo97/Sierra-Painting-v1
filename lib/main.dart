@@ -123,6 +123,13 @@ Future<void> _initializeApp() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Enable Firestore debug logging on web in debug builds
+    if (kIsWeb && kDebugMode) {
+      // FlutterFire prints verbose Firestore logs in debug builds automatically
+      debugPrint('[Admin] Firestore debug enabled (web)');
+    }
+
     // App Check & Performance
     await _activateAppCheck();
     if (!kIsWeb && kReleaseMode) {
