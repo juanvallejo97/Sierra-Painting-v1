@@ -126,7 +126,7 @@
     "rules": "(storage.rules)"
   },
   "firestore": {
-    "database": "default",
+    "database": "(default)",
     "location": "us-east4",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
