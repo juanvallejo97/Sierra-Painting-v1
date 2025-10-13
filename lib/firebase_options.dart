@@ -44,30 +44,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAJizvq82-zsud2NLtp_AtiboIV7mn2WOs',
-    appId: '1:138777646966:web:4d2b7855b2cb2b0c7e0c57',
-    messagingSenderId: '138777646966',
-    projectId: 'to-do-app-ac602',
-    authDomain: 'to-do-app-ac602.firebaseapp.com',
-    storageBucket: 'to-do-app-ac602.firebasestorage.app',
-    measurementId: 'G-G5JY0MJZMH',
+    apiKey: 'AIzaSyCiveErLn0w7ojBMQOCVak-0m897XRqvsk',
+    appId: '1:271985878317:web:554db8ba14a801be589fa4',
+    messagingSenderId: '271985878317',
+    projectId: 'sierra-painting-staging',
+    authDomain: 'sierra-painting-staging.firebaseapp.com',
+    storageBucket: 'sierra-painting-staging.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBBqKtYuqDTcv7uwRLShoCt7b2sPWm_Uks',
-    appId: '1:138777646966:android:36104ede7ac939a87e0c57',
-    messagingSenderId: '138777646966',
-    projectId: 'to-do-app-ac602',
-    storageBucket: 'to-do-app-ac602.firebasestorage.app',
+    apiKey: 'AIzaSyAZoMH7_Z7ele3Dlg4TeHPHHRNtxKUuYAY',
+    appId: '1:271985878317:android:b3b71b78fd6185fe589fa4',
+    messagingSenderId: '271985878317',
+    projectId: 'sierra-painting-staging',
+    storageBucket: 'sierra-painting-staging.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDNe_2n0gBPDZiOdwYvq-3r-jsqWyZ_V6g',
     appId: '1:138777646966:ios:eb8f44789bae81f27e0c57',
     messagingSenderId: '138777646966',
-    projectId: 'to-do-app-ac602',
-    storageBucket: 'to-do-app-ac602.firebasestorage.app',
-    iosBundleId: 'com.example.sierraPainting',
+    projectId: 'sierra-painting-staging',
+    storageBucket: 'sierra-painting-staging.firebasestorage.app',
+    iosBundleId: 'com.sierrapainting.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
