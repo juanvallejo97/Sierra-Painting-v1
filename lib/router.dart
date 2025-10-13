@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers.dart';
@@ -19,14 +20,17 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(userRoleProvider);
+    // Watch the claims provider for async loading state
+    final claimsAsync = ref.watch(userClaimsProvider);
 
-    return roleAsync.when(
-      data: (role) {
+    return claimsAsync.when(
+      data: (claims) {
+        final role = claims?['role'] as String?;
+
         // Route based on user role
         if (role == null) {
           // No role assigned - show error
-          return _buildNoRoleScreen(context);
+          return _buildNoRoleScreen(context, ref);
         }
 
         switch (role.toLowerCase()) {
@@ -41,11 +45,8 @@ class DashboardScreen extends ConsumerWidget {
             return _buildUnknownRoleScreen(context, role);
         }
       },
-      loading: () => const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
           child: Column(
@@ -68,7 +69,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNoRoleScreen(BuildContext context) {
+  Widget _buildNoRoleScreen(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sierra Painting'),
@@ -101,6 +102,16 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                // Force refresh ID token and invalidate claims provider
+                await FirebaseAuth.instance.currentUser?.getIdToken(true);
+                ref.invalidate(userClaimsProvider);
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh Claims'),
+            ),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushReplacementNamed('/login');
