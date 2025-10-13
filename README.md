@@ -1,7 +1,6 @@
 # D'Sierra Painting Application
 
 ### What is this?
-<<<<<<< HEAD
 A Flutter app (web + Android) with Firebase backend (Auth, Firestore, Functions), App Check, analytics, and perf tracing.
 
 ## Quickstart
@@ -12,7 +11,6 @@ analytics, and perf tracing.
 
 ## Quickstart
 
->>>>>>> feat/auth-foundation-day1
 ```bash
 flutter pub get
 # Web
@@ -22,21 +20,15 @@ flutter run -d emulator-5554
 ```
 
 ## Environments
-<<<<<<< HEAD
-=======
 
->>>>>>> feat/auth-foundation-day1
 - `.env` (local dev)
 - `.env.staging` (staging) — `APP_CHECK_ENFORCE=true`
 - `.env.production` (prod) — `APP_CHECK_ENFORCE=true`
 
-<<<<<<< HEAD
 ## Testing
 - Widget tests (web parity): `flutter test --concurrency=1`
 - Android integration: `flutter test integration_test -d <device>`
 
-## Observability
-=======
 ## Tests
 
     ```powershell
@@ -65,10 +57,7 @@ flutter run -d emulator-5554
 - Crashlytics gated by user consent
 
 ## Docs Index
-<<<<<<< HEAD
-=======
 
->>>>>>> feat/auth-foundation-day1
 - `docs/architecture/overview.md`
 - `docs/adr/` (architectural decisions)
 - `docs/runbooks/` (oncall + incident)
