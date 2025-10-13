@@ -4,6 +4,8 @@
 /// bulk approval/rejection, and statistics.
 library;
 
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers.dart';
@@ -34,7 +36,13 @@ class AdminTimeEntryRepository {
       query = query.where('clockInAt', isLessThanOrEqualTo: endDate);
     }
 
-    final snapshot = await query.orderBy('clockInAt', descending: true).get();
+    final snapshot = await query
+        .orderBy('clockInAt', descending: true)
+        .get()
+        .timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => throw TimeoutException('Firestore query timed out'),
+        );
     return snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
   }
 
@@ -188,6 +196,9 @@ class AdminTimeEntryRepository {
       companyId: companyId,
       startDate: startDate,
       endDate: endDate,
+    ).timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => throw TimeoutException('Stats query timed out'),
     );
 
     return {

@@ -20,8 +20,12 @@
 /// 5. Status updates, entries move to approved/rejected buckets
 library;
 
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
 
@@ -136,8 +140,13 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
             ],
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) =>
-              Center(child: Text('Error loading stats: $error')),
+          error: (error, stack) => _buildErrorWidget(
+            title: 'Can\'t load admin data',
+            subtitle: error is TimeoutException
+                ? 'Query timed out. Try refreshing your admin token.'
+                : error.toString(),
+            isTimeout: error is TimeoutException,
+          ),
         ),
       ),
     );
@@ -189,7 +198,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
                   _selectedEntries.clear();
                 });
               },
-              selectedColor: category.color.withOpacity(0.2),
+              selectedColor: category.color.withValues(alpha: 0.2),
             ),
           );
         }).toList(),
@@ -323,22 +332,80 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
+      error: (error, stack) => _buildErrorWidget(
+        title: 'Error loading entries',
+        subtitle: error is TimeoutException
+            ? 'Query timed out. Try refreshing your admin token.'
+            : error.toString(),
+        isTimeout: error is TimeoutException,
+      ),
+    );
+  }
+
+  /// Build error widget with optional "Refresh Claims" action
+  Widget _buildErrorWidget({
+    required String title,
+    required String subtitle,
+    required bool isTimeout,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+            Icon(
+              isTimeout ? Icons.access_time : Icons.error_outline,
+              size: 48,
+              color: isTimeout ? Colors.orange.shade300 : Colors.red.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
-              'Error loading entries',
-              style: TextStyle(color: Colors.grey.shade600),
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              error.toString(),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              subtitle,
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 24),
+            if (isTimeout)
+              ElevatedButton.icon(
+                onPressed: () async {
+                  // Force refresh ID token and invalidate claims provider
+                  await FirebaseAuth.instance.currentUser?.getIdToken(true);
+                  ref.invalidate(userClaimsProvider);
+                  // Also refresh data providers
+                  ref.invalidate(pendingEntriesProvider);
+                  ref.invalidate(exceptionCountsProvider);
+                  ref.invalidate(outsideGeofenceEntriesProvider);
+                  ref.invalidate(exceedsMaxHoursEntriesProvider);
+                  ref.invalidate(disputedEntriesProvider);
+                  ref.invalidate(flaggedEntriesProvider);
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh Claims & Retry'),
+              )
+            else
+              ElevatedButton.icon(
+                onPressed: () {
+                  // Just refresh data providers
+                  ref.invalidate(pendingEntriesProvider);
+                  ref.invalidate(exceptionCountsProvider);
+                  ref.invalidate(outsideGeofenceEntriesProvider);
+                  ref.invalidate(exceedsMaxHoursEntriesProvider);
+                  ref.invalidate(disputedEntriesProvider);
+                  ref.invalidate(flaggedEntriesProvider);
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
           ],
         ),
       ),
@@ -454,7 +521,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color),
       ),
@@ -616,7 +683,9 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
                   setState(() {
                     _startDate = date;
                   });
-                  Navigator.pop(context);
+                  if (mounted && context.mounted) {
+                    Navigator.pop(context);
+                  }
                 }
               },
             ),
@@ -637,7 +706,9 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
                   setState(() {
                     _endDate = date;
                   });
-                  Navigator.pop(context);
+                  if (mounted && context.mounted) {
+                    Navigator.pop(context);
+                  }
                 }
               },
             ),
