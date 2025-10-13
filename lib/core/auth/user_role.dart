@@ -126,11 +126,21 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
 
   try {
     // Get custom claims from ID token
-    final idTokenResult = await user.getIdTokenResult();
-    final claims = idTokenResult.claims ?? {};
+    var idTokenResult = await user.getIdTokenResult();
+    var claims = idTokenResult.claims ?? {};
+
+    // Force token refresh if critical claims are missing
+    if (claims['role'] == null || claims['companyId'] == null) {
+      print('[UserProfile] Claims missing (role=${claims['role']}, companyId=${claims['companyId']}), forcing refresh...');
+      await user.getIdToken(true); // Force refresh
+      idTokenResult = await user.getIdTokenResult();
+      claims = idTokenResult.claims ?? {};
+      print('[UserProfile] After refresh: role=${claims['role']}, companyId=${claims['companyId']}');
+    }
 
     return UserProfile.fromFirebaseUser(user, claims);
   } catch (e) {
+    print('[UserProfile] Error loading claims: $e');
     // If claims fetch fails, return basic profile with worker role
     return UserProfile(
       uid: user.uid,
