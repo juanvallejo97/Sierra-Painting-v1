@@ -18,6 +18,7 @@ class AdminTimeEntryRepository {
   AdminTimeEntryRepository(this._firestore);
 
   /// Get pending time entries (awaiting approval)
+  /// TEMPORARY: Showing ALL statuses for testing (not just pending)
   Future<List<TimeEntry>> getPendingEntries({
     required String companyId,
     DateTime? startDate,
@@ -27,8 +28,8 @@ class AdminTimeEntryRepository {
 
     var query = _firestore
         .collection('time_entries')
-        .where('companyId', isEqualTo: companyId)
-        .where('status', isEqualTo: 'pending');
+        .where('companyId', isEqualTo: companyId);
+        // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
 
     if (startDate != null) {
       query = query.where('clockInAt', isGreaterThanOrEqualTo: startDate);
@@ -234,6 +235,7 @@ class AdminTimeEntryRepository {
   }
 
   /// Stream of pending entries for real-time updates
+  /// TEMPORARY: Showing ALL statuses for testing (not just pending)
   Stream<List<TimeEntry>> watchPendingEntries({
     required String companyId,
     DateTime? startDate,
@@ -241,8 +243,8 @@ class AdminTimeEntryRepository {
   }) {
     var query = _firestore
         .collection('time_entries')
-        .where('companyId', isEqualTo: companyId)
-        .where('status', isEqualTo: 'pending');
+        .where('companyId', isEqualTo: companyId);
+        // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
 
     if (startDate != null) {
       query = query.where('clockInAt', isGreaterThanOrEqualTo: startDate);
