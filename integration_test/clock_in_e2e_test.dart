@@ -14,22 +14,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Import services under test
-import 'package:sierra_painting_v1/core/services/timeclock_service.dart';
-import 'package:sierra_painting_v1/core/models/time_entry.dart';
+import 'package:sierra_painting/core/services/timeclock_service.dart';
+import 'package:sierra_painting/core/models/time_entry.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   // Test constants (must match setup_test_data.cjs)
-  const String TEST_WORKER_EMAIL = 'worker@test.com';
-  const String TEST_WORKER_PASSWORD = 'testpass123';
-  const String TEST_JOB_ID = 'job_painted_ladies';
-  const String TEST_COMPANY_ID = 'company_dsierrapainting';
+  const String testWorkerEmail = 'worker@test.com';
+  const String testWorkerPassword = 'testpass123';
+  const String testJobId = 'job_painted_ladies';
+  const String testCompanyId = 'company_dsierrapainting';
 
   // SF Painted Ladies coordinates (from setup script)
-  const double JOB_LAT = 37.7793;
-  const double JOB_LNG = -122.4193;
-  const double JOB_RADIUS_M = 150.0;
+  const double jobLat = 37.7793;
+  const double jobLng = -122.4193;
+  // const double jobRadiusM = 150.0;  // Unused for now
 
   late FirebaseAuth auth;
   late FirebaseFirestore firestore;
@@ -64,8 +64,8 @@ void main() {
     test('should successfully clock in when inside geofence', () async {
       // 1. Authenticate as test worker
       final userCredential = await auth.signInWithEmailAndPassword(
-        email: TEST_WORKER_EMAIL,
-        password: TEST_WORKER_PASSWORD,
+        email: testWorkerEmail,
+        password: testWorkerPassword,
       );
 
       expect(userCredential.user, isNotNull);
@@ -73,15 +73,15 @@ void main() {
 
       // 2. Verify custom claims (companyId, role)
       final idTokenResult = await userCredential.user!.getIdTokenResult();
-      expect(idTokenResult.claims?['companyId'], equals(TEST_COMPANY_ID));
+      expect(idTokenResult.claims?['companyId'], equals(testCompanyId));
       expect(idTokenResult.claims?['role'], equals('worker'));
 
       // 3. Clock in at job site (inside geofence)
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result = await timeclockService.clockIn(
-        jobId: TEST_JOB_ID,
-        lat: JOB_LAT + 0.0001, // ~11m north (well within 150m radius)
-        lng: JOB_LNG,
+        jobId: testJobId,
+        lat: jobLat + 0.0001, // ~11m north (well within 150m radius)
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
         notes: 'E2E test clock in',
@@ -100,23 +100,23 @@ void main() {
 
       // Verify canonical field names
       expect(entry.entryId, equals(entryId));
-      expect(entry.companyId, equals(TEST_COMPANY_ID));
+      expect(entry.companyId, equals(testCompanyId));
       expect(entry.userId, equals(userId));
-      expect(entry.jobId, equals(TEST_JOB_ID));
+      expect(entry.jobId, equals(testJobId));
       expect(entry.clockInGeofenceValid, isTrue);
       expect(entry.clockInLocation, isNotNull);
       expect(entry.clockOutAt, isNull); // Should be null (still active)
 
       // Verify location accuracy
-      expect(entry.clockInLocation!.lat, closeTo(JOB_LAT + 0.0001, 0.0001));
-      expect(entry.clockInLocation!.lng, closeTo(JOB_LNG, 0.0001));
+      expect(entry.clockInLocation!.lat, closeTo(jobLat + 0.0001, 0.0001));
+      expect(entry.clockInLocation!.lng, closeTo(jobLng, 0.0001));
     });
 
     test('should reject clock in when outside geofence', () async {
       // 1. Authenticate as test worker
       await auth.signInWithEmailAndPassword(
-        email: TEST_WORKER_EMAIL,
-        password: TEST_WORKER_PASSWORD,
+        email: testWorkerEmail,
+        password: testWorkerPassword,
       );
 
       // 2. Attempt to clock in far from job site (outside geofence)
@@ -124,9 +124,9 @@ void main() {
 
       expect(
         () => timeclockService.clockIn(
-          jobId: TEST_JOB_ID,
-          lat: JOB_LAT + 0.01, // ~1.1km north (outside 150m radius)
-          lng: JOB_LNG,
+          jobId: testJobId,
+          lat: jobLat + 0.01, // ~1.1km north (outside 150m radius)
+          lng: jobLng,
           accuracy: 10.0,
           clientEventId: clientEventId,
         ),
@@ -143,16 +143,16 @@ void main() {
     test('should prevent double clock in (idempotency)', () async {
       // 1. Authenticate as test worker
       await auth.signInWithEmailAndPassword(
-        email: TEST_WORKER_EMAIL,
-        password: TEST_WORKER_PASSWORD,
+        email: testWorkerEmail,
+        password: testWorkerPassword,
       );
 
       // 2. Clock in first time
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result1 = await timeclockService.clockIn(
-        jobId: TEST_JOB_ID,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        jobId: testJobId,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -162,9 +162,9 @@ void main() {
 
       // 3. Attempt to clock in again with same clientEventId (idempotent)
       final result2 = await timeclockService.clockIn(
-        jobId: TEST_JOB_ID,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        jobId: testJobId,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId, // Same clientEventId
       );
@@ -175,9 +175,9 @@ void main() {
       // 4. Attempt to clock in again with different clientEventId (should fail - already clocked in)
       expect(
         () => timeclockService.clockIn(
-          jobId: TEST_JOB_ID,
-          lat: JOB_LAT,
-          lng: JOB_LNG,
+          jobId: testJobId,
+          lat: jobLat,
+          lng: jobLng,
           accuracy: 10.0,
           clientEventId: 'different_${DateTime.now().millisecondsSinceEpoch}',
         ),
@@ -198,15 +198,15 @@ void main() {
     setUp(() async {
       // Clock in before each clock out test
       await auth.signInWithEmailAndPassword(
-        email: TEST_WORKER_EMAIL,
-        password: TEST_WORKER_PASSWORD,
+        email: testWorkerEmail,
+        password: testWorkerPassword,
       );
 
       final clientEventId = 'setup_${DateTime.now().millisecondsSinceEpoch}';
       final result = await timeclockService.clockIn(
-        jobId: TEST_JOB_ID,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        jobId: testJobId,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -219,8 +219,8 @@ void main() {
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result = await timeclockService.clockOut(
         timeEntryId: activeEntryId,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -242,8 +242,8 @@ void main() {
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result = await timeclockService.clockOut(
         timeEntryId: activeEntryId,
-        lat: JOB_LAT + 0.01, // ~1.1km north (outside 150m radius)
-        lng: JOB_LNG,
+        lat: jobLat + 0.01, // ~1.1km north (outside 150m radius)
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -269,8 +269,8 @@ void main() {
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result1 = await timeclockService.clockOut(
         timeEntryId: activeEntryId,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -280,8 +280,8 @@ void main() {
       // Clock out again with same clientEventId (idempotent)
       final result2 = await timeclockService.clockOut(
         timeEntryId: activeEntryId,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );
@@ -294,15 +294,15 @@ void main() {
     test('time entry core fields should be immutable', () async {
       // 1. Clock in
       await auth.signInWithEmailAndPassword(
-        email: TEST_WORKER_EMAIL,
-        password: TEST_WORKER_PASSWORD,
+        email: testWorkerEmail,
+        password: testWorkerPassword,
       );
 
       final clientEventId = 'test_${DateTime.now().millisecondsSinceEpoch}';
       final result = await timeclockService.clockIn(
-        jobId: TEST_JOB_ID,
-        lat: JOB_LAT,
-        lng: JOB_LNG,
+        jobId: testJobId,
+        lat: jobLat,
+        lng: jobLng,
         accuracy: 10.0,
         clientEventId: clientEventId,
       );

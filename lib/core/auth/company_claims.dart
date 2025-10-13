@@ -65,7 +65,7 @@ Future<String?> resolveCompanyId({
 
     debugPrint('⚠️ resolveCompanyId: User has no companyId claim');
     return null;
-  } on TimeoutException catch (e) {
+  } on TimeoutException {
     debugPrint(
       '⚠️ resolveCompanyId: Token refresh timed out, falling back to cache',
     );
