@@ -39,3 +39,22 @@ final authStateProvider = StreamProvider<User?>((ref) {
 final currentUserProvider = Provider<User?>((ref) {
   return ref.watch(authStateProvider).value;
 });
+
+/// Provider for user role from custom claims
+final userRoleProvider = FutureProvider<String?>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+
+  // Get ID token which contains custom claims
+  final idTokenResult = await user.getIdTokenResult();
+  return idTokenResult.claims?['role'] as String?;
+});
+
+/// Provider for user company ID from custom claims
+final userCompanyProvider = FutureProvider<String?>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return null;
+
+  final idTokenResult = await user.getIdTokenResult();
+  return idTokenResult.claims?['companyId'] as String?;
+});
