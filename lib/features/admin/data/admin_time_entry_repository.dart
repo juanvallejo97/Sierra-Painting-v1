@@ -45,8 +45,10 @@ class AdminTimeEntryRepository {
   }) async {
     print('[AdminRepo] getPendingEntries START - companyId=$companyId');
 
-    const useFallbackIndexedQuery =
-        bool.fromEnvironment('ADMIN_USE_STATUS_FILTER', defaultValue: false);
+    const useFallbackIndexedQuery = bool.fromEnvironment(
+      'ADMIN_USE_STATUS_FILTER',
+      defaultValue: false,
+    );
 
     var base = _firestore
         .collection('time_entries')
@@ -62,9 +64,9 @@ class AdminTimeEntryRepository {
 
     final q = useFallbackIndexedQuery
         ? base
-            .where('status', isEqualTo: 'pending')
-            .orderBy('clockInAt', descending: true)
-            .limit(100)
+              .where('status', isEqualTo: 'pending')
+              .orderBy('clockInAt', descending: true)
+              .limit(100)
         : base.orderBy('clockInAt', descending: true).limit(100);
 
     print(

@@ -131,11 +131,15 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
 
     // Force token refresh if critical claims are missing
     if (claims['role'] == null || claims['companyId'] == null) {
-      print('[UserProfile] Claims missing (role=${claims['role']}, companyId=${claims['companyId']}), forcing refresh...');
+      print(
+        '[UserProfile] Claims missing (role=${claims['role']}, companyId=${claims['companyId']}), forcing refresh...',
+      );
       await user.getIdToken(true); // Force refresh
       idTokenResult = await user.getIdTokenResult();
       claims = idTokenResult.claims ?? {};
-      print('[UserProfile] After refresh: role=${claims['role']}, companyId=${claims['companyId']}');
+      print(
+        '[UserProfile] After refresh: role=${claims['role']}, companyId=${claims['companyId']}',
+      );
     }
 
     return UserProfile.fromFirebaseUser(user, claims);

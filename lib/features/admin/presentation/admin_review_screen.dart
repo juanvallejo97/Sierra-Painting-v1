@@ -22,6 +22,7 @@ library;
 
 import 'dart:async';
 
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,6 +78,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
+              FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
               ref.invalidate(pendingEntriesProvider);
               ref.invalidate(exceptionCountsProvider);
               ref.invalidate(outsideGeofenceEntriesProvider);
@@ -87,6 +89,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
             },
             tooltip: 'Refresh',
           ),
+          _buildAdminMenu(context, ref),
         ],
       ),
       body: Column(
@@ -382,6 +385,9 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
             if (isTimeout)
               ElevatedButton.icon(
                 onPressed: () async {
+                  FirebaseAnalytics.instance.logEvent(
+                    name: 'admin_refresh_token',
+                  );
                   // Force refresh ID token and invalidate claims provider
                   await FirebaseAuth.instance.currentUser?.getIdToken(true);
                   ref.invalidate(userClaimsProvider);
@@ -738,6 +744,76 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
     );
   }
 
+  /// Admin navigation menu
+  Widget _buildAdminMenu(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.menu),
+      tooltip: 'Admin Menu',
+      onSelected: (value) {
+        switch (value) {
+          case 'home':
+            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_home');
+            Navigator.pushReplacementNamed(context, '/admin/home');
+            break;
+          case 'review':
+            // Already on review screen, just refresh
+            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_review');
+            ref.invalidate(pendingEntriesProvider);
+            ref.invalidate(exceptionCountsProvider);
+            break;
+          case 'users':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Users management (coming soon)')),
+            );
+            break;
+          case 'reports':
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Reports (coming soon)')),
+            );
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'home',
+          child: ListTile(
+            leading: Icon(Icons.home),
+            title: Text('Home'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'review',
+          child: ListTile(
+            leading: Icon(Icons.list),
+            title: Text('Time Review'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'users',
+          child: ListTile(
+            leading: Icon(Icons.people),
+            title: Text('Users (beta)'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'reports',
+          child: ListTile(
+            leading: Icon(Icons.analytics),
+            title: Text('Reports (beta)'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Debug probe chip to verify provider wiring
   Widget _buildProbeChip(AsyncValue<String> probe) {
     final probeText = probe.when(
@@ -848,6 +924,9 @@ class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () async {
+                      FirebaseAnalytics.instance.logEvent(
+                        name: 'admin_refresh_token',
+                      );
                       // Force token refresh
                       await FirebaseAuth.instance.currentUser?.getIdToken(true);
                       widget.ref.invalidate(userProfileProvider);

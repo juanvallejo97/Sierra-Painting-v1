@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,9 +29,7 @@ class AdminHomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin · Dashboard'),
-        actions: [
-          _buildAdminMenu(context, ref),
-        ],
+        actions: [_buildAdminMenu(context, ref)],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -82,7 +81,8 @@ class AdminHomeScreen extends ConsumerWidget {
               runSpacing: 12,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, '/admin/review'),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/admin/review'),
                   icon: const Icon(Icons.list),
                   label: const Text('Review Entries'),
                 ),
@@ -106,9 +106,11 @@ class AdminHomeScreen extends ConsumerWidget {
       onSelected: (value) {
         switch (value) {
           case 'home':
+            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_home');
             Navigator.pushReplacementNamed(context, '/admin/home');
             break;
           case 'review':
+            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_review');
             Navigator.pushReplacementNamed(context, '/admin/review');
             break;
           case 'users':
@@ -163,6 +165,7 @@ class AdminHomeScreen extends ConsumerWidget {
   Future<void> _refreshAdminToken(WidgetRef ref) async {
     try {
       print('[AdminHome] Refreshing admin token...');
+      FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
       await FirebaseAuth.instance.currentUser?.getIdToken(true);
       ref.invalidate(userProfileProvider);
       ref.invalidate(currentCompanyIdProvider);
@@ -213,10 +216,7 @@ class _StatCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
                       Text(
