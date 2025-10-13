@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(firebase firestore:indexes:*)"
     ],
     "deny": [],
     "ask": []

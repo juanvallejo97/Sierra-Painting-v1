@@ -42,12 +42,13 @@ class AdminTimeEntryRepository {
     try {
       final snapshot = await query
           .orderBy('clockInAt', descending: true)
+          .limit(100) // Limit results for better performance
           .get()
           .timeout(
-            const Duration(seconds: 8),
+            const Duration(seconds: 20), // Increased from 8 to 20 seconds
             onTimeout: () {
-              print('[AdminRepo] ❌ TIMEOUT after 8 seconds');
-              throw TimeoutException('Firestore query timed out');
+              print('[AdminRepo] ❌ TIMEOUT after 20 seconds');
+              throw TimeoutException('Firestore query timed out - index may still be building');
             },
           );
       print('[AdminRepo] ✅ SUCCESS - Found ${snapshot.size} documents');
@@ -210,8 +211,8 @@ class AdminTimeEntryRepository {
           startDate: startDate,
           endDate: endDate,
         ).timeout(
-          const Duration(seconds: 8),
-          onTimeout: () => throw TimeoutException('Stats query timed out'),
+          const Duration(seconds: 20),
+          onTimeout: () => throw TimeoutException('Stats query timed out - index may still be building'),
         );
 
     return {
