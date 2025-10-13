@@ -1,0 +1,59 @@
+name: Backup Staging Firestore
+
+on:
+  schedule:
+    # Run daily at 3 AM UTC (7 PM PT previous day)
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Run Firestore backup
+        env:
+          FIREBASE_PROJECT: sierra-painting-staging
+          BACKUP_BUCKET: gs://sierra-painting-staging-backups
+        run: |
+          bash tools/backup_firestore.sh
+      
+      - name: Cleanup old backups (keep last 30 days)
+        env:
+          BACKUP_BUCKET: gs://sierra-painting-staging-backups
+        run: |
+          # List backups older than 30 days
+          CUTOFF_DATE=$(date -d '30 days ago' +%Y-%m-%d)
+          echo "Deleting backups older than ${CUTOFF_DATE}"
+          
+          # List and delete old backups
+          gsutil ls ${BACKUP_BUCKET}/ | while read backup; do
+            backup_date=$(basename ${backup} | cut -d'_' -f1)
+            if [[ "${backup_date}" < "${CUTOFF_DATE}" ]]; then
+              echo "Deleting old backup: ${backup}"
+              gsutil -m rm -r ${backup}
+            fi
+          done
+      
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Backup failed for sierra-painting-staging"
+          # Add Slack/Discord notification here if needed
