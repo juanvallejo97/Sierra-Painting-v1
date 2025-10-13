@@ -145,9 +145,11 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   }
 });
 
-/// Synchronous provider for companyId (no .future awaits)
+/// Synchronous provider for companyId from userProfile (no .future awaits)
 /// Returns null while loading or if not available
-final companyIdProvider = Provider<String?>((ref) {
+/// NOTE: Use this instead of the async companyIdProvider from company_claims.dart
+/// when you need synchronous access without .future chains
+final currentCompanyIdProvider = Provider<String?>((ref) {
   final profileAsync = ref.watch(userProfileProvider);
   return profileAsync.maybeWhen(
     data: (profile) => profile?.companyId,
@@ -157,7 +159,7 @@ final companyIdProvider = Provider<String?>((ref) {
 
 /// Synchronous provider for userId (no .future awaits)
 /// Returns null while loading or if not available
-final userIdProvider = Provider<String?>((ref) {
+final currentUserIdProvider = Provider<String?>((ref) {
   final profileAsync = ref.watch(userProfileProvider);
   return profileAsync.maybeWhen(
     data: (profile) => profile?.uid,

@@ -64,7 +64,7 @@ final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
 
 /// Provider for all pending entries (stream)
 final pendingEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) {
     return Stream.value([]);
   }
@@ -83,7 +83,7 @@ final pendingEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
 final outsideGeofenceEntriesProvider = FutureProvider<List<TimeEntry>>((
   ref,
 ) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
@@ -100,7 +100,7 @@ final outsideGeofenceEntriesProvider = FutureProvider<List<TimeEntry>>((
 final exceedsMaxHoursEntriesProvider = FutureProvider<List<TimeEntry>>((
   ref,
 ) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
@@ -115,7 +115,7 @@ final exceedsMaxHoursEntriesProvider = FutureProvider<List<TimeEntry>>((
 
 /// Provider for disputed entries
 final disputedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
@@ -130,7 +130,7 @@ final disputedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
 
 /// Provider for flagged entries
 final flaggedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
@@ -145,7 +145,7 @@ final flaggedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
 
 /// Provider for exception counts (statistics)
 final exceptionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) {
     return {
       'outsideGeofence': 0,
@@ -183,14 +183,14 @@ final filteredEntriesProvider =
 /// If this doesn't resolve, the issue is in userProfile chain.
 /// If this resolves but exceptionCounts doesn't, issue is in Firestore layer.
 final adminPlumbingProbeProvider = FutureProvider<String>((ref) async {
-  final companyId = ref.watch(companyIdProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
   if (companyId == null || companyId.isEmpty) return 'NO_COMPANY_YET';
   return 'OK_$companyId';
 });
 
 /// Action: Approve single entry
 Future<void> approveEntry(WidgetRef ref, String entryId) async {
-  final userId = ref.read(userIdProvider);
+  final userId = ref.read(currentUserIdProvider);
   if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
@@ -207,7 +207,7 @@ Future<void> rejectEntry(
   String entryId, {
   String? reason,
 }) async {
-  final userId = ref.read(userIdProvider);
+  final userId = ref.read(currentUserIdProvider);
   if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
@@ -224,7 +224,7 @@ Future<void> rejectEntry(
 
 /// Action: Bulk approve entries
 Future<void> bulkApproveEntries(WidgetRef ref, List<String> entryIds) async {
-  final userId = ref.read(userIdProvider);
+  final userId = ref.read(currentUserIdProvider);
   if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
@@ -244,7 +244,7 @@ Future<void> bulkRejectEntries(
   List<String> entryIds, {
   String? reason,
 }) async {
-  final userId = ref.read(userIdProvider);
+  final userId = ref.read(currentUserIdProvider);
   if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
