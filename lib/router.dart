@@ -12,6 +12,7 @@ import 'package:sierra_painting/features/invoices/presentation/invoice_detail_sc
 import 'package:sierra_painting/features/settings/privacy_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/worker_dashboard_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_review_screen.dart';
+import 'package:sierra_painting/features/admin/presentation/admin_home_screen.dart';
 
 /// Role-Based Dashboard Router
 /// Routes users to appropriate dashboard based on their role
@@ -191,6 +192,10 @@ Route<dynamic> onGenerateRoute(RouteSettings s) {
       return _page(const ForgotPasswordScreen());
     case '/dashboard':
       return _page(const DashboardScreen());
+    case '/admin/home':
+      return _page(const AdminHomeScreen());
+    case '/admin/review':
+      return _page(const AdminReviewScreen());
     case '/invoices/create':
       return _page(const InvoiceCreateScreen());
     case '/estimates/create':
