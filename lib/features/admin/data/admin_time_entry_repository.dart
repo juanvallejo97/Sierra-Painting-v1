@@ -19,6 +19,7 @@ class AdminTimeEntryRepository {
 
   /// Get pending time entries (awaiting approval)
   /// TEMPORARY: Showing ALL statuses for testing (not just pending)
+  /// ENV flag: ADMIN_USE_STATUS_FILTER=true to fall back to old indexed query
   Future<List<TimeEntry>> getPendingEntries({
     required String companyId,
     DateTime? startDate,
@@ -26,23 +27,33 @@ class AdminTimeEntryRepository {
   }) async {
     print('[AdminRepo] getPendingEntries START - companyId=$companyId');
 
-    var query = _firestore
+    const useFallbackIndexedQuery =
+        bool.fromEnvironment('ADMIN_USE_STATUS_FILTER', defaultValue: false);
+
+    var base = _firestore
         .collection('time_entries')
         .where('companyId', isEqualTo: companyId);
-    // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
 
     if (startDate != null) {
-      query = query.where('clockInAt', isGreaterThanOrEqualTo: startDate);
+      base = base.where('clockInAt', isGreaterThanOrEqualTo: startDate);
     }
 
     if (endDate != null) {
-      query = query.where('clockInAt', isLessThanOrEqualTo: endDate);
+      base = base.where('clockInAt', isLessThanOrEqualTo: endDate);
     }
 
-    print('[AdminRepo] Executing query...');
-    try {
-      final q = query.orderBy('clockInAt', descending: true).limit(100);
+    final q = useFallbackIndexedQuery
+        ? base
+            .where('status', isEqualTo: 'pending')
+            .orderBy('clockInAt', descending: true)
+            .limit(100)
+        : base.orderBy('clockInAt', descending: true).limit(100);
 
+    print(
+      '[AdminRepo] Executing query (fallback=${useFallbackIndexedQuery ? "status-filtered" : "all-entries"})...',
+    );
+
+    try {
       // Hard timeout that *always* fires & logs:
       final snap = await Future.any([
         q.get(),
