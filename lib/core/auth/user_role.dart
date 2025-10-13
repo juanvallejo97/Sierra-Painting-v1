@@ -118,6 +118,9 @@ class UserProfile {
 
 /// Provider for current user's profile with role
 final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
+  // Keep this provider alive to prevent dispose/re-create cycles
+  ref.keepAlive();
+
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return null;
 
@@ -140,6 +143,26 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
       lastLoginAt: user.metadata.lastSignInTime,
     );
   }
+});
+
+/// Synchronous provider for companyId (no .future awaits)
+/// Returns null while loading or if not available
+final companyIdProvider = Provider<String?>((ref) {
+  final profileAsync = ref.watch(userProfileProvider);
+  return profileAsync.maybeWhen(
+    data: (profile) => profile?.companyId,
+    orElse: () => null,
+  );
+});
+
+/// Synchronous provider for userId (no .future awaits)
+/// Returns null while loading or if not available
+final userIdProvider = Provider<String?>((ref) {
+  final profileAsync = ref.watch(userProfileProvider);
+  return profileAsync.maybeWhen(
+    data: (profile) => profile?.uid,
+    orElse: () => null,
+  );
 });
 
 /// Provider for current user's role

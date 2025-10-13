@@ -64,8 +64,8 @@ final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
 
 /// Provider for all pending entries (stream)
 final pendingEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
-  final userProfile = ref.watch(userProfileProvider).value;
-  if (userProfile == null || userProfile.companyId.isEmpty) {
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) {
     return Stream.value([]);
   }
 
@@ -73,7 +73,7 @@ final pendingEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.watchPendingEntries(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -83,14 +83,14 @@ final pendingEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
 final outsideGeofenceEntriesProvider = FutureProvider<List<TimeEntry>>((
   ref,
 ) async {
-  final userProfile = await ref.watch(userProfileProvider.future);
-  if (userProfile == null || userProfile.companyId.isEmpty) return [];
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.getOutsideGeofenceEntries(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -100,14 +100,14 @@ final outsideGeofenceEntriesProvider = FutureProvider<List<TimeEntry>>((
 final exceedsMaxHoursEntriesProvider = FutureProvider<List<TimeEntry>>((
   ref,
 ) async {
-  final userProfile = await ref.watch(userProfileProvider.future);
-  if (userProfile == null || userProfile.companyId.isEmpty) return [];
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.getExceedsMaxHoursEntries(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -115,14 +115,14 @@ final exceedsMaxHoursEntriesProvider = FutureProvider<List<TimeEntry>>((
 
 /// Provider for disputed entries
 final disputedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
-  final userProfile = await ref.watch(userProfileProvider.future);
-  if (userProfile == null || userProfile.companyId.isEmpty) return [];
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.getDisputedEntries(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -130,14 +130,14 @@ final disputedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
 
 /// Provider for flagged entries
 final flaggedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
-  final userProfile = await ref.watch(userProfileProvider.future);
-  if (userProfile == null || userProfile.companyId.isEmpty) return [];
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) return [];
 
   final repository = ref.watch(adminTimeEntryRepositoryProvider);
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.getFlaggedEntries(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -145,8 +145,8 @@ final flaggedEntriesProvider = FutureProvider<List<TimeEntry>>((ref) async {
 
 /// Provider for exception counts (statistics)
 final exceptionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
-  final userProfile = await ref.watch(userProfileProvider.future);
-  if (userProfile == null || userProfile.companyId.isEmpty) {
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) {
     return {
       'outsideGeofence': 0,
       'exceedsMaxHours': 0,
@@ -160,7 +160,7 @@ final exceptionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
   final dateRange = ref.watch(dateRangeFilterProvider);
 
   return repository.getExceptionCounts(
-    companyId: userProfile.companyId,
+    companyId: companyId,
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   );
@@ -181,11 +181,11 @@ final filteredEntriesProvider =
 
 /// Action: Approve single entry
 Future<void> approveEntry(WidgetRef ref, String entryId) async {
-  final userProfile = await ref.read(userProfileProvider.future);
-  if (userProfile == null) return;
+  final userId = ref.read(userIdProvider);
+  if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
-  await repository.approveEntry(entryId: entryId, approvedBy: userProfile.uid);
+  await repository.approveEntry(entryId: entryId, approvedBy: userId);
 
   // Refresh data
   ref.invalidate(pendingEntriesProvider);
@@ -198,13 +198,13 @@ Future<void> rejectEntry(
   String entryId, {
   String? reason,
 }) async {
-  final userProfile = await ref.read(userProfileProvider.future);
-  if (userProfile == null) return;
+  final userId = ref.read(userIdProvider);
+  if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
   await repository.rejectEntry(
     entryId: entryId,
-    rejectedBy: userProfile.uid,
+    rejectedBy: userId,
     reason: reason,
   );
 
@@ -215,13 +215,13 @@ Future<void> rejectEntry(
 
 /// Action: Bulk approve entries
 Future<void> bulkApproveEntries(WidgetRef ref, List<String> entryIds) async {
-  final userProfile = await ref.read(userProfileProvider.future);
-  if (userProfile == null) return;
+  final userId = ref.read(userIdProvider);
+  if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
   await repository.bulkApproveEntries(
     entryIds: entryIds,
-    approvedBy: userProfile.uid,
+    approvedBy: userId,
   );
 
   // Refresh data
@@ -235,13 +235,13 @@ Future<void> bulkRejectEntries(
   List<String> entryIds, {
   String? reason,
 }) async {
-  final userProfile = await ref.read(userProfileProvider.future);
-  if (userProfile == null) return;
+  final userId = ref.read(userIdProvider);
+  if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
   await repository.bulkRejectEntries(
     entryIds: entryIds,
-    rejectedBy: userProfile.uid,
+    rejectedBy: userId,
     reason: reason,
   );
 
