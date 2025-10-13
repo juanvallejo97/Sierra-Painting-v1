@@ -63,6 +63,8 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final probe = ref.watch(adminPlumbingProbeProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Time Entry Review'),
@@ -81,6 +83,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
               ref.invalidate(exceedsMaxHoursEntriesProvider);
               ref.invalidate(disputedEntriesProvider);
               ref.invalidate(flaggedEntriesProvider);
+              ref.invalidate(adminPlumbingProbeProvider);
             },
             tooltip: 'Refresh',
           ),
@@ -102,6 +105,9 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
 
           // Entry List
           Expanded(child: _buildEntryList()),
+
+          // Debug probe chip (bottom)
+          _buildProbeChip(probe),
         ],
       ),
     );
@@ -726,6 +732,41 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Debug probe chip to verify provider wiring
+  Widget _buildProbeChip(AsyncValue<String> probe) {
+    final probeText = probe.when(
+      data: (s) => s,
+      loading: () => 'LOADING',
+      error: (_, __) => 'ERROR',
+    );
+
+    final probeColor = probe.when(
+      data: (s) => s.startsWith('OK_') ? Colors.green : Colors.orange,
+      loading: () => Colors.blue,
+      error: (_, __) => Colors.red,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      color: Colors.grey.shade100,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.bug_report, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(
+            'Probe: $probeText',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: probeColor,
+            ),
           ),
         ],
       ),

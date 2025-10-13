@@ -179,6 +179,15 @@ final filteredEntriesProvider =
       }).toList();
     });
 
+/// Admin plumbing probe - minimal fast provider to verify wiring
+/// If this doesn't resolve, the issue is in userProfile chain.
+/// If this resolves but exceptionCounts doesn't, issue is in Firestore layer.
+final adminPlumbingProbeProvider = FutureProvider<String>((ref) async {
+  final companyId = ref.watch(companyIdProvider);
+  if (companyId == null || companyId.isEmpty) return 'NO_COMPANY_YET';
+  return 'OK_$companyId';
+});
+
 /// Action: Approve single entry
 Future<void> approveEntry(WidgetRef ref, String entryId) async {
   final userId = ref.read(userIdProvider);
