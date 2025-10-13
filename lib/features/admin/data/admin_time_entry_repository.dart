@@ -17,6 +17,24 @@ class AdminTimeEntryRepository {
 
   AdminTimeEntryRepository(this._firestore);
 
+  /// Test single document read to distinguish rules vs. index issues
+  Future<void> testSingleDocRead(String id) async {
+    try {
+      print('[AdminRepo] TEST: Reading single document $id...');
+      final doc = await _firestore
+          .collection('time_entries')
+          .doc(id)
+          .get()
+          .timeout(const Duration(seconds: 5));
+      print('[AdminRepo] TEST single doc: exists=${doc.exists}');
+      if (doc.exists) {
+        print('[AdminRepo] TEST single doc data: ${doc.data()}');
+      }
+    } catch (e, st) {
+      print('[AdminRepo] TEST single doc FAILED: $e\n$st');
+    }
+  }
+
   /// Get pending time entries (awaiting approval)
   /// TEMPORARY: Showing ALL statuses for testing (not just pending)
   /// ENV flag: ADMIN_USE_STATUS_FILTER=true to fall back to old indexed query
