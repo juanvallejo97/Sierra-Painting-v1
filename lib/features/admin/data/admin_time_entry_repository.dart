@@ -29,7 +29,7 @@ class AdminTimeEntryRepository {
     var query = _firestore
         .collection('time_entries')
         .where('companyId', isEqualTo: companyId);
-        // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
+    // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
 
     if (startDate != null) {
       query = query.where('clockInAt', isGreaterThanOrEqualTo: startDate);
@@ -41,19 +41,19 @@ class AdminTimeEntryRepository {
 
     print('[AdminRepo] Executing query...');
     try {
-      final snapshot = await query
-          .orderBy('clockInAt', descending: true)
-          .limit(100) // Limit results for better performance
-          .get()
-          .timeout(
-            const Duration(seconds: 20), // Increased from 8 to 20 seconds
-            onTimeout: () {
-              print('[AdminRepo] ❌ TIMEOUT after 20 seconds');
-              throw TimeoutException('Firestore query timed out - index may still be building');
-            },
-          );
-      print('[AdminRepo] ✅ SUCCESS - Found ${snapshot.size} documents');
-      return snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
+      final q = query.orderBy('clockInAt', descending: true).limit(100);
+
+      // Hard timeout that *always* fires & logs:
+      final snap = await Future.any([
+        q.get(),
+        Future.delayed(
+          const Duration(seconds: 20),
+          () => throw TimeoutException('time_entries query timeout (20s)'),
+        ),
+      ]);
+
+      print('[AdminRepo] ✅ SUCCESS - docs=${(snap as QuerySnapshot).size}');
+      return snap.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
     } catch (e) {
       print('[AdminRepo] ❌ ERROR: $e');
       rethrow;
@@ -213,7 +213,9 @@ class AdminTimeEntryRepository {
           endDate: endDate,
         ).timeout(
           const Duration(seconds: 20),
-          onTimeout: () => throw TimeoutException('Stats query timed out - index may still be building'),
+          onTimeout: () => throw TimeoutException(
+            'Stats query timed out - index may still be building',
+          ),
         );
 
     return {
@@ -244,7 +246,7 @@ class AdminTimeEntryRepository {
     var query = _firestore
         .collection('time_entries')
         .where('companyId', isEqualTo: companyId);
-        // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
+    // TEMPORARY: Removed .where('status', isEqualTo: 'pending') for testing
 
     if (startDate != null) {
       query = query.where('clockInAt', isGreaterThanOrEqualTo: startDate);

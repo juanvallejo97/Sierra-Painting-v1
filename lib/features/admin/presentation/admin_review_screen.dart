@@ -796,8 +796,7 @@ class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {
-          _elapsedSeconds =
-              DateTime.now().difference(_loadingStart!).inSeconds;
+          _elapsedSeconds = DateTime.now().difference(_loadingStart!).inSeconds;
         });
       }
     });
@@ -827,7 +826,11 @@ class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
               ),
               child: Column(
                 children: [
-                  Icon(Icons.access_time, size: 48, color: Colors.orange.shade600),
+                  Icon(
+                    Icons.access_time,
+                    size: 48,
+                    color: Colors.orange.shade600,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Still loading... ($_elapsedSeconds seconds)',
@@ -840,10 +843,7 @@ class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
                   const SizedBox(height: 8),
                   Text(
                     'Claims may be loading slowly',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(

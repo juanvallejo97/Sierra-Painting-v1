@@ -228,10 +228,7 @@ Future<void> bulkApproveEntries(WidgetRef ref, List<String> entryIds) async {
   if (userId == null) return;
 
   final repository = ref.read(adminTimeEntryRepositoryProvider);
-  await repository.bulkApproveEntries(
-    entryIds: entryIds,
-    approvedBy: userId,
-  );
+  await repository.bulkApproveEntries(entryIds: entryIds, approvedBy: userId);
 
   // Refresh data
   ref.invalidate(pendingEntriesProvider);
