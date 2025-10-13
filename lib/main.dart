@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -10,7 +11,15 @@ import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sierra_painting/core/env/build_flags.dart';
+import 'package:sierra_painting/core/providers.dart';
+import 'package:sierra_painting/core/offline/sync_service.dart';
+import 'package:sierra_painting/core/services/device_info_service.dart';
+import 'package:sierra_painting/core/services/location_service.dart';
+import 'package:sierra_painting/core/services/location_service_impl.dart';
+import 'package:sierra_painting/features/jobs/data/job_context_impl.dart';
+import 'package:sierra_painting/features/jobs/domain/job_context.dart';
 import 'package:sierra_painting/firebase_options.dart';
 import 'package:sierra_painting/infra/perf/performance_monitor.dart';
 import 'package:sierra_painting/router.dart';
@@ -30,6 +39,10 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       await _initializeApp();
 
+      // Initialize device info and preferences for idempotency support
+      final prefs = await SharedPreferences.getInstance();
+      final deviceInfo = DeviceInfoPlugin();
+
       // Only set up Crashlytics error handlers when NOT in test mode
       if (!kIsWeb && !isUnderTest) {
         FlutterError.onError = (FlutterErrorDetails details) {
@@ -41,7 +54,27 @@ Future<void> main() async {
           return true;
         };
       }
-      runApp(const ProviderScope(child: SierraPaintingApp()));
+      runApp(
+        ProviderScope(
+          overrides: [
+            // Override device info service for stable device IDs
+            deviceInfoServiceProvider.overrideWithValue(
+              DeviceInfoService(deviceInfo: deviceInfo, prefs: prefs),
+            ),
+            // Override location service with concrete implementation
+            locationServiceProvider.overrideWith(
+              (ref) => LocationServiceImpl(),
+            ),
+            // Override job context service with concrete implementation
+            jobContextServiceProvider.overrideWith((ref) {
+              final firestore = ref.watch(firestoreProvider);
+              final locationService = ref.watch(locationServiceProvider);
+              return JobContextServiceImpl(firestore, locationService);
+            }),
+          ],
+          child: const SierraPaintingApp(),
+        ),
+      );
 
       // Stop after first frame (app "visually ready")
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -96,6 +129,18 @@ Future<void> _initializeApp() async {
   } else {
     debugPrint('Skipping Firebase initialization in test mode.');
   }
+
+  // K2: Initialize offline sync service (Hive + connectivity monitoring)
+  if (!isUnderTest) {
+    debugPrint('Initializing SyncService...'); // Debug print
+    try {
+      await SyncService.initialize();
+      debugPrint('SyncService initialized successfully.');
+    } catch (e) {
+      debugPrint('SyncService initialization failed: $e');
+    }
+  }
+
   debugPrint('App initialization complete.'); // Debug print
 }
 
@@ -117,23 +162,20 @@ Future<void> _activateAppCheck() async {
   final v3Key = dotenv.env['RECAPTCHA_V3_SITE_KEY'];
 
   try {
+    // Enable token auto-refresh BEFORE activation
+    await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+
     if (kIsWeb && v3Key != null && v3Key.isNotEmpty) {
-      // Newer API (firebase_app_check >= 0.3): ReCaptchaV3Provider
-      try {
-        await FirebaseAppCheck.instance.activate(
-          providerWeb: ReCaptchaV3Provider(v3Key),
-          androidProvider: AndroidProvider.debug, // or playIntegrity in prod
-          appleProvider:
-              AppleProvider.debug, // or appAttest/deviceCheck in prod
-        );
-      } catch (_) {
-        // Back-compat API (older plugin versions use webRecaptchaSiteKey)
-        await FirebaseAppCheck.instance.activate(
-          providerWeb: ReCaptchaV3Provider(v3Key),
-          androidProvider: AndroidProvider.debug,
-          appleProvider: AppleProvider.debug,
-        );
-      }
+      // Web: Use reCAPTCHA v3 provider
+      await FirebaseAppCheck.instance.activate(
+        webProvider: ReCaptchaV3Provider(v3Key),
+        androidProvider: kReleaseMode
+            ? AndroidProvider.playIntegrity
+            : AndroidProvider.debug,
+        appleProvider: kReleaseMode
+            ? AppleProvider.appAttest
+            : AppleProvider.debug,
+      );
       // ignore: avoid_print
       debugPrint(
         'App Check: activation succeeded on web (v3 site key detected).',
@@ -157,22 +199,46 @@ Future<void> _activateAppCheck() async {
   }
 }
 
-class SierraPaintingApp extends StatelessWidget {
+class SierraPaintingApp extends ConsumerWidget {
   const SierraPaintingApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize token refresh listener (automatically starts/stops based on auth state)
+    ref.watch(tokenRefreshListenerProvider);
+
     return MaterialApp(
       title: 'Sierra Painting',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // keep your text theme or customize as needed
-        textTheme: ThemeData.light().textTheme,
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.light,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          labelStyle: TextStyle(color: Colors.grey[700]),
+          hintStyle: TextStyle(color: Colors.grey[500]),
+        ),
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: Colors.black87,
+          displayColor: Colors.black87,
+        ),
       ),
       darkTheme: ThemeData(
-        textTheme: ThemeData.dark().textTheme,
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[800],
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
       // 👇 Key fix: give the app a starting route and a route generator.
       initialRoute: '/', // Updated to align with router configuration
