@@ -19,6 +19,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { z } from 'zod';
+import { ensureAppCheck } from '../middleware/ensureAppCheck';
 
 // Validation schema
 const SetUserRoleSchema = z.object({
@@ -42,12 +43,15 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     timeoutSeconds: 30,
   },
   async (request) => {
-    // 1. Verify caller is authenticated
+    // 1. Verify App Check token (defense-in-depth)
+    ensureAppCheck(request);
+
+    // 2. Verify caller is authenticated
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be authenticated to call this function');
     }
 
-    // 2. Verify caller is an admin
+    // 3. Verify caller is an admin
     const callerToken = request.auth.token;
     if (callerToken.role !== 'admin') {
       throw new HttpsError(
@@ -56,7 +60,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
       );
     }
 
-    // 3. Validate input
+    // 4. Validate input
     let validatedData: SetUserRoleRequest;
     try {
       validatedData = SetUserRoleSchema.parse(request.data);
@@ -70,7 +74,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     const { uid, role, companyId } = validatedData;
 
     try {
-      // 4. Verify target user exists
+      // 5. Verify target user exists
       let user: admin.auth.UserRecord;
       try {
         user = await admin.auth().getUser(uid);
@@ -78,7 +82,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
         throw new HttpsError('not-found', `User with ID ${uid} not found`);
       }
 
-      // 5. Set custom claims
+      // 6. Set custom claims
       const customClaims = {
         role,
         companyId,
@@ -87,7 +91,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
 
       await admin.auth().setCustomUserClaims(uid, customClaims);
 
-      // 6. Update user document in Firestore (for legacy compatibility)
+      // 7. Update user document in Firestore (for legacy compatibility)
       // This ensures rules using Firestore lookups still work during migration
       const userRef = admin.firestore().collection('users').doc(uid);
       await userRef.set(
@@ -95,11 +99,14 @@ export const setUserRole = onCall<SetUserRoleRequest>(
           role,
           companyId,
           roleUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          // Force token refresh flag (client will detect and refresh)
+          forceTokenRefresh: true,
+          tokenRefreshReason: 'role_change',
         },
         { merge: true }
       );
 
-      // 7. Log the change for audit
+      // 8. Log the change for audit
       await admin.firestore().collection('auditLog').add({
         action: 'setUserRole',
         targetUserId: uid,

@@ -1,3 +1,7 @@
+// Initialize Firebase Admin SDK (required for all functions using Firestore/Auth)
+import * as admin from 'firebase-admin';
+admin.initializeApp();
+
 // Health check function for smoke tests
 export const healthCheck = async (req: any, res: any) => {
   res.status(200).json({
@@ -9,6 +13,25 @@ export const healthCheck = async (req: any, res: any) => {
 
 // Auth functions
 export { setUserRole } from './auth/setUserRole';
+
+// Timeclock functions
+export { clockIn, clockOut } from './timeclock';
+export { autoClockOut, adminAutoClockOutOnce } from './auto-clockout';
+export { editTimeEntry } from './edit-time-entry';
+
+// Admin functions
+export { bulkApproveTimeEntries } from './admin/bulk_approve';
+
+// Billing functions
+export { createInvoiceFromTime } from './create-invoice-from-time';
+export { generateInvoice } from './billing/generate_invoice';
+export { onInvoiceCreated, getInvoicePDFUrl, regenerateInvoicePDF } from './billing/invoice_pdf_functions';
+
+// Monitoring functions
+export { latencyProbe, getProbeMetrics } from './monitoring/latency_probe';
+
+// Scheduled cleanup functions
+export { dailyCleanup, manualCleanup } from './scheduled/ttl_cleanup';
 import * as logger from "firebase-functions/logger";
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";

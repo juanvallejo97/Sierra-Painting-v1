@@ -1,0 +1,16 @@
+{
+  "functions/**/*.{ts,js}": [
+    "npm --prefix functions run lint:fix",
+    "npm --prefix functions run build"
+  ],
+  "lib/**/*.dart": [
+    "dart format",
+    "flutter analyze"
+  ],
+  "test/**/*.dart": [
+    "dart format"
+  ],
+  "*.{json,md,yaml,yml}": [
+    "prettier --write"
+  ]
+}

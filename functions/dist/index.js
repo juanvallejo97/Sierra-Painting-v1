@@ -8,6 +8,12 @@ export const healthCheck = async (req, res) => {
 };
 // Auth functions
 export { setUserRole } from './auth/setUserRole';
+// Timeclock functions
+export { clockIn, clockOut } from './timeclock';
+export { autoClockOut } from './auto-clockout';
+export { editTimeEntry } from './edit-time-entry';
+// Billing functions
+export { createInvoiceFromTime } from './create-invoice-from-time';
 import * as logger from "firebase-functions/logger";
 import { onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";

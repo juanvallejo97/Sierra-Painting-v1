@@ -101,9 +101,9 @@ class LocationHelper {
       // No cached position - try medium accuracy with shorter timeout
       try {
         final position = await geolocator.Geolocator.getCurrentPosition(
-          locationSettings: geolocator.LocationSettings(
+          locationSettings: const geolocator.LocationSettings(
             accuracy: geolocator.LocationAccuracy.medium,
-            timeLimit: const Duration(seconds: 3),
+            timeLimit: Duration(seconds: 3),
           ),
         );
 

@@ -1,0 +1,91 @@
+Analyzing Sierra-Painting-v1...                                 
+
+   info - Missing an 'await' for the 'Future' computed by this expression - integration_test\e2e_demo_test.dart:79:12 - unawaited_futures
+   info - Missing an 'await' for the 'Future' computed by this expression - integration_test\offline_queue_test.dart:81:12 - unawaited_futures
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:215:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:221:7 - avoid_print
+   info - Use 'const' with the constructor to improve performance - integration_test\offline_queue_test.dart:231:14 - prefer_const_constructors
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:253:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:259:9 - avoid_print
+   info - Use 'const' with the constructor to improve performance - integration_test\offline_queue_test.dart:265:16 - prefer_const_constructors
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:288:9 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:293:7 - avoid_print
+   info - Use 'const' with the constructor to improve performance - integration_test\offline_queue_test.dart:301:14 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance - integration_test\offline_queue_test.dart:307:14 - prefer_const_constructors
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:325:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:329:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:366:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:370:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:392:9 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:404:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:408:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:450:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:454:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:510:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:514:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:563:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:567:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:609:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:613:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:658:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:664:7 - avoid_print
+   info - Use 'const' with the constructor to improve performance - integration_test\offline_queue_test.dart:672:14 - prefer_const_constructors
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:678:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:704:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:708:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:718:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:719:7 - avoid_print
+   info - Don't invoke 'print' in production code - integration_test\offline_queue_test.dart:720:7 - avoid_print
+   info - Missing an 'await' for the 'Future' computed by this expression - integration_test\timeclock_geofence_test.dart:59:12 - unawaited_futures
+warning - The declaration '_attemptExecution' isn't referenced - lib\core\services\offline_queue.dart:164:16 - unused_element
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\admin\presentation\admin_review_screen.dart:192:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\admin\presentation\admin_review_screen.dart:457:22 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\features\admin\presentation\admin_review_screen.dart:619:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\admin\presentation\admin_review_screen.dart:640:33 - use_build_context_synchronously
+warning - The value of the local variable 'exceeds12hQuery' isn't used - lib\features\admin\presentation\exceptions_tab_wiring_guide.dart:42:13 - unused_local_variable
+warning - The value of the local variable 'autoClockoutQuery' isn't used - lib\features\admin\presentation\exceptions_tab_wiring_guide.dart:48:13 - unused_local_variable
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:101:27 - dead_code
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:208:47 - dead_code
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:209:45 - dead_code
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:215:47 - dead_code
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:222:47 - dead_code
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\admin\presentation\widgets\time_entry_card.dart:240:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\admin\presentation\widgets\time_entry_card.dart:242:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\admin\presentation\widgets\time_entry_card.dart:267:22 - deprecated_member_use
+   info - Unnecessary braces in a string interpolation - lib\features\admin\presentation\widgets\time_entry_card.dart:313:13 - unnecessary_brace_in_string_interps
+warning - Dead code - lib\features\admin\presentation\widgets\time_entry_card.dart:349:15 - dead_code
+   info - Statements in an if should be enclosed in a block - lib\features\jobs\data\job_repository.dart:212:9 - curly_braces_in_flow_control_structures
+warning - Unused import: 'package:sierra_painting/core/domain/company_settings.dart' - lib\features\settings\presentation\company_settings_screen.dart:37:8 - unused_import
+   info - Missing an 'await' for the 'Future' computed by this expression - lib\features\timeclock\presentation\worker_dashboard_screen.dart:62:39 - unawaited_futures
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:111:36 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:112:43 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:121:42 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:124:42 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:125:25 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:134:33 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:186:15 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:188:37 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:195:45 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:199:15 - dead_code
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:201:34 - dead_code
+   info - Unnecessary braces in a string interpolation - lib\features\timeclock\presentation\worker_dashboard_screen.dart:330:13 - unnecessary_brace_in_string_interps
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:335:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:339:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:343:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:346:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:348:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:353:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:355:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:357:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:371:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:378:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:411:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\timeclock\presentation\worker_dashboard_screen.dart:412:7 - avoid_print
+warning - The declaration '_showDisputeDialog' isn't referenced - lib\features\timeclock\presentation\worker_dashboard_screen.dart:522:16 - unused_element
+   info - Missing an 'await' for the 'Future' computed by this expression - lib\features\timeclock\presentation\worker_dashboard_screen.dart:530:5 - unawaited_futures
+warning - Unused import: 'package:sierra_painting/core/services/location_service.dart' - lib\features\timeclock\presentation\worker_dashboard_screen_v2.dart:42:8 - unused_import
+warning - Unused import: 'package:sierra_painting/features/timeclock/presentation/widgets/location_permission_primer.dart' - lib\features\timeclock\presentation\worker_dashboard_screen_v2.dart:43:8 - unused_import
+warning - Dead code - lib\features\timeclock\presentation\worker_dashboard_screen_v2.dart:76:13 - dead_code
+warning - The declaration '_showGeofenceError' isn't referenced - lib\features\timeclock\presentation\worker_dashboard_screen_v2.dart:639:8 - unused_element
+   info - Missing an 'await' for the 'Future' computed by this expression - lib\features\timeclock\presentation\worker_dashboard_screen_v2.dart:676:5 - unawaited_futures
+

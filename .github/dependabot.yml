@@ -1,13 +1,60 @@
 version: 2
 updates:
+  # ============================================================================
+  # GitHub Actions - Monthly updates
+  # ============================================================================
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule: { interval: "monthly" }
     open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    commit-message:
+      prefix: "chore(ci)"
+      prefix-development: "chore(ci)"
+      include: "scope"
+
+  # ============================================================================
+  # Root NPM - CI and tooling dependencies
+  # ============================================================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule: { interval: "weekly" }
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "ci-tooling"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    groups:
+      firebase-tooling:
+        patterns: ["firebase-tools", "firebase-admin"]
+      commit-tooling:
+        patterns: ["@commitlint/", "husky"]
+      testing:
+        patterns: ["vitest", "puppeteer", "jest"]
+
+  # ============================================================================
+  # Cloud Functions - Backend dependencies
+  # ============================================================================
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "backend"
+      - "cloud-functions"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
     groups:
       firebase:
         patterns: ["firebase*", "@firebase/", "firebase-admin", "firebase-functions"]
@@ -15,25 +62,73 @@ updates:
         patterns: ["eslint", "@typescript-eslint/", "typescript"]
       observability:
         patterns: ["@opentelemetry/", "trace"]
+      security-critical:
+        patterns: ["stripe", "zod", "pdfkit"]
+        update-types: ["security"]  # Only security updates for these
+      testing:
+        patterns: ["jest", "@types/jest", "ts-jest", "@firebase/rules-unit-testing"]
+
+  # ============================================================================
+  # Firestore Tests - Rules testing dependencies
+  # ============================================================================
   - package-ecosystem: "npm"
     directory: "/firestore-tests"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "npm"
+      - "testing"
+      - "firestore-rules"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # ============================================================================
+  # Webapp - Frontend dependencies (if exists)
+  # ============================================================================
   - package-ecosystem: "npm"
     directory: "/webapp"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "frontend"
+      - "webapp"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
     groups:
       react-next:
         patterns: ["react", "react-", "next", "eslint-config-next"]
       ui-tooling:
         patterns: ["tailwind", "postcss*", "autoprefixer"]
+
+  # ============================================================================
+  # Flutter/Dart - Mobile app dependencies
+  # ============================================================================
   - package-ecosystem: "pub"
     directory: "/"
     schedule: { interval: "weekly" }
     open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "pub"
+      - "flutter"
+      - "dart"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
     groups:
       flutterfire:
         patterns: ["firebase_", "cloud_functions", "firebase_core*", "firebase_performance*"]
+      state-management:
+        patterns: ["riverpod", "flutter_riverpod"]
       lints-build:
         patterns: ["flutter_lints", "build_runner", "source_gen", "mockito", "dart_style", "analyzer*"]
+      storage:
+        patterns: ["hive", "hive_flutter", "shared_preferences"]
+      networking:
+        patterns: ["connectivity_plus", "dio", "http"]

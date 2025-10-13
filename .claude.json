@@ -1,0 +1,81 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\lib",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\functions\\src",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\test",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\integration_test",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\tools",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\docs"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "firebase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\firestore.rules",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\firebase.json",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\.firebaserc"
+      ]
+    },
+    "config": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\pubspec.yaml",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\analysis_options.yaml",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\functions\\package.json",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\functions\\tsconfig.json"
+      ]
+    },
+    "scripts": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:\\Users\\valle\\desktop\\90\\sierra-painting-v1\\scripts"
+      ]
+    }
+  },
+  "projectContext": {
+    "name": "sierra-painting-v1",
+    "type": "flutter-firebase",
+    "primaryLanguages": ["dart", "typescript"],
+    "keyDirectories": {
+      "app": "lib/",
+      "features": "lib/features/",
+      "core": "lib/core/",
+      "functions": "functions/src/",
+      "tests": "test/",
+      "integrationTests": "integration_test/",
+      "tools": "tools/",
+      "docs": "docs/"
+    },
+    "commonWorkflows": {
+      "testSingle": "flutter test {path}",
+      "testAll": "flutter test --concurrency=1",
+      "buildFunctions": "npm --prefix functions run build",
+      "typeCheck": "npm --prefix functions run typecheck",
+      "lint": "flutter analyze && npm --prefix functions run lint",
+      "fix": "dart fix --apply && flutter format .",
+      "emulators": "firebase emulators:start",
+      "seed": "dart run tools/seed_fixtures.dart"
+    },
+    "architecture": {
+      "stateManagement": "Riverpod 3.x",
+      "backend": "Firebase (Firestore, Auth, Functions, Storage)",
+      "routing": "MaterialApp with onGenerateRoute",
+      "testing": "flutter_test + integration_test"
+    }
+  }
+}

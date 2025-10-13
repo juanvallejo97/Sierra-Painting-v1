@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "138777646966",
-    "project_id": "to-do-app-ac602",
-    "storage_bucket": "to-do-app-ac602.firebasestorage.app"
+    "project_number": "271985878317",
+    "project_id": "sierra-painting-staging",
+    "storage_bucket": "sierra-painting-staging.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:138777646966:android:36104ede7ac939a87e0c57",
+        "mobilesdk_app_id": "1:271985878317:android:b3b71b78fd6185fe589fa4",
         "android_client_info": {
           "package_name": "com.example.sierra_painting"
         }
@@ -15,45 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBBqKtYuqDTcv7uwRLShoCt7b2sPWm_Uks"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:138777646966:android:9f33d6390bd6355f7e0c57",
-        "android_client_info": {
-          "package_name": "com.sierra.painting"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBBqKtYuqDTcv7uwRLShoCt7b2sPWm_Uks"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:138777646966:android:87025b3de2d83ab07e0c57",
-        "android_client_info": {
-          "package_name": "com.sierrapainting.app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBBqKtYuqDTcv7uwRLShoCt7b2sPWm_Uks"
+          "current_key": "AIzaSyAZoMH7_Z7ele3Dlg4TeHPHHRNtxKUuYAY"
         }
       ],
       "services": {

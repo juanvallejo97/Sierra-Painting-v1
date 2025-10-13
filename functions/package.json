@@ -25,8 +25,8 @@
     "@opentelemetry/sdk-trace-node": "^1",
     "@opentelemetry/semantic-conventions": "^1",
     "@types/stripe": "^8.0.416",
-    "firebase-admin": "^13.5.0",
-    "firebase-functions": "^6.4.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^4.9.0",
     "node-fetch": "^2.7.0",
     "pdfkit": "^0.17.2",
     "stripe": "^19.1.0",
@@ -36,9 +36,8 @@
     "@eslint/js": "^9.37.0",
     "@firebase/rules-unit-testing": "^5.0.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.6.2",
+    "@types/node": "^20.19.21",
     "@types/node-fetch": "^2.6.9",
-    "firebase": "^12.3.0",
     "@types/pdfkit": "^0.13.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
@@ -47,18 +46,19 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.29.1",
+    "firebase": "^12.3.0",
     "firebase-functions-test": "^3.4.1",
     "jest": "^30.0.0",
     "prettier": "^3.3.3",
     "ts-jest": "^29.1.1",
-    "typescript": "^5.5.4"
+    "typescript": "^5.9.3"
   },
   "type": "commonjs",
   "private": true,
   "functions": [
     {
       "name": "<function-name>",
-  "region": "us-east4",
+      "region": "us-east4",
       "minInstances": 1
     }
   ]

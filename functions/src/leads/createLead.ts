@@ -5,6 +5,7 @@ import { LeadSchema, type Lead } from '../lib/zodSchemas';
 import { logAudit, createAuditEntry, extractCallableMetadata } from '../lib/audit';
 import { checkIdempotency, recordIdempotency, generateIdempotencyKey } from '../lib/idempotency';
 import { getDeploymentConfig } from '../config/deployment';
+import { checkRateLimit, getClientIP } from '../middleware/rateLimiter';
 
 // Initialize Admin if not already
 try { admin.app(); } catch { admin.initializeApp(); }
@@ -17,6 +18,22 @@ function verifyCaptcha(token: string): boolean {
   return token?.length > 10;
 }
 
+/**
+ * Create Lead - Public Endpoint
+ *
+ * SECURITY DESIGN:
+ * This endpoint is intentionally PUBLIC (no authentication required) to allow
+ * anonymous website visitors to submit lead forms. Protection against abuse:
+ *
+ * 1. App Check: Ensures requests come from registered web/mobile apps
+ * 2. Rate Limiting: Max 5 requests per hour per IP address
+ * 3. Captcha: Verifies human interaction (TODO: implement real provider)
+ * 4. Idempotency: Prevents duplicate submissions via hashed key
+ * 5. Input Validation: Zod schema validates all fields
+ *
+ * This multi-layered approach provides defense-in-depth without requiring
+ * authentication, which would block legitimate lead capture.
+ */
 export const createLead = onCall(
   {
   ...getDeploymentConfig('createLead'),
@@ -27,6 +44,11 @@ export const createLead = onCall(
     if (!req.app) {
       throw new HttpsError('failed-precondition', 'App Check validation failed');
     }
+
+    // --- Rate Limiting (anti-spam) -------------------------------------------
+    // Allow 5 lead submissions per hour per IP address
+    const clientIP = getClientIP(req);
+    await checkRateLimit('createLead', clientIP, 5, 3600);
 
     // --- Input validation ----------------------------------------------------
     let lead: Lead;
@@ -52,7 +74,7 @@ export const createLead = onCall(
     );
 
     if (await checkIdempotency(key)) {
-      logger.info('Duplicate createLead (idempotent OK)', { key, email: lead.email });
+      logger.info('Duplicate createLead (idempotent OK)', { key, source: lead.source });
       return { leadId: key, message: 'Lead already submitted' };
     }
 
@@ -90,7 +112,7 @@ export const createLead = onCall(
       })
     );
 
-    logger.info('Lead created', { leadId, email: lead.email, source: lead.source });
+    logger.info('Lead created', { leadId, source: lead.source });
     return { leadId, message: 'Lead submitted successfully' };
   }
 );

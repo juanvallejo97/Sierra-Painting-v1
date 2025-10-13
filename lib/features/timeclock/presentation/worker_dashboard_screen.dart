@@ -228,7 +228,10 @@ class _WorkerDashboardScreenState extends ConsumerState<WorkerDashboardScreen> {
   }
 
   /// Build job assignment card (shows active job or empty state)
-  Widget _buildJobAssignmentCard(BuildContext context, Map<String, dynamic>? job) {
+  Widget _buildJobAssignmentCard(
+    BuildContext context,
+    Map<String, dynamic>? job,
+  ) {
     if (job == null) {
       // Empty state: No active assignment
       return Card(
@@ -239,7 +242,11 @@ class _WorkerDashboardScreenState extends ConsumerState<WorkerDashboardScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.assignment_late, color: Colors.orange.shade700, size: 32),
+                  Icon(
+                    Icons.assignment_late,
+                    color: Colors.orange.shade700,
+                    size: 32,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -247,16 +254,16 @@ class _WorkerDashboardScreenState extends ConsumerState<WorkerDashboardScreen> {
                       children: [
                         Text(
                           'No Active Assignment',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange.shade900,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange.shade900,
+                              ),
                         ),
                         Text(
                           'Contact your manager to get assigned to a job.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.orange.shade800,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.orange.shade800),
                         ),
                       ],
                     ),
@@ -294,7 +301,11 @@ class _WorkerDashboardScreenState extends ConsumerState<WorkerDashboardScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.assignment_turned_in, color: Colors.green.shade700, size: 32),
+            Icon(
+              Icons.assignment_turned_in,
+              color: Colors.green.shade700,
+              size: 32,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -347,10 +358,11 @@ class _WorkerDashboardScreenState extends ConsumerState<WorkerDashboardScreen> {
                     children: [
                       Text(
                         'Unable to Load Assignment',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red.shade900,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade900,
+                            ),
                       ),
                       Text(
                         error.toString().contains('TimeoutException')

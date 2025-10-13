@@ -1,11 +1,10 @@
-/**
- * Clock In/Out End-to-End Integration Test
- *
- * Tests the full clock in/out flow using TimeclockService with us-east4 region.
- * Validates canonical schema usage and geofence validation.
- *
- * Run with: flutter test integration_test/clock_in_e2e_test.dart
- */
+/// Clock In/Out End-to-End Integration Test
+///
+/// Tests the full clock in/out flow using TimeclockService with us-east4 region.
+/// Validates canonical schema usage and geofence validation.
+///
+/// Run with: flutter test integration_test/clock_in_e2e_test.dart
+library;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

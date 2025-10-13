@@ -1,0 +1,338 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers -----------------------------------------------------------
+    function authed() {
+      return request.auth != null;
+    }
+
+    // Alias for authed() - used in timeclock rules
+    function isSignedIn() {
+      return authed();
+    }
+
+    // Return company_id claim or null
+    function claimCompany() {
+      return authed() && request.auth.token.company_id != null
+        ? request.auth.token.company_id
+        : null;
+    }
+
+    // Check the authenticated user's company matches the path
+    function isCompany(companyId) {
+      return claimCompany() == companyId;
+    }
+
+    // Role checks: Uses custom claims from Firebase Auth tokens
+    // Custom claims should be set via setUserRole Cloud Function
+    function hasAnyRole(roles) {
+      return authed() &&
+             request.auth.token.role != null &&
+             request.auth.token.role in roles;
+    }
+
+    // Individual role checks
+    function isAdmin() {
+      return hasAnyRole(["admin"]);
+    }
+
+    function isManager() {
+      return hasAnyRole(["manager"]);
+    }
+
+    // Check if user is accessing their own document
+    function isOwner(uid) {
+      return authed() && request.auth.uid == uid;
+    }
+
+    // Alias for isOwner - used in users rules
+    function isSelf(uid) {
+      return isOwner(uid);
+    }
+
+    // Check if user owns the document being modified
+    function isDocOwner() {
+      return authed() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Only allow specific fields to change on self-edits
+    function willOnlyChange(allowedKeys) {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly(allowedKeys);
+    }
+
+    // Prevent modification of immutable fields
+    function preservesFields(fields) {
+      return !request.resource.data.diff(resource.data).changedKeys().hasAny(fields);
+    }
+
+    // Prevent creation/modification of protected fields by clients
+    function hasNoProtectedFields(fields) {
+      return !request.resource.data.keys().hasAny(fields);
+    }
+
+    // ---- company-scoped documents -----------------------------------------
+    match /companies/{companyId} {
+      // company document itself
+      allow read: if authed() && isCompany(companyId);
+
+      // all subcollections under a company (e.g., projects, jobs, estimates…)
+      match /{collection}/{docId} {
+        // Everyone in the company can read
+        allow read: if authed() && isCompany(companyId);
+
+        // Creates: staff/admin OR owner creating their own doc
+        allow create: if authed() && isCompany(companyId) && (
+          hasAnyRole(["admin", "manager", "staff"]) ||
+          request.resource.data.ownerId == request.auth.uid
+        );
+
+        // Updates/deletes: admin/manager OR owner with limited self fields
+        allow update, delete: if authed() && isCompany(companyId) && (
+          hasAnyRole(["admin", "manager"]) ||
+          (isDocOwner() && willOnlyChange(["title","notes","status","images","updatedAt","hours"]))
+        );
+      }
+    }
+
+    match /companies/{companyId}/invoices/{doc} {
+      allow read: if isCompany(companyId) && (isManager() || isAdmin());
+      allow create, update, delete: if isCompany(companyId) && isAdmin();
+    }
+
+    match /companies/{companyId}/users/{uid} {
+      allow read: if isCompany(companyId) && (isOwner(uid) || isAdmin());
+      allow update: if isCompany(companyId) && (isOwner(uid) || isAdmin());
+      allow create, delete: if isCompany(companyId) && isAdmin();
+    }
+
+    // ---- Root-level collections with company isolation -----------------------
+
+    // /estimates/{estimateId}
+    // Estimates are stored at root level with companyId field for multi-tenant isolation
+    match /estimates/{estimateId} {
+      // Read: Anyone in the same company
+      allow read: if authed()
+        && resource.data.companyId == claimCompany();
+
+      // Create: Admin/Manager only, must set correct companyId
+      allow create: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && request.resource.data.companyId == claimCompany()
+        && request.resource.data.keys().hasAll(["companyId", "customerId", "status", "amount", "items", "validUntil"])
+        && request.resource.data.status == "draft";
+
+      // Update: Admin/Manager only, cannot change companyId or createdAt
+      allow update: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && resource.data.companyId == claimCompany()
+        && request.resource.data.companyId == resource.data.companyId
+        && preservesFields(["createdAt", "companyId"]);
+
+      // Delete: Admin only
+      allow delete: if authed()
+        && isAdmin()
+        && resource.data.companyId == claimCompany();
+    }
+
+    // /invoices/{invoiceId}
+    // Invoices are stored at root level with companyId field for multi-tenant isolation
+    match /invoices/{invoiceId} {
+      // Read: Anyone in the same company
+      allow read: if authed()
+        && resource.data.companyId == claimCompany();
+
+      // Create: Only via Cloud Functions (generateInvoice)
+      // Clients cannot create invoices directly
+      allow create: if false;
+
+      // Update: Admin/Manager only for limited fields
+      // Cannot modify: companyId, createdAt, pdfPath, pdfGeneratedAt (set by Cloud Functions)
+      allow update: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && resource.data.companyId == claimCompany()
+        && preservesFields(["companyId", "createdAt", "pdfPath", "pdfGeneratedAt", "pdfError", "pdfErrorAt"])
+        && willOnlyChange(["status", "notes", "dueDate", "updatedAt"]);
+
+      // Delete: Admin only, cannot delete if PDF exists (data retention requirement)
+      allow delete: if authed()
+        && isAdmin()
+        && resource.data.companyId == claimCompany()
+        && (!resource.data.keys().hasAny(["pdfPath"]) || resource.data.pdfPath == null);
+    }
+
+    // /customers/{customerId}
+    // Customers are stored at root level with companyId field for multi-tenant isolation
+    match /customers/{customerId} {
+      // Read: Anyone in the same company
+      allow read: if authed()
+        && resource.data.companyId == claimCompany();
+
+      // Create: Admin/Manager/Staff, must set correct companyId
+      allow create: if authed()
+        && hasAnyRole(["admin", "manager", "staff"])
+        && request.resource.data.companyId == claimCompany()
+        && request.resource.data.keys().hasAll(["companyId", "name"]);
+
+      // Update: Admin/Manager/Staff, cannot change companyId or createdAt
+      allow update: if authed()
+        && hasAnyRole(["admin", "manager", "staff"])
+        && resource.data.companyId == claimCompany()
+        && preservesFields(["companyId", "createdAt"]);
+
+      // Delete: Admin/Manager only
+      allow delete: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && resource.data.companyId == claimCompany();
+    }
+
+    // /jobs/{jobId}
+    // Jobs define work sites with geofence parameters
+    match /jobs/{jobId} {
+      // Read: Anyone in the same company
+      allow read: if authed()
+        && resource.data.companyId == claimCompany();
+
+      // Create: Admin/Manager only
+      allow create: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && request.resource.data.companyId == claimCompany()
+        && request.resource.data.keys().hasAll(["companyId", "name", "address"]);
+
+      // Update: Admin/Manager only, cannot change companyId
+      allow update: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && resource.data.companyId == claimCompany()
+        && preservesFields(["companyId", "createdAt"]);
+
+      // Delete: Admin only
+      allow delete: if authed()
+        && isAdmin()
+        && resource.data.companyId == claimCompany();
+    }
+
+    // /assignments/{assignmentId}
+    // Worker-to-job assignments for access control
+    match /assignments/{assignmentId} {
+      // Read: Anyone in the same company
+      allow read: if authed()
+        && resource.data.companyId == claimCompany();
+
+      // Create/Update/Delete: Admin/Manager only
+      allow create, update, delete: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && (
+          // On create, must set companyId
+          (request.resource.data.companyId == claimCompany()) ||
+          // On update/delete, existing must match
+          (resource.data.companyId == claimCompany())
+        );
+    }
+
+    // /timeEntries/{id}
+    // CRITICAL SECURITY BOUNDARY: Function-Write Only Pattern
+    //
+    // DESIGN RATIONALE:
+    // - Workers cannot manipulate their own time (prevents fraud)
+    // - Geofence validation happens server-side only (cannot be bypassed)
+    // - All time entry writes go through Cloud Functions (clockIn/clockOut)
+    // - Cloud Functions use Admin SDK (bypasses these rules)
+    //
+    // IMMUTABILITY GUARANTEE:
+    // - Once invoiceId field is set, the entry becomes immutable
+    // - This is enforced in Cloud Functions, not in these rules
+    // - Reason: Admin SDK bypasses security rules, so server-side enforcement required
+    // - See: functions/src/timeclock/updateTimeEntry.ts for enforcement logic
+    //
+    // READ PERMISSIONS:
+    // - Workers: Can read only their own entries from their company
+    // - Admins/Managers: Can read all entries from their company
+    // - Cross-company reads: Denied (company isolation)
+    //
+    // WRITE PERMISSIONS:
+    // - Client writes: DENIED (all roles)
+    // - Function writes: Allowed (via Admin SDK, bypasses rules)
+    //
+    match /timeEntries/{id} {
+      // Read: Workers can read their own entries; Admins/Managers can read all company entries
+      allow read: if authed() && (
+        (hasAnyRole(["admin","manager"]) && resource.data.companyId == claimCompany()) ||
+        (resource.data.userId == request.auth.uid && resource.data.companyId == claimCompany())
+      );
+
+      // NO client writes - deny all creates, updates, deletes
+      // Only Cloud Functions with Admin SDK can write to timeEntries
+      // Invoiced immutability is enforced server-side (see Cloud Functions)
+      allow write: if false;
+    }
+
+    // /clockEvents/{id}
+    // Workers post clock events here; Cloud Function validates & creates timeEntries
+    match /clockEvents/{id} {
+      // Read: Workers can read their own events; Admins can read all
+      allow read: if authed() && (
+        (hasAnyRole(["admin","manager"]) && resource.data.companyId == claimCompany()) ||
+        (resource.data.userId == request.auth.uid && resource.data.companyId == claimCompany())
+      );
+
+      // Create: Workers can create their own clock events
+      allow create: if authed()
+        && request.resource.data.companyId == claimCompany()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(["companyId","userId","jobId","type","clientEventId"]);
+
+      // Prevent edits/deletes by clients (events are append-only)
+      allow update, delete: if false;
+    }
+
+    // /users/{uid}
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && request.resource.data.keys().hasOnly(['displayName','email','photoURL','createdAt','updatedAt'])
+        && request.time == request.resource.data.createdAt
+        && request.resource.data.updatedAt == request.resource.data.createdAt;
+      allow update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['displayName','photoURL','updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    // ---- System collections (managed by Cloud Functions) ---------------------
+
+    // /_probes/{docId}
+    // Latency probe test documents - read/write by Cloud Functions only
+    match /_probes/{docId} {
+      // Only Cloud Functions can write (Admin SDK)
+      allow write: if false;
+
+      // Admins can read for debugging
+      allow read: if authed() && isAdmin();
+    }
+
+    // /_audit/{docId}
+    // Audit log documents - write by Cloud Functions only
+    match /_audit/{docId} {
+      // Only Cloud Functions can write (Admin SDK)
+      allow write: if false;
+
+      // Admins can read audit logs
+      allow read: if authed() && isAdmin();
+    }
+
+    // /_backups/{docId}
+    // Backup metadata - write by Cloud Functions only
+    match /_backups/{docId} {
+      // Only Cloud Functions can write (Admin SDK)
+      allow write: if false;
+
+      // Admins can read backup metadata
+      allow read: if authed() && isAdmin();
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

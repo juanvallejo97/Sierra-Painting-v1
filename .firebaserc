@@ -1,15 +1,16 @@
 {
   "projects": {
-    "default": "sierra-painting-dev",
-    "dev": "sierra-painting-dev",
+    "default": "sierra-painting-staging",
+    "dev": "to-do-app-ac602",
     "staging": "sierra-painting-staging",
-    "production": "sierra-painting-prod"
+    "production": "sierra-painting-prod",
+    "prod": "sierra-painting-prod"
   },
   "targets": {
-    "sierra-painting-dev": {
+    "to-do-app-ac602": {
       "hosting": {
         "dev": [
-          "sierra-painting-dev"
+          "to-do-app-ac602"
         ]
       }
     },
@@ -26,14 +27,8 @@
           "sierra-painting-prod"
         ]
       }
-    },
-    "to-do-app-ac602": {
-      "hosting": {
-        "sierrapainting": [
-          "sierrapainting"
-        ]
-      }
     }
   },
-  "etags": {}
+  "etags": {},
+  "_comment": "Updated 2025-10-11: default set to sierra-painting-staging, dev remains to-do-app-ac602 for local testing. Use 'firebase use staging' or 'firebase use prod' to deploy to real environments."
 }

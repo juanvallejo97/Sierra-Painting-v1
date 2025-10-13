@@ -79,7 +79,7 @@ if (!RUN_RULES) {
       );
 
       await assertFails(
-        unauthedStorage.ref('users/user1/profile/avatar.jpg').put(Buffer.from('test'))
+        unauthedStorage.ref('users/user1/profile/avatar.jpg').put(Buffer.from('test')).then()
       );
     });
 
@@ -110,7 +110,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         storage.ref('users/user1/profile/avatar.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -122,7 +122,7 @@ if (!RUN_RULES) {
       await assertFails(
         storage.ref('users/user2/profile/avatar.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -134,7 +134,7 @@ if (!RUN_RULES) {
       await assertFails(
         storage.ref('users/user1/profile/document.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
 
@@ -147,7 +147,7 @@ if (!RUN_RULES) {
       await assertFails(
         storage.ref('users/user1/profile/large.jpg').put(largeBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -160,7 +160,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         storage.ref('users/user1/profile/small.jpg').put(smallBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
   });
@@ -179,7 +179,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         adminStorage.ref('projects/proj1/images/before.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -196,7 +196,7 @@ if (!RUN_RULES) {
       await assertFails(
         staffStorage.ref('projects/proj1/images/before.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -213,7 +213,7 @@ if (!RUN_RULES) {
       await assertFails(
         crewStorage.ref('projects/proj1/images/before.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -247,7 +247,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('projects/proj1/images/document.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
   });
@@ -266,7 +266,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         adminStorage.ref('estimates/est1/estimate.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
 
@@ -283,7 +283,7 @@ if (!RUN_RULES) {
       await assertFails(
         managerStorage.ref('estimates/est1/estimate.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
 
@@ -317,7 +317,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         adminStorage.ref('invoices/inv1/invoice.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
 
@@ -334,7 +334,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('estimates/est1/image.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
   });
@@ -353,7 +353,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         adminStorage.ref('jobs/job1/photos/site1.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -383,7 +383,7 @@ if (!RUN_RULES) {
       await assertSucceeds(
         crewStorage.ref('jobs/job1/photos/site1.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -415,7 +415,7 @@ if (!RUN_RULES) {
       await assertFails(
         crew2Storage.ref('jobs/job1/photos/site1.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -445,7 +445,7 @@ if (!RUN_RULES) {
       await assertFails(
         staffStorage.ref('jobs/job1/photos/site1.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -479,7 +479,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('jobs/job1/photos/document.pdf').put(pdfBuffer, {
           contentType: 'application/pdf',
-        })
+        }).then()
       );
     });
 
@@ -497,7 +497,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('jobs/job1/photos/large.jpg').put(largeBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
   });
@@ -507,7 +507,7 @@ if (!RUN_RULES) {
       const storage = testEnv.authenticatedContext('user1').storage();
 
       await assertFails(
-        storage.ref('random/path/file.txt').put(Buffer.from('content'))
+        storage.ref('random/path/file.txt').put(Buffer.from('content')).then()
       );
     });
 
@@ -524,7 +524,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('projects/proj1/images/huge.jpg').put(largeBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
 
@@ -541,7 +541,7 @@ if (!RUN_RULES) {
       await assertFails(
         adminStorage.ref('projects/proj1/images/file.txt').put(textBuffer, {
           contentType: 'text/plain',
-        })
+        }).then()
       );
     });
 
@@ -569,7 +569,7 @@ if (!RUN_RULES) {
       await assertFails(
         crewStorage.ref('jobs/job1/photos/site1.jpg').put(imageBuffer, {
           contentType: 'image/jpeg',
-        })
+        }).then()
       );
     });
   });

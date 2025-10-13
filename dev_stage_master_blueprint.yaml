@@ -1,0 +1,152 @@
+version: "2.0"
+name: "dsierra_app_development_stage_blueprint"
+classification:
+  level: "CONFIDENTIAL"
+  owner: "D’Sierra – Engineering"
+  handling: ["Internal Only", "No Public Repos"]
+inputs:
+  repo_url: "https://github.com/juanvallejo97/Sierra-Painting-v1"
+  timeframe: "Next 3 months (6 sprints)"
+governance:
+  principles:
+    - "Small, reversible, auditable PRs"
+    - "Security and performance over cosmetic changes"
+    - "Flutter + Firebase parity across Android/iOS/Web"
+    - "No schema breaks without migration/backfill"
+  risk_register:
+    - id: "R1"
+      risk: "Misconfigured Firestore rules allow privilege escalation"
+      mitigation: "Exhaustive emulator tests; rule coverage gate; read-only canary"
+    - id: "R2"
+      risk: "Cloud Functions cold starts spike latency"
+      mitigation: "Pin runtime; set minInstances on hot endpoints; lightweight caches"
+    - id: "R3"
+      risk: "Docs drift and dead links"
+      mitigation: "Docs gate in CI; monthly audit; ADRs for major decisions"
+    - id: "R4"
+      risk: "Index/query drift causes runtime failures"
+      mitigation: "Indexes versioned in repo; CI smoke path exercises critical queries"
+non_functional_requirements:
+  performance:
+    p75_startup_ms_mobile: 1200
+    p95_functions_latency_ms: 600
+    p95_scroll_jank_pct: 1.0
+  reliability:
+    error_budget_pct: 1.0
+    incident_mttd_min: 5
+    incident_mttr_min: 30
+  security:
+    authz_model: "Per-document ownership + RBAC via custom claims"
+    app_check: "Required for all clients; emulator bypass for tests"
+    pii_policy: "Field-level encryption for sensitive notes/attachments"
+quality_bars:
+  per_pr:
+    - "One module intent per PR"
+    - "All unit/widget/emulator tests green"
+    - "No critical TODOs in touched code"
+    - "Before/after metrics for perf-sensitive changes"
+    - "Bundle/asset budgets enforced (web+mobile)"
+  releases:
+    - "Smoke green on Android+iOS+Web"
+    - "Scorecard report generated with metrics deltas and risks"
+workflow:
+  stages:
+    - id: "design"
+      run: ["requirements_review", "api_rules_impact", "ui_wireframes"]
+    - id: "implement"
+      run: ["feature_module_dev", "rules_functions_dev"]
+    - id: "test"
+      run: ["unit_widget", "emulator_rules_storage", "integration_smoke"]
+    - id: "measure"
+      run: ["perf_traces", "analytics_events"]
+    - id: "ship"
+      run: ["staging_auto", "prod_canary", "rollback_playbook"]
+    - id: "observe"
+      run: ["dashboards_alerts", "scorecard_update", "post_release_review"]
+modules:
+  - id: "invoices_feature"
+    description: "CRUD, detail/edit screens, status transitions, PDF, Stripe payments"
+    owners: ["FE Lead", "BE/Functions"]
+    outputs:
+      - "screens: invoices_list, invoice_detail, invoice_edit"
+      - "cloud_functions: pdf_render, stripe_checkout, stripe_webhook"
+      - "rules: invoices_read_company, invoices_write_rbac"
+    tests:
+      - "unit: model/serialization"
+      - "emulator: create/update/delete with RBAC"
+      - "integration: payment -> webhook -> paid status"
+  - id: "estimates_feature"
+    description: "CRUD + detail/edit screens; convert to invoice"
+    owners: ["FE Lead"]
+    outputs:
+      - "screens: estimates_list, estimate_detail, estimate_edit"
+      - "rules: estimates_read_company, estimates_write_rbac"
+    tests:
+      - "unit + emulator parity"
+  - id: "jobs_management"
+    description: "Kanban board and crew assignment; job photos"
+    owners: ["FE Lead", "Mobile"]
+    outputs:
+      - "screens: jobs_board_web, jobs_list_mobile"
+      - "storage_paths: jobs/{jobId}/photos/*"
+      - "rules: crew-only uploads with size/type limits"
+    tests:
+      - "emulator: storage rules; firestore RBAC for assignments"
+  - id: "timeclock_offline"
+    description: "Queue-based clock events; reconnect sync; optional geofence"
+    owners: ["Mobile", "Generalist"]
+    outputs:
+      - "queue processor; offline banners; conflict resolution"
+    tests:
+      - "chaos tests with airplane-mode cycles"
+  - id: "admin_rbac_ui"
+    description: "User management via setUserRole; company settings"
+    owners: ["Generalist"]
+    outputs:
+      - "admin/users_screen with audit log viewer"
+    tests:
+      - "emulator tests for claims document + audit log"
+  - id: "observability_release"
+    description: "Pipelines, canary, alerts, scorecard reports"
+    owners: ["Platform"]
+    outputs:
+      - ".github workflows: staging on main, prod on tag"
+      - "rollback script and operator checklist"
+      - "dashboards & alerts for error budget / latency SLOs"
+    tests:
+      - "synthetic errors + perf traces reach dashboards"
+  - id: "security_encryption"
+    description: "Field-level encryption for sensitive notes/attachments"
+    owners: ["BE/Functions"]
+    outputs:
+      - "crypto helpers; key management doc; rules adaptations"
+    tests:
+      - "roundtrip encrypt/decrypt tests; rules deny plaintext writes"
+  - id: "db_indexes_queries"
+    description: "Keep indexes aligned with queries; perf tests for hot reads"
+    owners: ["BE/Functions", "Platform"]
+    outputs:
+      - "firestore.indexes.json maintained with rationale"
+      - "perf tests and dashboards for slow queries"
+    tests:
+      - "CI smoke queries fail if index regression"
+sprints:
+  - id: "sprint_1"
+    focus: ["aliases_fix", "invoice_estimate_scaffolds", "telemetry_smoke"]
+  - id: "sprint_2"
+    focus: ["invoice_edit_pdf"]
+  - id: "sprint_3"
+    focus: ["stripe_checkout_webhook", "admin_exports"]
+  - id: "sprint_4"
+    focus: ["jobs_board", "storage_rules_photos"]
+  - id: "sprint_5"
+    focus: ["timeclock_offline_queue", "geofencing_optional"]
+  - id: "sprint_6"
+    focus: ["admin_rbac_ui", "canary_release", "performance_tuning"]
+outputs:
+  - "reports/blueprint-scorecard.md"
+  - "release/rollback-playbook.md"
+  - "dashboards: crashlytics, performance, analytics"
+notes:
+  - "Prefer surgical edits with clear Diffs & rationale in PR body"
+  - "If unsure, add tests/checks and open an issue instead of silent changes"

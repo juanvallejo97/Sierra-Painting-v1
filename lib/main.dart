@@ -7,11 +7,12 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sierra_painting/core/debug/provider_logger.dart';
 import 'package:sierra_painting/core/env/build_flags.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/core/offline/sync_service.dart';
@@ -56,6 +57,7 @@ Future<void> main() async {
       }
       runApp(
         ProviderScope(
+          observers: kDebugMode ? [ProviderLogger()] : const [],
           overrides: [
             // Override device info service for stable device IDs
             deviceInfoServiceProvider.overrideWithValue(
@@ -154,11 +156,24 @@ Future<void> _activateAppCheck() async {
     return;
   }
 
-  // For Web:
-  // 1) To use reCAPTCHA v3, set RECAPTCHA_V3_SITE_KEY in public.env.
-  // 2) For local/dev, you can enable debug by setting
-  //    window.FIREBASE_APPCHECK_DEBUG_TOKEN = true in index.html
-  //    (you already saw the token printed in your console).
+  // TEMPORARY DEBUG MODE:
+  // Testing with debug provider to isolate whether issue is:
+  // 1) reCAPTCHA integration problem, OR
+  // 2) Broader App Check backend issue
+  //
+  // Debug mode is enabled in index.html via:
+  //   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  //
+  // Steps to test:
+  // 1) Deploy this code
+  // 2) Load https://sierra-painting-staging.web.app
+  // 3) Open browser console - will see: "Firebase App Check debug token: <TOKEN>"
+  // 4) Copy the token
+  // 5) Register at: console.firebase.google.com/project/sierra-painting-staging/appcheck
+  // 6) Refresh page - debug provider will be used instead of reCAPTCHA
+  //
+  // If admin dashboard works: Problem is reCAPTCHA integration
+  // If admin dashboard still fails: Problem is App Check backend
   final v3Key = dotenv.env['RECAPTCHA_V3_SITE_KEY'];
 
   try {
@@ -166,7 +181,7 @@ Future<void> _activateAppCheck() async {
     await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
 
     if (kIsWeb && v3Key != null && v3Key.isNotEmpty) {
-      // Web: Use reCAPTCHA v3 provider
+      // Web: ReCaptchaV3Provider, but debug mode in index.html will override it
       await FirebaseAppCheck.instance.activate(
         webProvider: ReCaptchaV3Provider(v3Key),
         androidProvider: kReleaseMode
@@ -178,7 +193,7 @@ Future<void> _activateAppCheck() async {
       );
       // ignore: avoid_print
       debugPrint(
-        'App Check: activation succeeded on web (v3 site key detected).',
+        'App Check: activation succeeded (debug mode enabled in index.html).',
       );
     } else {
       // Mobile or no site key on web — still activate (debug providers ok for dev)

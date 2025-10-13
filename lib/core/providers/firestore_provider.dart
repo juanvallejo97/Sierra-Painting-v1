@@ -40,17 +40,25 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Provider for Firestore instance with offline persistence
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   final firestore = FirebaseFirestore.instance;
 
-  // Enable offline persistence
-  firestore.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
+  // Note: Web persistence disabled due to WebChannel connection issues
+  // Mobile still uses offline persistence for better offline experience
+  if (!kIsWeb) {
+    firestore.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+    print('[Firestore] Mobile - persistence ENABLED');
+  } else {
+    firestore.settings = const Settings(persistenceEnabled: false);
+    print('[Firestore] ✅ Web - persistence DISABLED (FIX v2)');
+  }
 
   return firestore;
 });

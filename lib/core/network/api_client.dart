@@ -87,7 +87,8 @@ class ApiClient {
   final Uuid _uuid = const Uuid();
 
   ApiClient({cf.FirebaseFunctions? functions})
-    : _functions = functions ?? cf.FirebaseFunctions.instance;
+    : _functions =
+          functions ?? cf.FirebaseFunctions.instanceFor(region: 'us-east4');
 
   /// Call a Cloud Function with timeout, retry, and requestId
   Future<core.Result<T, ApiError>> call<T>({

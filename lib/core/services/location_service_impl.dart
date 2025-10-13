@@ -22,19 +22,30 @@ class LocationServiceImpl implements LocationService {
     return 'GPS signal very weak. Go outside and wait 10-30 seconds.';
   }
 
-  /// Get current location with timeout
+  /// Get current location with three-stage fallback chain
+  ///
+  /// Fallback strategy:
+  /// 1. High accuracy GPS (5s timeout, best accuracy)
+  /// 2. Last known position (if <60s old)
+  /// 3. Balanced accuracy (10s timeout, medium accuracy)
+  ///
+  /// This ensures we get a location even in challenging conditions
+  /// (indoors, poor GPS signal, etc.)
   @override
   Future<LocationResult> getCurrentLocation({
     LocationAccuracy accuracy = LocationAccuracy.balanced,
     Duration timeout = const Duration(seconds: 10),
   }) async {
+    LocationException? lastException;
+
+    // Stage 1: Try high accuracy GPS (5s timeout)
     try {
-      final settings = geolocator.LocationSettings(
-        accuracy: _mapAccuracyToGeolocator(accuracy),
-        timeLimit: timeout,
+      final highAccuracySettings = const geolocator.LocationSettings(
+        accuracy: geolocator.LocationAccuracy.best,
+        timeLimit: Duration(seconds: 5),
       );
       final position = await geolocator.Geolocator.getCurrentPosition(
-        locationSettings: settings,
+        locationSettings: highAccuracySettings,
       );
 
       return LocationResult(
@@ -43,16 +54,11 @@ class LocationServiceImpl implements LocationService {
         accuracy: position.accuracy,
         timestamp: position.timestamp,
         hasGPS: true,
-        hasWiFi: false, // Geolocator doesn't expose this
-        hasNetwork: false, // Geolocator doesn't expose this
+        hasWiFi: false,
+        hasNetwork: false,
         altitude: position.altitude,
         speed: position.speed,
         heading: position.heading,
-      );
-    } on TimeoutException {
-      throw LocationException(
-        'Location timeout after ${timeout.inSeconds}s',
-        LocationExceptionType.timeout,
       );
     } on geolocator.LocationServiceDisabledException {
       throw LocationException(
@@ -65,10 +71,56 @@ class LocationServiceImpl implements LocationService {
         LocationExceptionType.permissionDenied,
       );
     } catch (e) {
-      throw LocationException(
-        'Failed to get location: $e',
-        LocationExceptionType.unknown,
+      lastException = LocationException(
+        'High accuracy GPS failed: $e',
+        LocationExceptionType.timeout,
       );
+      // Continue to Stage 2
+    }
+
+    // Stage 2: Try last known position (if <60s fresh)
+    try {
+      final cachedLocation = await getCachedLocation();
+      if (cachedLocation != null) {
+        final age = DateTime.now().difference(cachedLocation.timestamp);
+        if (age.inSeconds < 60) {
+          return cachedLocation;
+        }
+      }
+    } catch (e) {
+      // Ignore cache errors, continue to Stage 3
+    }
+
+    // Stage 3: Try balanced accuracy (10s timeout)
+    try {
+      final balancedSettings = const geolocator.LocationSettings(
+        accuracy: geolocator.LocationAccuracy.high,
+        timeLimit: Duration(seconds: 10),
+      );
+      final position = await geolocator.Geolocator.getCurrentPosition(
+        locationSettings: balancedSettings,
+      );
+
+      return LocationResult(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
+        timestamp: position.timestamp,
+        hasGPS: true,
+        hasWiFi: false,
+        hasNetwork: false,
+        altitude: position.altitude,
+        speed: position.speed,
+        heading: position.heading,
+      );
+    } on TimeoutException {
+      throw LocationException(
+        'All location attempts timed out. Move to an area with better GPS signal.',
+        LocationExceptionType.timeout,
+      );
+    } catch (e) {
+      // Throw the last exception from Stage 1, which is always set at this point
+      throw lastException;
     }
   }
 
@@ -138,7 +190,9 @@ class LocationServiceImpl implements LocationService {
       timeLimit: const Duration(minutes: 10),
     );
 
-    return geolocator.Geolocator.getPositionStream(locationSettings: settings).map(
+    return geolocator.Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).map(
       (position) => LocationResult(
         latitude: position.latitude,
         longitude: position.longitude,
@@ -225,7 +279,9 @@ class LocationServiceImpl implements LocationService {
   }
 
   /// Map geolocator permission to our enum
-  LocationPermissionStatus _mapPermission(geolocator.LocationPermission permission) {
+  LocationPermissionStatus _mapPermission(
+    geolocator.LocationPermission permission,
+  ) {
     return switch (permission) {
       geolocator.LocationPermission.always ||
       geolocator.LocationPermission.whileInUse =>
@@ -240,7 +296,8 @@ class LocationServiceImpl implements LocationService {
 
   /// Map our accuracy enum to geolocator
   geolocator.LocationAccuracy _mapAccuracyToGeolocator(
-      LocationAccuracy accuracy) {
+    LocationAccuracy accuracy,
+  ) {
     return switch (accuracy) {
       LocationAccuracy.best => geolocator.LocationAccuracy.best,
       LocationAccuracy.balanced => geolocator.LocationAccuracy.high,

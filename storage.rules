@@ -141,16 +141,27 @@ service firebase.storage {
     }
     
     // ============================================================
-    // INVOICE PDFs (Generated Server-Side)
-    // Path: /invoices/{invoiceId}/{filename}
-    // Read: Authenticated users (org-scoped via signed URLs)
-    // Write: Admin only (but Cloud Functions use Admin SDK directly)
+    // INVOICE PDFs (Generated Server-Side with Company Isolation)
+    // Path: /invoices/{companyId}/{invoiceId}.pdf
+    // Read: Users in same company (prefer signed URLs via getInvoicePDFUrl)
+    // Write: Deny (Cloud Functions only via Admin SDK)
     // ============================================================
-    
+
+    match /invoices/{companyId}/{invoiceId}.pdf {
+      // Read: Anyone in the same company
+      // Note: Prefer using signed URLs (getInvoicePDFUrl) for audit trail
+      allow read: if isAuthenticated() &&
+                     request.auth.token.company_id == companyId;
+
+      // Write: Deny direct writes (Cloud Functions only via Admin SDK)
+      allow write: if false;
+    }
+
+    // Legacy invoice path (for backward compatibility)
     match /invoices/{invoiceId}/{filename} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() && 
-                      isValidPdfFile() && 
+      allow write: if isAdmin() &&
+                      isValidPdfFile() &&
                       isUnder10MB();
     }
     
@@ -183,6 +194,21 @@ service firebase.storage {
       let job = firestore.get(/databases/(default)/documents/jobs/$(jobId));
       return job.data.assignedCrew != null &&
              request.auth.uid in job.data.assignedCrew;
+    }
+
+    // ============================================================
+    // SYSTEM FILES (Latency Probe Test Files)
+    // Path: /_probes/{filename}
+    // Read: Admin only (for debugging)
+    // Write: Deny (Cloud Functions only via Admin SDK)
+    // ============================================================
+
+    match /_probes/{filename} {
+      // Read: Admin only
+      allow read: if isAdmin();
+
+      // Write: Deny (Cloud Functions only)
+      allow write: if false;
     }
   }
 }

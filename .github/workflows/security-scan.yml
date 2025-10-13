@@ -1,0 +1,320 @@
+name: Security Scan
+
+on:
+  # Run on pull requests to main/staging
+  pull_request:
+    branches:
+      - main
+      - staging
+  # Run on push to main/staging
+  push:
+    branches:
+      - main
+      - staging
+  # Schedule weekly security scans (Monday 2am UTC)
+  schedule:
+    - cron: '0 2 * * 1'
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  # ============================================================================
+  # NPM Dependency Vulnerability Scan
+  # ============================================================================
+  npm-audit:
+    name: NPM Audit (Root + Functions)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Run npm audit (Root)
+        id: npm_audit_root
+        run: |
+          echo "## 🔒 NPM Audit (Root)" >> $GITHUB_STEP_SUMMARY
+          npm audit --json > audit-root.json || true
+          VULNERABILITIES=$(cat audit-root.json | jq '.metadata.vulnerabilities | .total')
+          echo "vulnerabilities_root=$VULNERABILITIES" >> $GITHUB_OUTPUT
+
+          if [ "$VULNERABILITIES" -gt 0 ]; then
+            echo "⚠️ Found $VULNERABILITIES vulnerabilities in root dependencies" >> $GITHUB_STEP_SUMMARY
+            npm audit >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "✅ No vulnerabilities found in root dependencies" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run npm audit (Functions)
+        id: npm_audit_functions
+        run: |
+          echo "## 🔒 NPM Audit (Functions)" >> $GITHUB_STEP_SUMMARY
+          npm --prefix functions audit --json > audit-functions.json || true
+          VULNERABILITIES=$(cat audit-functions.json | jq '.metadata.vulnerabilities | .total')
+          echo "vulnerabilities_functions=$VULNERABILITIES" >> $GITHUB_OUTPUT
+
+          if [ "$VULNERABILITIES" -gt 0 ]; then
+            echo "⚠️ Found $VULNERABILITIES vulnerabilities in functions dependencies" >> $GITHUB_STEP_SUMMARY
+            npm --prefix functions audit >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "✅ No vulnerabilities found in functions dependencies" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-reports
+          path: |
+            audit-root.json
+            audit-functions.json
+          retention-days: 30
+
+      - name: Fail on high/critical vulnerabilities
+        if: steps.npm_audit_root.outputs.vulnerabilities_root > 0 || steps.npm_audit_functions.outputs.vulnerabilities_functions > 0
+        run: |
+          echo "❌ Security vulnerabilities detected in dependencies"
+          echo "Root: ${{ steps.npm_audit_root.outputs.vulnerabilities_root }} vulnerabilities"
+          echo "Functions: ${{ steps.npm_audit_functions.outputs.vulnerabilities_functions }} vulnerabilities"
+          echo ""
+          echo "Run 'npm audit fix' to automatically fix vulnerabilities"
+          exit 1
+
+  # ============================================================================
+  # Dart/Flutter Dependency Scan
+  # ============================================================================
+  dart-audit:
+    name: Dart/Flutter Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Run dart pub outdated
+        id: pub_outdated
+        run: |
+          echo "## 🔍 Dart/Flutter Dependency Status" >> $GITHUB_STEP_SUMMARY
+          flutter pub outdated --mode=null-safety --json > pub-outdated.json || true
+
+          # Check for packages with security advisories (if any)
+          OUTDATED_COUNT=$(cat pub-outdated.json | jq '.packages | length')
+          echo "outdated_count=$OUTDATED_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$OUTDATED_COUNT" -gt 0 ]; then
+            echo "⚠️ $OUTDATED_COUNT packages can be updated" >> $GITHUB_STEP_SUMMARY
+            flutter pub outdated >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "✅ All packages are up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload pub outdated report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pub-outdated-report
+          path: pub-outdated.json
+          retention-days: 30
+
+  # ============================================================================
+  # CodeQL Analysis (SAST - Static Application Security Testing)
+  # ============================================================================
+  codeql:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'typescript' ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # ============================================================================
+  # Secrets Scanning (Detect hardcoded secrets, API keys, tokens)
+  # ============================================================================
+  secrets-scan:
+    name: Secret Scanning (Gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Upload Gitleaks report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: results.sarif
+          retention-days: 30
+
+  # ============================================================================
+  # License Compliance Check
+  # ============================================================================
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses (Root)
+        run: |
+          echo "## 📜 License Compliance Report (Root)" >> $GITHUB_STEP_SUMMARY
+          license-checker --json --out licenses-root.json || true
+          license-checker --summary >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Check licenses (Functions)
+        working-directory: functions
+        run: |
+          npm ci
+          echo "## 📜 License Compliance Report (Functions)" >> $GITHUB_STEP_SUMMARY
+          license-checker --json --out ../licenses-functions.json || true
+          license-checker --summary >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Verify allowed licenses
+        run: |
+          # Define allowed licenses
+          ALLOWED_LICENSES="MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,0BSD,CC0-1.0,Unlicense,WTFPL"
+
+          # Check for prohibited licenses
+          PROHIBITED=$(license-checker --json | jq -r '.[] | select(.licenses | test("GPL|AGPL|LGPL"; "i")) | .name' || echo "")
+
+          if [ -n "$PROHIBITED" ]; then
+            echo "❌ Prohibited licenses found:" >> $GITHUB_STEP_SUMMARY
+            echo "$PROHIBITED" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ All licenses are compatible" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload license reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-reports
+          path: |
+            licenses-root.json
+            licenses-functions.json
+          retention-days: 30
+
+  # ============================================================================
+  # Dependency Review (GitHub Native)
+  # ============================================================================
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          comment-summary-in-pr: always
+
+  # ============================================================================
+  # Security Summary
+  # ============================================================================
+  security-summary:
+    name: Security Scan Summary
+    runs-on: ubuntu-latest
+    needs: [npm-audit, dart-audit, codeql, secrets-scan, license-check]
+    if: always()
+
+    steps:
+      - name: Generate security summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| NPM Audit | ${{ needs.npm-audit.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dart Audit | ${{ needs.dart-audit.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | ${{ needs.codeql.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets Scan | ${{ needs.secrets-scan.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| License Check | ${{ needs.license-check.result == 'success' && '✅ Pass' || '❌ Fail' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📅 Scan completed: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check overall status
+        if: |
+          needs.npm-audit.result != 'success' ||
+          needs.secrets-scan.result != 'success' ||
+          needs.license-check.result != 'success'
+        run: |
+          echo "❌ Security scan failed. Please review the issues above."
+          exit 1

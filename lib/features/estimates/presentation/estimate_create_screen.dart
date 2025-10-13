@@ -1,0 +1,452 @@
+/// Estimate Create Screen
+///
+/// PURPOSE:
+/// Full-page form for creating new estimates/quotes.
+/// Handles line items, validation, and total calculation.
+///
+/// FEATURES:
+/// - Customer and job ID fields
+/// - Dynamic line items (add/remove)
+/// - Real-time total calculation
+/// - Date picker for valid until date
+/// - Form validation
+/// - Loading/error states
+library;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:sierra_painting/design/design.dart';
+import 'package:sierra_painting/features/estimates/domain/estimate.dart';
+import 'package:sierra_painting/features/estimates/presentation/providers/estimate_form_provider.dart';
+
+class EstimateCreateScreen extends ConsumerStatefulWidget {
+  const EstimateCreateScreen({super.key});
+
+  @override
+  ConsumerState<EstimateCreateScreen> createState() =>
+      _EstimateCreateScreenState();
+}
+
+class _EstimateCreateScreenState extends ConsumerState<EstimateCreateScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _customerIdController = TextEditingController();
+  final _jobIdController = TextEditingController();
+  final _notesController = TextEditingController();
+
+  // Line items state
+  final List<_LineItemData> _lineItems = [_LineItemData()];
+
+  DateTime _validUntil = DateTime.now().add(const Duration(days: 30));
+
+  @override
+  void dispose() {
+    _customerIdController.dispose();
+    _jobIdController.dispose();
+    _notesController.dispose();
+    for (final item in _lineItems) {
+      item.dispose();
+    }
+    super.dispose();
+  }
+
+  double _calculateTotal() {
+    return _lineItems.fold(0.0, (total, item) {
+      final quantity = double.tryParse(item.quantityController.text) ?? 0.0;
+      final unitPrice = double.tryParse(item.unitPriceController.text) ?? 0.0;
+      final discount = double.tryParse(item.discountController.text) ?? 0.0;
+      return total + (quantity * unitPrice - discount);
+    });
+  }
+
+  void _addLineItem() {
+    setState(() {
+      _lineItems.add(_LineItemData());
+    });
+  }
+
+  void _removeLineItem(int index) {
+    if (_lineItems.length > 1) {
+      setState(() {
+        _lineItems[index].dispose();
+        _lineItems.removeAt(index);
+      });
+    }
+  }
+
+  Future<void> _selectValidUntilDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _validUntil,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _validUntil = picked;
+      });
+    }
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Convert line items to domain models
+    final items = _lineItems.map((item) {
+      return EstimateItem(
+        description: item.descriptionController.text,
+        quantity: double.parse(item.quantityController.text),
+        unitPrice: double.parse(item.unitPriceController.text),
+        discount: item.discountController.text.isNotEmpty
+            ? double.parse(item.discountController.text)
+            : null,
+      );
+    }).toList();
+
+    // Submit form
+    ref
+        .read(estimateFormProvider.notifier)
+        .createEstimate(
+          customerId: _customerIdController.text,
+          jobId: _jobIdController.text,
+          items: items,
+          notes: _notesController.text,
+          validUntil: _validUntil,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final formState = ref.watch(estimateFormProvider);
+    final theme = Theme.of(context);
+
+    // Listen for successful creation
+    ref.listen<EstimateFormState>(estimateFormProvider, (previous, next) {
+      if (next.createdEstimate != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Estimate created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true); // Return true to indicate success
+      } else if (next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
+        );
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Estimate'),
+        actions: [
+          if (formState.isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            TextButton.icon(
+              onPressed: _submit,
+              icon: const Icon(Icons.save),
+              label: const Text('Save'),
+            ),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(DesignTokens.spaceLG),
+          children: [
+            // Header
+            Text(
+              'Estimate Details',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceMD),
+
+            // Customer ID
+            AppInput(
+              controller: _customerIdController,
+              label: 'Customer ID',
+              hint: 'Enter customer ID',
+              prefixIcon: Icons.person,
+              keyboardType: TextInputType.text,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Customer ID is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: DesignTokens.spaceMD),
+
+            // Job ID (optional)
+            AppInput(
+              controller: _jobIdController,
+              label: 'Job ID (Optional)',
+              hint: 'Enter job ID',
+              prefixIcon: Icons.work,
+              keyboardType: TextInputType.text,
+            ),
+            const SizedBox(height: DesignTokens.spaceMD),
+
+            // Valid Until Date
+            AppCard(
+              child: ListTile(
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('Valid Until'),
+                subtitle: Text(DateFormat('MMM d, yyyy').format(_validUntil)),
+                trailing: const Icon(Icons.edit),
+                onTap: _selectValidUntilDate,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceLG),
+
+            // Line Items Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Line Items',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _addLineItem,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Item'),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.spaceSM),
+
+            // Line items list
+            ..._lineItems.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return _LineItemCard(
+                key: ValueKey(item),
+                item: item,
+                index: index,
+                canRemove: _lineItems.length > 1,
+                onRemove: () => _removeLineItem(index),
+                onChanged: () => setState(() {}), // Trigger total recalculation
+              );
+            }),
+
+            const SizedBox(height: DesignTokens.spaceMD),
+
+            // Total
+            AppCard(
+              child: Padding(
+                padding: const EdgeInsets.all(DesignTokens.spaceMD),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      NumberFormat.currency(
+                        symbol: '\$',
+                        decimalDigits: 2,
+                      ).format(_calculateTotal()),
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceLG),
+
+            // Notes
+            Text(
+              'Notes (Optional)',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceSM),
+            AppInput(
+              controller: _notesController,
+              label: 'Notes',
+              hint: 'Add any additional notes',
+              maxLines: 4,
+              keyboardType: TextInputType.multiline,
+            ),
+            const SizedBox(height: DesignTokens.spaceXL),
+
+            // Submit Button
+            SizedBox(
+              width: double.infinity,
+              child: AppButton(
+                label: 'Create Estimate',
+                icon: Icons.check,
+                onPressed: formState.isLoading ? null : _submit,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Line item data holder
+class _LineItemData {
+  final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController();
+  final TextEditingController unitPriceController = TextEditingController();
+  final TextEditingController discountController = TextEditingController();
+
+  void dispose() {
+    descriptionController.dispose();
+    quantityController.dispose();
+    unitPriceController.dispose();
+    discountController.dispose();
+  }
+}
+
+/// Line item card widget
+class _LineItemCard extends StatelessWidget {
+  final _LineItemData item;
+  final int index;
+  final bool canRemove;
+  final VoidCallback onRemove;
+  final VoidCallback onChanged;
+
+  const _LineItemCard({
+    super.key,
+    required this.item,
+    required this.index,
+    required this.canRemove,
+    required this.onRemove,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceMD),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with remove button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Item ${index + 1}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (canRemove)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: onRemove,
+                    tooltip: 'Remove item',
+                  ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.spaceSM),
+
+            // Description
+            AppInput(
+              controller: item.descriptionController,
+              label: 'Description',
+              hint: 'Item description',
+              keyboardType: TextInputType.text,
+              onChanged: (_) => onChanged(),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Description is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: DesignTokens.spaceSM),
+
+            // Quantity and Unit Price
+            Row(
+              children: [
+                Expanded(
+                  child: AppInput(
+                    controller: item.quantityController,
+                    label: 'Quantity',
+                    hint: '0',
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => onChanged(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Invalid';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.spaceSM),
+                Expanded(
+                  child: AppInput(
+                    controller: item.unitPriceController,
+                    label: 'Unit Price',
+                    hint: '0.00',
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => onChanged(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Required';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Invalid';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DesignTokens.spaceSM),
+
+            // Discount
+            AppInput(
+              controller: item.discountController,
+              label: 'Discount (Optional)',
+              hint: '0.00',
+              keyboardType: TextInputType.number,
+              onChanged: (_) => onChanged(),
+              validator: (value) {
+                if (value != null &&
+                    value.isNotEmpty &&
+                    double.tryParse(value) == null) {
+                  return 'Invalid discount amount';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

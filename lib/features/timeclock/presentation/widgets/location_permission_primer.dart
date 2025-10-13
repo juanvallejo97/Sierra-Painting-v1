@@ -52,9 +52,9 @@ class LocationPermissionPrimer extends StatelessWidget {
           // Title
           Text(
             'Enable Location',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
@@ -72,9 +72,9 @@ class LocationPermissionPrimer extends StatelessWidget {
           Text(
             'Your location is only checked during clock in/out and is never shared.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
-                ),
+              color: Colors.grey.shade600,
+              fontStyle: FontStyle.italic,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -155,16 +155,13 @@ class GPSAccuracyWarningDialog extends StatelessWidget {
         children: [
           Text('Current accuracy: ${accuracy.round()}m'),
           const SizedBox(height: 12),
-          Text(
-            tip,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(tip, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
           Text(
             'Better GPS accuracy helps ensure your clock-in is accepted.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
           ),
         ],
       ),

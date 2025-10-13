@@ -87,16 +87,10 @@ class ClockInResponse {
   final String id; // Time entry ID
   final bool ok;
 
-  ClockInResponse({
-    required this.id,
-    required this.ok,
-  });
+  ClockInResponse({required this.id, required this.ok});
 
   factory ClockInResponse.fromJson(Map<String, dynamic> json) {
-    return ClockInResponse(
-      id: json['id'] as String,
-      ok: json['ok'] as bool,
-    );
+    return ClockInResponse(id: json['id'] as String, ok: json['ok'] as bool);
   }
 }
 
@@ -105,10 +99,7 @@ class ClockOutResponse {
   final bool ok;
   final String? warning; // Optional warning message (e.g., outside geofence)
 
-  ClockOutResponse({
-    required this.ok,
-    this.warning,
-  });
+  ClockOutResponse({required this.ok, this.warning});
 
   factory ClockOutResponse.fromJson(Map<String, dynamic> json) {
     return ClockOutResponse(

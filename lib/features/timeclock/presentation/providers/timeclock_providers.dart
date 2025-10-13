@@ -3,7 +3,11 @@
 /// Comprehensive Riverpod providers for Worker Dashboard and timeclock features.
 library;
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/auth/company_claims.dart';
 import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/domain/company_settings.dart';
 import 'package:sierra_painting/core/providers.dart';
@@ -17,8 +21,7 @@ final companySettingsProvider = FutureProvider<CompanySettings?>((ref) async {
   if (userProfile == null || userProfile.companyId.isEmpty) return null;
 
   final db = ref.watch(firestoreProvider);
-  final doc =
-      await db.collection('companies').doc(userProfile.companyId).get();
+  final doc = await db.collection('companies').doc(userProfile.companyId).get();
 
   if (!doc.exists) return null;
   return CompanySettings.fromFirestore(doc);
@@ -33,21 +36,22 @@ final activeTimeEntryProvider = StreamProvider<TimeEntry?>((ref) {
 
   final db = ref.watch(firestoreProvider);
   return db
-      .collection('timeEntries')
+      .collection('time_entries')
       .where('companyId', isEqualTo: userProfile.companyId)
-      .where('workerId', isEqualTo: userProfile.uid)
+      .where('userId', isEqualTo: userProfile.uid)
       .where('status', isEqualTo: 'active')
       .limit(1)
       .snapshots()
       .map((snapshot) {
-    if (snapshot.docs.isEmpty) return null;
-    return TimeEntry.fromFirestore(snapshot.docs.first);
-  });
+        if (snapshot.docs.isEmpty) return null;
+        return TimeEntry.fromFirestore(snapshot.docs.first);
+      });
 });
 
 /// Provider for this week's time entries (in company timezone)
-final timeEntriesThisWeekProvider =
-    FutureProvider<List<TimeEntry>>((ref) async {
+final timeEntriesThisWeekProvider = FutureProvider<List<TimeEntry>>((
+  ref,
+) async {
   final userProfile = await ref.watch(userProfileProvider.future);
   if (userProfile == null || userProfile.companyId.isEmpty) return [];
 
@@ -76,17 +80,19 @@ final timeEntriesThisWeekProvider =
 
   final db = ref.watch(firestoreProvider);
   final snapshot = await db
-      .collection('timeEntries')
+      .collection('time_entries')
       .where('companyId', isEqualTo: userProfile.companyId)
-      .where('workerId', isEqualTo: userProfile.uid)
-      .where('clockIn', isGreaterThanOrEqualTo: weekStart.toUtc())
-      .where('clockIn', isLessThan: weekEnd.toUtc())
-      .orderBy('clockIn', descending: true)
-      .get();
+      .where('userId', isEqualTo: userProfile.uid)
+      .where('clockInAt', isGreaterThanOrEqualTo: weekStart.toUtc())
+      .where('clockInAt', isLessThan: weekEnd.toUtc())
+      .orderBy('clockInAt', descending: true)
+      .get()
+      .timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException('Week entries query timed out'),
+      );
 
-  return snapshot.docs
-      .map((doc) => TimeEntry.fromFirestore(doc))
-      .toList();
+  return snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
 });
 
 /// Provider for recent time entries (last 10)
@@ -98,14 +104,16 @@ final recentTimeEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
 
   final db = ref.watch(firestoreProvider);
   return db
-      .collection('timeEntries')
+      .collection('time_entries')
       .where('companyId', isEqualTo: userProfile.companyId)
-      .where('workerId', isEqualTo: userProfile.uid)
-      .orderBy('clockIn', descending: true)
-      .limit(10)
+      .where('userId', isEqualTo: userProfile.uid)
+      .orderBy('clockInAt', descending: true)
+      .limit(100) // Limit to prevent memory leaks
       .snapshots()
-      .map((snapshot) =>
-          snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList());
+      .map(
+        (snapshot) =>
+            snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList(),
+      );
 });
 
 /// Provider for this week's total hours
@@ -142,35 +150,69 @@ final elapsedTimeProvider = StreamProvider<Duration?>((ref) async* {
 
 /// Provider for active job (auto-select from assignments)
 final activeJobProvider = FutureProvider((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return null;
+  debugPrint('🟢 activeJobProvider: Starting');
 
-  // Get company ID directly from token
-  final idToken = await user.getIdTokenResult();
-  final company = idToken.claims?['companyId'] as String?;
-  if (company == null) return null;
+  final user = ref.watch(currentUserProvider);
+  if (user == null) {
+    debugPrint('🟢 activeJobProvider: No user, returning null');
+    return null;
+  }
+  debugPrint('🟢 activeJobProvider: User UID = ${user.uid}');
 
   final db = ref.watch(firestoreProvider);
 
+  // Fetch company ID from Firebase Auth custom claims
+  final company = await ref.watch(companyIdProvider.future);
+  if (company == null || company.isEmpty) {
+    debugPrint('🔴 activeJobProvider: No company claim found');
+    return null;
+  }
+  debugPrint('🟢 activeJobProvider: Company ID from claims = $company');
+
   // Query active assignment for this user
+  debugPrint('🟢 activeJobProvider: Querying assignments...');
   final assignmentsQuery = await db
       .collection('assignments')
       .where('userId', isEqualTo: user.uid)
       .where('companyId', isEqualTo: company)
       .where('active', isEqualTo: true)
       .limit(1)
-      .get();
+      .get()
+      .timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException('Assignment query timed out'),
+      );
+
+  debugPrint(
+    '🟢 activeJobProvider: Found ${assignmentsQuery.docs.length} assignments',
+  );
 
   if (assignmentsQuery.docs.isEmpty) return null;
 
   final assignment = assignmentsQuery.docs.first.data();
   final jobId = assignment['jobId'] as String;
+  debugPrint('🟢 activeJobProvider: Job ID from assignment = $jobId');
 
   // Get the job
-  final jobDoc = await db.collection('jobs').doc(jobId).get();
+  debugPrint('🟢 activeJobProvider: Fetching job document...');
+  final jobDoc = await db
+      .collection('jobs')
+      .doc(jobId)
+      .get()
+      .timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException('Job document fetch timed out'),
+      );
+  debugPrint('🟢 activeJobProvider: Job doc exists = ${jobDoc.exists}');
+
   if (!jobDoc.exists) return null;
 
-  return jobDoc.data();
+  final jobData = jobDoc.data();
+  if (jobData == null) return null;
+
+  // Ensure document ID is included in returned map
+  debugPrint('🟢 activeJobProvider: Returning job data with ID = ${jobDoc.id}');
+  return {'id': jobDoc.id, ...jobData};
 });
 
 /// Simple provider for active time entry
@@ -178,21 +220,26 @@ final activeEntryProvider = FutureProvider<TimeEntry?>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
 
-  // Get company ID directly from token
-  final idToken = await user.getIdTokenResult();
-  final company = idToken.claims?['companyId'] as String?;
-  if (company == null) return null;
-
   final db = ref.watch(firestoreProvider);
+
+  // Fetch company ID from Firebase Auth custom claims
+  final company = await ref.watch(companyIdProvider.future);
+  if (company == null || company.isEmpty) {
+    return null; // No company claim, cannot query
+  }
 
   // Query active time entry (no clockOutAt)
   final entriesQuery = await db
-      .collection('timeEntries')
+      .collection('time_entries')
       .where('userId', isEqualTo: user.uid)
       .where('companyId', isEqualTo: company)
       .where('clockOutAt', isEqualTo: null)
       .limit(1)
-      .get();
+      .get()
+      .timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException('Time entry query timed out'),
+      );
 
   if (entriesQuery.docs.isEmpty) return null;
 

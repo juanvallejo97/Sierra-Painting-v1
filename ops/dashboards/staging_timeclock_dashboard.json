@@ -1,0 +1,345 @@
+{
+  "dashboardId": "staging-timeclock",
+  "title": "Staging Timeclock Performance Dashboard",
+  "description": "Real-time performance monitoring for timeclock operations (clockIn, clockOut) on staging environment",
+  "version": "1.0.0",
+  "environment": "staging",
+  "refreshInterval": "30s",
+  "timeRange": {
+    "default": "last_24h",
+    "options": ["last_1h", "last_6h", "last_24h", "last_7d", "last_30d"]
+  },
+  "panels": [
+    {
+      "id": "slo-summary",
+      "title": "SLO Summary",
+      "type": "stat",
+      "position": { "x": 0, "y": 0, "w": 24, "h": 4 },
+      "metrics": [
+        {
+          "name": "clockIn SLO Compliance",
+          "query": "count(timeclock_clockIn_latency_p95 <= 2000) / count(timeclock_clockIn_latency_p95) * 100",
+          "unit": "%",
+          "threshold": {
+            "critical": 95,
+            "warning": 98
+          },
+          "description": "Percentage of time clockIn p95 latency is under 2000ms SLO"
+        },
+        {
+          "name": "clockOut SLO Compliance",
+          "query": "count(timeclock_clockOut_latency_p95 <= 1500) / count(timeclock_clockOut_latency_p95) * 100",
+          "unit": "%",
+          "threshold": {
+            "critical": 95,
+            "warning": 98
+          },
+          "description": "Percentage of time clockOut p95 latency is under 1500ms SLO"
+        },
+        {
+          "name": "Success Rate",
+          "query": "count(timeclock_operations_success) / count(timeclock_operations_total) * 100",
+          "unit": "%",
+          "threshold": {
+            "critical": 95,
+            "warning": 99
+          },
+          "description": "Overall success rate for all timeclock operations"
+        }
+      ]
+    },
+    {
+      "id": "clockin-latency",
+      "title": "Clock In Latency",
+      "type": "timeseries",
+      "position": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "yAxis": {
+        "label": "Latency (ms)",
+        "min": 0,
+        "max": "auto"
+      },
+      "metrics": [
+        {
+          "name": "p50",
+          "query": "timeclock_clockIn_latency_p50",
+          "color": "#00AA55",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "p95",
+          "query": "timeclock_clockIn_latency_p95",
+          "color": "#FF9900",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "p99",
+          "query": "timeclock_clockIn_latency_p99",
+          "color": "#DD3333",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "SLO (2000ms)",
+          "query": "constant(2000)",
+          "color": "#666666",
+          "lineStyle": "dashed"
+        }
+      ],
+      "legend": {
+        "position": "bottom",
+        "showValues": true
+      }
+    },
+    {
+      "id": "clockout-latency",
+      "title": "Clock Out Latency",
+      "type": "timeseries",
+      "position": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "yAxis": {
+        "label": "Latency (ms)",
+        "min": 0,
+        "max": "auto"
+      },
+      "metrics": [
+        {
+          "name": "p50",
+          "query": "timeclock_clockOut_latency_p50",
+          "color": "#00AA55",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "p95",
+          "query": "timeclock_clockOut_latency_p95",
+          "color": "#FF9900",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "p99",
+          "query": "timeclock_clockOut_latency_p99",
+          "color": "#DD3333",
+          "lineStyle": "solid"
+        },
+        {
+          "name": "SLO (1500ms)",
+          "query": "constant(1500)",
+          "color": "#666666",
+          "lineStyle": "dashed"
+        }
+      ],
+      "legend": {
+        "position": "bottom",
+        "showValues": true
+      }
+    },
+    {
+      "id": "operation-volume",
+      "title": "Operation Volume",
+      "type": "timeseries",
+      "position": { "x": 0, "y": 12, "w": 12, "h": 6 },
+      "yAxis": {
+        "label": "Operations / min",
+        "min": 0
+      },
+      "metrics": [
+        {
+          "name": "clockIn",
+          "query": "rate(timeclock_clockIn_total[1m])",
+          "color": "#4285F4"
+        },
+        {
+          "name": "clockOut",
+          "query": "rate(timeclock_clockOut_total[1m])",
+          "color": "#34A853"
+        }
+      ]
+    },
+    {
+      "id": "error-rate",
+      "title": "Error Rate",
+      "type": "timeseries",
+      "position": { "x": 12, "y": 12, "w": 12, "h": 6 },
+      "yAxis": {
+        "label": "Errors / min",
+        "min": 0
+      },
+      "metrics": [
+        {
+          "name": "clockIn errors",
+          "query": "rate(timeclock_clockIn_errors[1m])",
+          "color": "#EA4335"
+        },
+        {
+          "name": "clockOut errors",
+          "query": "rate(timeclock_clockOut_errors[1m])",
+          "color": "#FBBC04"
+        },
+        {
+          "name": "geofence violations",
+          "query": "rate(timeclock_geofence_violations[1m])",
+          "color": "#FF6D00"
+        }
+      ]
+    },
+    {
+      "id": "geofence-validation",
+      "title": "Geofence Validation Stats",
+      "type": "stat",
+      "position": { "x": 0, "y": 18, "w": 8, "h": 4 },
+      "metrics": [
+        {
+          "name": "Valid Rate",
+          "query": "count(timeclock_geofence_valid) / count(timeclock_geofence_checks) * 100",
+          "unit": "%",
+          "threshold": {
+            "critical": 80,
+            "warning": 90
+          }
+        },
+        {
+          "name": "Average Distance",
+          "query": "avg(timeclock_geofence_distance_meters)",
+          "unit": "m"
+        }
+      ]
+    },
+    {
+      "id": "pending-entries",
+      "title": "Pending Time Entries",
+      "type": "stat",
+      "position": { "x": 8, "y": 18, "w": 8, "h": 4 },
+      "metrics": [
+        {
+          "name": "Total Pending",
+          "query": "count(timeEntries{status=pending})",
+          "unit": "entries",
+          "threshold": {
+            "critical": 100,
+            "warning": 50
+          }
+        },
+        {
+          "name": "Outside Geofence",
+          "query": "count(timeEntries{status=pending, clockInGeofenceValid=false OR clockOutGeofenceValid=false})",
+          "unit": "entries"
+        }
+      ]
+    },
+    {
+      "id": "firestore-ops",
+      "title": "Firestore Operations",
+      "type": "timeseries",
+      "position": { "x": 16, "y": 18, "w": 8, "h": 4 },
+      "yAxis": {
+        "label": "Ops / sec",
+        "min": 0
+      },
+      "metrics": [
+        {
+          "name": "reads",
+          "query": "rate(firestore_document_reads[1m])",
+          "color": "#4285F4"
+        },
+        {
+          "name": "writes",
+          "query": "rate(firestore_document_writes[1m])",
+          "color": "#34A853"
+        }
+      ]
+    },
+    {
+      "id": "latency-distribution",
+      "title": "Latency Distribution (Last Hour)",
+      "type": "histogram",
+      "position": { "x": 0, "y": 22, "w": 12, "h": 6 },
+      "buckets": [0, 100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000],
+      "metrics": [
+        {
+          "name": "clockIn",
+          "query": "histogram_quantile(timeclock_clockIn_latency_bucket[1h])",
+          "color": "#4285F4"
+        },
+        {
+          "name": "clockOut",
+          "query": "histogram_quantile(timeclock_clockOut_latency_bucket[1h])",
+          "color": "#34A853"
+        }
+      ]
+    },
+    {
+      "id": "error-breakdown",
+      "title": "Error Types (Last 24h)",
+      "type": "pie",
+      "position": { "x": 12, "y": 22, "w": 12, "h": 6 },
+      "metrics": [
+        {
+          "name": "Geofence Violation",
+          "query": "count(timeclock_errors{type=geofence_violation}[24h])",
+          "color": "#FF6D00"
+        },
+        {
+          "name": "Already Clocked In",
+          "query": "count(timeclock_errors{type=already_clocked_in}[24h])",
+          "color": "#FBBC04"
+        },
+        {
+          "name": "Not Assigned",
+          "query": "count(timeclock_errors{type=not_assigned}[24h])",
+          "color": "#EA4335"
+        },
+        {
+          "name": "Other",
+          "query": "count(timeclock_errors{type!=geofence_violation,type!=already_clocked_in,type!=not_assigned}[24h])",
+          "color": "#9E9E9E"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "name": "clockIn SLO Violation",
+      "condition": "timeclock_clockIn_latency_p95 > 2000",
+      "duration": "5m",
+      "severity": "warning",
+      "notificationChannels": ["slack", "email"]
+    },
+    {
+      "name": "clockOut SLO Violation",
+      "condition": "timeclock_clockOut_latency_p95 > 1500",
+      "duration": "5m",
+      "severity": "warning",
+      "notificationChannels": ["slack", "email"]
+    },
+    {
+      "name": "High Error Rate",
+      "condition": "rate(timeclock_errors[5m]) > 0.05",
+      "duration": "2m",
+      "severity": "critical",
+      "notificationChannels": ["pagerduty", "slack"]
+    },
+    {
+      "name": "Low Success Rate",
+      "condition": "count(timeclock_operations_success) / count(timeclock_operations_total) < 0.95",
+      "duration": "10m",
+      "severity": "warning",
+      "notificationChannels": ["slack"]
+    }
+  ],
+  "tags": [
+    "timeclock",
+    "staging",
+    "performance",
+    "slo"
+  ],
+  "metadata": {
+    "createdAt": "2025-10-11",
+    "createdBy": "Claude Code",
+    "lastUpdated": "2025-10-11",
+    "owner": "platform-team",
+    "documentation": "https://github.com/company/sierra-painting-v1/blob/main/docs/ops/dashboards/README.md"
+  },
+  "instructions": {
+    "firebase": "Import this dashboard config into Firebase Performance Monitoring custom dashboards",
+    "grafana": "Convert metric queries to PromQL format and import as Grafana dashboard JSON",
+    "datadog": "Convert to Datadog dashboard JSON using Datadog API",
+    "custom": "Use panel definitions as template for custom monitoring solution"
+  }
+}

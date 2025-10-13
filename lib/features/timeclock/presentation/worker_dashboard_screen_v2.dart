@@ -67,6 +67,7 @@ class _WorkerDashboardScreenV2State
     // final syncStatus = ref.watch(syncStatusProvider);
 
     final hasActiveEntry = false; // activeEntry != null
+    // ignore: dead_code
     final hasPendingSync = false; // syncStatus.hasPending
 
     return Scaffold(
@@ -503,15 +504,15 @@ class _WorkerDashboardScreenV2State
       }
 
       // STEP 2: Get current location with 6s timeout and fallbacks (J6)
-      late double lat;
-      late double lng;
-
       try {
         final location = await LocationHelper.getCurrent(
           timeout: const Duration(seconds: 6),
         );
-        lat = location.lat;
-        lng = location.lng;
+        // TODO: Use location for geofence check
+        // ignore: unused_local_variable
+        final lat = location.lat;
+        // ignore: unused_local_variable
+        final lng = location.lng;
       } on LocationException catch (e) {
         // User-friendly error from LocationHelper
         _showMessage(e.message, isError: true);
@@ -613,15 +614,15 @@ class _WorkerDashboardScreenV2State
 
     try {
       // STEP 1: Get location (optional, for distance recording) (J6)
-      double? lat;
-      double? lng;
-
       try {
         final location = await LocationHelper.getCurrent(
           timeout: const Duration(seconds: 6),
         );
-        lat = location.lat;
-        lng = location.lng;
+        // TODO: Use location for geofence validation
+        // ignore: unused_local_variable
+        final lat = location.lat;
+        // ignore: unused_local_variable
+        final lng = location.lng;
       } on LocationException catch (_) {
         // Location is optional for clock-out, continue without it
         // Warning will be shown if outside geofence
@@ -668,6 +669,7 @@ class _WorkerDashboardScreenV2State
   }
 
   /// Show geofence error with "Explain Issue" shortcut
+  // ignore: unused_element
   void _showGeofenceError(double distance, String jobName, JobWithContext job) {
     if (!mounted) return;
 

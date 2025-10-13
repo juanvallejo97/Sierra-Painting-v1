@@ -23,6 +23,8 @@ class AdminTimeEntryRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    print('[AdminRepo] getPendingEntries START - companyId=$companyId');
+
     var query = _firestore
         .collection('time_entries')
         .where('companyId', isEqualTo: companyId)
@@ -36,14 +38,24 @@ class AdminTimeEntryRepository {
       query = query.where('clockInAt', isLessThanOrEqualTo: endDate);
     }
 
-    final snapshot = await query
-        .orderBy('clockInAt', descending: true)
-        .get()
-        .timeout(
-          const Duration(seconds: 8),
-          onTimeout: () => throw TimeoutException('Firestore query timed out'),
-        );
-    return snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
+    print('[AdminRepo] Executing query...');
+    try {
+      final snapshot = await query
+          .orderBy('clockInAt', descending: true)
+          .get()
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              print('[AdminRepo] ❌ TIMEOUT after 8 seconds');
+              throw TimeoutException('Firestore query timed out');
+            },
+          );
+      print('[AdminRepo] ✅ SUCCESS - Found ${snapshot.size} documents');
+      return snapshot.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
+    } catch (e) {
+      print('[AdminRepo] ❌ ERROR: $e');
+      rethrow;
+    }
   }
 
   /// Get entries outside geofence (clock-in or clock-out)
@@ -192,14 +204,15 @@ class AdminTimeEntryRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    final entries = await getPendingEntries(
-      companyId: companyId,
-      startDate: startDate,
-      endDate: endDate,
-    ).timeout(
-      const Duration(seconds: 8),
-      onTimeout: () => throw TimeoutException('Stats query timed out'),
-    );
+    final entries =
+        await getPendingEntries(
+          companyId: companyId,
+          startDate: startDate,
+          endDate: endDate,
+        ).timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => throw TimeoutException('Stats query timed out'),
+        );
 
     return {
       'outsideGeofence': entries

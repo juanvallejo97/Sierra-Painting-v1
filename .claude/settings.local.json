@@ -1,28 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git commit:*)",
-      "Bash(git add:*)",
-      "Bash(flutter analyze:*)",
-      "Bash(npm run lint)",
-      "Bash(npm run typecheck:*)",
-      "Bash(pwsh:*)",
-      "Bash(cat:*)",
-      "Bash(dart format:*)",
-      "Bash(git reset:*)",
-      "Bash(git log:*)",
-      "Bash(git push:*)",
-      "Bash(gh pr create:*)",
-      "Bash(gh pr view:*)",
-      "Bash(gh run view:*)",
-      "Bash(gh api:*)",
-      "Bash(gh run list:*)",
-      "Bash(npm run build:*)",
-      "Bash(git restore:*)",
-      "Bash(dart fix:*)",
-      "Bash(flutter test:*)",
-      "Bash(powershell:*)",
-      "Bash(gh pr edit:*)"
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

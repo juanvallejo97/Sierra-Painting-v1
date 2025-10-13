@@ -54,6 +54,61 @@ Related to #
 - [ ] Linting passes (`dart format`, `npm run lint`)
 - [ ] Build succeeds (`flutter build apk`, `npm run build`)
 
+### Schema Changes (Option B Canonical v2.0)
+<!-- If this PR changes canonical schemas, complete this section. Otherwise, delete it. -->
+
+#### Collections Affected
+- [ ] `jobs` (geofence structure)
+- [ ] `time_entries` (field names)
+- [ ] `users` (custom claims)
+- [ ] `assignments`
+- [ ] `estimates`
+- [ ] `invoices`
+- [ ] Other: _______
+
+#### Breaking Schema Changes
+- [ ] Job geofence: flat → nested structure (`geofence.{lat,lng,radiusM}`)
+- [ ] TimeEntry fields: renamed (`userId` not `workerId`, `clockInAt` not `clockIn`)
+- [ ] User claims: Firestore → JWT custom claims only
+- [ ] Firestore indexes modified
+- [ ] Security rules immutability constraints added
+
+#### Migration Required
+- [ ] Yes - migration script: `tools/migrate_v1_to_v2.cjs`
+- [ ] No - backward compatible with legacy schemas
+
+#### Migration Plan
+<!-- If migration required, describe plan and timeline -->
+
+**Timeline**:
+- Deployment date: ___
+- Legacy support window: 2 weeks
+- Legacy removal date: ___
+
+**Steps**:
+1. Backup database
+2. Run migration script (dry-run)
+3. Run actual migration
+4. Set custom claims
+5. Deploy rules & indexes
+6. Deploy functions with fallbacks
+7. Monitor for 24h
+8. Remove fallbacks after 2 weeks
+
+#### Verification
+<!-- How to verify migration success -->
+
+```bash
+# Verify job nested geofence
+firebase firestore:get jobs/{jobId}
+
+# Verify time entry canonical fields
+firebase firestore:get time_entries/{entryId}
+
+# Verify user custom claims
+firebase auth:get {uid}
+```
+
 ### Security Considerations
 <!-- Answer these questions for security-related changes -->
 
@@ -61,6 +116,8 @@ Related to #
 - [ ] Does this PR modify Cloud Functions authentication/authorization?
 - [ ] Does this PR handle sensitive data (PII, payment info)?
 - [ ] Have you reviewed the security implications?
+- [ ] Does this PR enforce immutability of core fields?
+- [ ] Does this PR validate geofence boundaries correctly?
 
 If yes to any above, explain:
 

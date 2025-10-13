@@ -10,20 +10,20 @@ void main() {
 
     test('creates instance with required fields', () {
       final entry = TimeEntry(
-        orgId: 'org-1',
-        userId: 'user-1',
+        companyId: 'org-1',
+        workerId: 'user-1',
         jobId: 'job-1',
         clockIn: now,
-        clientId: 'client-1',
+        clientEventId: 'client-1',
         createdAt: now,
         updatedAt: now,
       );
 
-      expect(entry.orgId, 'org-1');
-      expect(entry.userId, 'user-1');
+      expect(entry.companyId, 'org-1');
+      expect(entry.workerId, 'user-1');
       expect(entry.jobId, 'job-1');
       expect(entry.clockIn, now);
-      expect(entry.clientId, 'client-1');
+      expect(entry.clientEventId, 'client-1');
       expect(entry.source, 'mobile'); // default
       expect(entry.gpsMissing, false); // default
       expect(entry.id, isNull);
@@ -34,14 +34,14 @@ void main() {
     test('creates instance with all fields', () {
       final entry = TimeEntry(
         id: 'entry-1',
-        orgId: 'org-1',
-        userId: 'user-1',
+        companyId: 'org-1',
+        workerId: 'user-1',
         jobId: 'job-1',
         clockIn: now,
         clockOut: later,
         geo: geoPoint,
         gpsMissing: true,
-        clientId: 'client-1',
+        clientEventId: 'client-1',
         source: 'web',
         createdAt: now,
         updatedAt: later,
@@ -57,11 +57,11 @@ void main() {
     group('durationHours', () {
       test('returns null when not clocked out', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
@@ -71,12 +71,12 @@ void main() {
 
       test('calculates hours when clocked out', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
           clockOut: later, // 8.5 hours later
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: later,
         );
@@ -87,12 +87,12 @@ void main() {
       test('calculates fractional hours correctly', () {
         final clockOut = now.add(const Duration(hours: 2, minutes: 15));
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
           clockOut: clockOut,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: clockOut,
         );
@@ -104,11 +104,11 @@ void main() {
     group('isActive', () {
       test('returns true when not clocked out', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
@@ -118,12 +118,12 @@ void main() {
 
       test('returns false when clocked out', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
           clockOut: later,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: later,
         );
@@ -136,14 +136,14 @@ void main() {
       test('serializes all fields correctly', () {
         final entry = TimeEntry(
           id: 'entry-1',
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
           clockOut: later,
           geo: geoPoint,
           gpsMissing: true,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           source: 'web',
           createdAt: now,
           updatedAt: later,
@@ -151,8 +151,8 @@ void main() {
 
         final map = entry.toFirestore();
 
-        expect(map['orgId'], 'org-1');
-        expect(map['userId'], 'user-1');
+        expect(map['companyId'], 'org-1');
+        expect(map['workerId'], 'user-1');
         expect(map['jobId'], 'job-1');
         expect(map['clockIn'], isA<Timestamp>());
         expect((map['clockIn'] as Timestamp).toDate(), now);
@@ -160,7 +160,7 @@ void main() {
         expect((map['clockOut'] as Timestamp).toDate(), later);
         expect(map['geo'], geoPoint);
         expect(map['gpsMissing'], true);
-        expect(map['clientId'], 'client-1');
+        expect(map['clientEventId'], 'client-1');
         expect(map['source'], 'web');
         expect(map['createdAt'], isA<Timestamp>());
         expect(map['updatedAt'], isA<Timestamp>());
@@ -168,11 +168,11 @@ void main() {
 
       test('handles null clockOut', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
@@ -184,11 +184,11 @@ void main() {
 
       test('handles null geo', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
@@ -202,19 +202,19 @@ void main() {
     group('copyWith', () {
       test('creates copy with updated fields', () {
         final entry = TimeEntry(
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
 
         final updated = entry.copyWith(clockOut: later, source: 'web');
 
-        expect(updated.orgId, entry.orgId);
-        expect(updated.userId, entry.userId);
+        expect(updated.companyId, entry.companyId);
+        expect(updated.workerId, entry.workerId);
         expect(updated.clockOut, later);
         expect(updated.source, 'web');
       });
@@ -222,11 +222,11 @@ void main() {
       test('creates copy with all fields updated', () {
         final entry = TimeEntry(
           id: 'entry-1',
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           createdAt: now,
           updatedAt: now,
         );
@@ -234,42 +234,42 @@ void main() {
         final newGeo = const GeoPoint(40.7128, -74.0060);
         final updated = entry.copyWith(
           id: 'entry-2',
-          orgId: 'org-2',
-          userId: 'user-2',
+          companyId: 'org-2',
+          workerId: 'user-2',
           jobId: 'job-2',
           clockIn: later,
           clockOut: later.add(const Duration(hours: 1)),
           geo: newGeo,
           gpsMissing: true,
-          clientId: 'client-2',
+          clientEventId: 'client-2',
           source: 'web',
           createdAt: later,
           updatedAt: later,
         );
 
         expect(updated.id, 'entry-2');
-        expect(updated.orgId, 'org-2');
-        expect(updated.userId, 'user-2');
+        expect(updated.companyId, 'org-2');
+        expect(updated.workerId, 'user-2');
         expect(updated.jobId, 'job-2');
         expect(updated.clockIn, later);
         expect(updated.clockOut, later.add(const Duration(hours: 1)));
         expect(updated.geo, newGeo);
         expect(updated.gpsMissing, true);
-        expect(updated.clientId, 'client-2');
+        expect(updated.clientEventId, 'client-2');
         expect(updated.source, 'web');
       });
 
       test('preserves original values when no updates', () {
         final entry = TimeEntry(
           id: 'entry-1',
-          orgId: 'org-1',
-          userId: 'user-1',
+          companyId: 'org-1',
+          workerId: 'user-1',
           jobId: 'job-1',
           clockIn: now,
           clockOut: later,
           geo: geoPoint,
           gpsMissing: true,
-          clientId: 'client-1',
+          clientEventId: 'client-1',
           source: 'web',
           createdAt: now,
           updatedAt: later,
@@ -278,14 +278,14 @@ void main() {
         final copy = entry.copyWith();
 
         expect(copy.id, entry.id);
-        expect(copy.orgId, entry.orgId);
-        expect(copy.userId, entry.userId);
+        expect(copy.companyId, entry.companyId);
+        expect(copy.workerId, entry.workerId);
         expect(copy.jobId, entry.jobId);
         expect(copy.clockIn, entry.clockIn);
         expect(copy.clockOut, entry.clockOut);
         expect(copy.geo, entry.geo);
         expect(copy.gpsMissing, entry.gpsMissing);
-        expect(copy.clientId, entry.clientId);
+        expect(copy.clientEventId, entry.clientEventId);
         expect(copy.source, entry.source);
       });
     });
