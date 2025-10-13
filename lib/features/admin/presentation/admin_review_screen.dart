@@ -25,6 +25,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
@@ -139,7 +140,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
               ),
             ],
           ),
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => _LoadingWithTimeout(ref: ref),
           error: (error, stack) => _buildErrorWidget(
             title: 'Can\'t load admin data',
             subtitle: error is TimeoutException
@@ -331,7 +332,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => _LoadingWithTimeout(ref: ref),
       error: (error, stack) => _buildErrorWidget(
         title: 'Error loading entries',
         subtitle: error is TimeoutException
@@ -729,6 +730,112 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Loading widget with timeout banner
+class _LoadingWithTimeout extends StatefulWidget {
+  final WidgetRef ref;
+
+  const _LoadingWithTimeout({required this.ref});
+
+  @override
+  State<_LoadingWithTimeout> createState() => _LoadingWithTimeoutState();
+}
+
+class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
+  DateTime? _loadingStart;
+  Timer? _timer;
+  int _elapsedSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadingStart = DateTime.now();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _elapsedSeconds =
+              DateTime.now().difference(_loadingStart!).inSeconds;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_elapsedSeconds > 5) {
+      // Show long-load banner with refresh button
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                border: Border.all(color: Colors.orange.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.access_time, size: 48, color: Colors.orange.shade600),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Still loading... ($_elapsedSeconds seconds)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Claims may be loading slowly',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      // Force token refresh
+                      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+                      widget.ref.invalidate(userProfileProvider);
+                      widget.ref.invalidate(pendingEntriesProvider);
+                      widget.ref.invalidate(exceptionCountsProvider);
+                      widget.ref.invalidate(outsideGeofenceEntriesProvider);
+                      widget.ref.invalidate(exceedsMaxHoursEntriesProvider);
+                      widget.ref.invalidate(disputedEntriesProvider);
+                      widget.ref.invalidate(flaggedEntriesProvider);
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh admin token'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      );
+    }
+
+    // Normal loading indicator
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
