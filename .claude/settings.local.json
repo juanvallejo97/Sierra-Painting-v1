@@ -10,7 +10,8 @@
       "Bash(firebase deploy:*)",
       "Bash(flutter:*)",
       "Bash(flutter pub:*)",
-      "Bash(Select-Object -First 50)"
+      "Bash(Select-Object -First 50)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
