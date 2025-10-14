@@ -385,7 +385,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
             if (isTimeout)
               ElevatedButton.icon(
                 onPressed: () async {
-                  FirebaseAnalytics.instance.logEvent(
+                  await FirebaseAnalytics.instance.logEvent(
                     name: 'admin_refresh_token',
                   );
                   // Force refresh ID token and invalidate claims provider
@@ -819,13 +819,13 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
     final probeText = probe.when(
       data: (s) => s,
       loading: () => 'LOADING',
-      error: (_, __) => 'ERROR',
+      error: (_, _) => 'ERROR',
     );
 
     final probeColor = probe.when(
       data: (s) => s.startsWith('OK_') ? Colors.green : Colors.orange,
       loading: () => Colors.blue,
-      error: (_, __) => Colors.red,
+      error: (_, _) => Colors.red,
     );
 
     return Container(

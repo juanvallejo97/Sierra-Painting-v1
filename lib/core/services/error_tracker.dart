@@ -37,8 +37,11 @@ class ConsoleErrorTracker implements ErrorTracker {
     Map<String, dynamic>? context,
   }) {
     if (kDebugMode) {
+      // ignore: avoid_print
       print('[ERROR] $error');
+      // ignore: avoid_print
       if (context != null) print('[CONTEXT] $context');
+      // ignore: avoid_print
       if (stackTrace != null) print(stackTrace);
     }
   }
@@ -55,11 +58,13 @@ class ConsoleErrorTracker implements ErrorTracker {
 
   @override
   void setUserId(String? userId) {
+    // ignore: avoid_print
     if (kDebugMode) print('[USER_ID] $userId');
   }
 
   @override
   void setCustomKey(String key, dynamic value) {
+    // ignore: avoid_print
     if (kDebugMode) print('[CUSTOM] $key = $value');
   }
 }

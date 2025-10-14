@@ -484,6 +484,8 @@ class _WorkerDashboardScreenV2State
       // STEP 1: Ensure location permission (J6)
       final hasPermission = await LocationHelper.ensurePermission();
 
+      if (!mounted) return;
+
       if (!hasPermission) {
         // Show primer dialog explaining why we need location
         final shouldOpenSettings = await showDialog<bool>(
@@ -707,7 +709,7 @@ class _WorkerDashboardScreenV2State
     // Pre-fill with: distance, accuracy, job location, timestamp
     // Allow worker to add explanation
     // Submit as dispute note via callable function
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Explain Issue'),

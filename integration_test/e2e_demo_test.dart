@@ -76,7 +76,7 @@ void main() {
     );
     if (useEmulator) {
       firestore.useFirestoreEmulator('localhost', 8080);
-      auth.useAuthEmulator('localhost', 9099);
+      await auth.useAuthEmulator('localhost', 9099);
       functions.useFunctionsEmulator('localhost', 5001);
     }
 

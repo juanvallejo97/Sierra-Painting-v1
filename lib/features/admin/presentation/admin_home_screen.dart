@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/auth/user_role.dart';
+import 'package:sierra_painting/core/services/logger_service.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 
 /// Lightweight Admin Home Screen
@@ -23,7 +24,7 @@ class AdminHomeScreen extends ConsumerWidget {
         outside = m['outsideGeofence'] ?? 0;
       },
       loading: () {},
-      error: (_, __) {},
+      error: (_, _) {},
     );
 
     return Scaffold(
@@ -63,7 +64,7 @@ class AdminHomeScreen extends ConsumerWidget {
                         icon: Icons.location_off,
                         color: Colors.red,
                       ),
-                      _StatCard(
+                      const _StatCard(
                         title: 'Latency P95',
                         valueText: '—',
                         icon: Icons.speed,
@@ -163,17 +164,18 @@ class AdminHomeScreen extends ConsumerWidget {
   }
 
   Future<void> _refreshAdminToken(WidgetRef ref) async {
+    final logger = ref.read(loggerServiceProvider);
     try {
-      print('[AdminHome] Refreshing admin token...');
-      FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
+      logger.debug('Refreshing admin token...');
+      await FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
       await FirebaseAuth.instance.currentUser?.getIdToken(true);
       ref.invalidate(userProfileProvider);
       ref.invalidate(currentCompanyIdProvider);
       ref.invalidate(exceptionCountsProvider);
       ref.invalidate(outsideGeofenceEntriesProvider);
-      print('[AdminHome] Token refreshed successfully');
+      logger.info('Token refreshed successfully');
     } catch (e) {
-      print('[AdminHome] Token refresh failed: $e');
+      logger.error('Token refresh failed', error: e);
     }
   }
 }

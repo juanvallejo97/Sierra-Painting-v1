@@ -9,29 +9,31 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers.dart';
+import 'package:sierra_painting/core/services/logger_service.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
 
 /// Repository for admin time entry operations
 class AdminTimeEntryRepository {
   final FirebaseFirestore _firestore;
+  final LoggerService _logger;
 
-  AdminTimeEntryRepository(this._firestore);
+  AdminTimeEntryRepository(this._firestore, this._logger);
 
   /// Test single document read to distinguish rules vs. index issues
   Future<void> testSingleDocRead(String id) async {
     try {
-      print('[AdminRepo] TEST: Reading single document $id...');
+      _logger.debug('TEST: Reading single document', data: {'id': id});
       final doc = await _firestore
           .collection('time_entries')
           .doc(id)
           .get()
           .timeout(const Duration(seconds: 5));
-      print('[AdminRepo] TEST single doc: exists=${doc.exists}');
+      _logger.debug('TEST single doc', data: {'exists': doc.exists});
       if (doc.exists) {
-        print('[AdminRepo] TEST single doc data: ${doc.data()}');
+        _logger.debug('TEST single doc data', data: doc.data());
       }
     } catch (e, st) {
-      print('[AdminRepo] TEST single doc FAILED: $e\n$st');
+      _logger.error('TEST single doc FAILED', error: e, stackTrace: st);
     }
   }
 
@@ -43,7 +45,7 @@ class AdminTimeEntryRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    print('[AdminRepo] getPendingEntries START - companyId=$companyId');
+    _logger.debug('getPendingEntries START', data: {'companyId': companyId});
 
     const useFallbackIndexedQuery = bool.fromEnvironment(
       'ADMIN_USE_STATUS_FILTER',
@@ -69,8 +71,11 @@ class AdminTimeEntryRepository {
               .limit(100)
         : base.orderBy('clockInAt', descending: true).limit(100);
 
-    print(
-      '[AdminRepo] Executing query (fallback=${useFallbackIndexedQuery ? "status-filtered" : "all-entries"})...',
+    _logger.debug(
+      'Executing query',
+      data: {
+        'fallback': useFallbackIndexedQuery ? 'status-filtered' : 'all-entries',
+      },
     );
 
     try {
@@ -83,10 +88,13 @@ class AdminTimeEntryRepository {
         ),
       ]);
 
-      print('[AdminRepo] ✅ SUCCESS - docs=${(snap as QuerySnapshot).size}');
+      _logger.info(
+        'Query SUCCESS',
+        data: {'docs': (snap as QuerySnapshot).size},
+      );
       return snap.docs.map((doc) => TimeEntry.fromFirestore(doc)).toList();
     } catch (e) {
-      print('[AdminRepo] ❌ ERROR: $e');
+      _logger.error('Query ERROR', error: e);
       rethrow;
     }
   }
@@ -302,5 +310,6 @@ final adminTimeEntryRepositoryProvider = Provider<AdminTimeEntryRepository>((
   ref,
 ) {
   final firestore = ref.watch(firestoreProvider);
-  return AdminTimeEntryRepository(firestore);
+  final logger = ref.watch(loggerServiceProvider);
+  return AdminTimeEntryRepository(firestore, logger);
 });

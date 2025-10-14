@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_review_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 
@@ -9,11 +8,7 @@ void main() {
   group('AdminReviewScreen smoke tests', () {
     testWidgets('renders with loading state', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: AdminReviewScreen())),
       );
       await tester.pump();
 
@@ -23,11 +18,7 @@ void main() {
 
     testWidgets('renders admin menu button in AppBar', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: AdminReviewScreen())),
       );
       await tester.pump();
 
@@ -40,28 +31,17 @@ void main() {
 
     testWidgets('renders refresh button in AppBar', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: AdminReviewScreen())),
       );
       await tester.pump();
 
       // Refresh button should be present
-      expect(
-        find.widgetWithIcon(IconButton, Icons.refresh),
-        findsOneWidget,
-      );
+      expect(find.widgetWithIcon(IconButton, Icons.refresh), findsOneWidget);
     });
 
     testWidgets('renders filter button in AppBar', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: AdminReviewScreen())),
       );
       await tester.pump();
 
@@ -89,15 +69,15 @@ void main() {
               }),
             ),
           ],
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
+          child: const MaterialApp(home: AdminReviewScreen()),
         ),
       );
       await tester.pumpAndSettle();
 
       // Tap the menu button
-      await tester.tap(find.widgetWithIcon(PopupMenuButton<String>, Icons.menu));
+      await tester.tap(
+        find.widgetWithIcon(PopupMenuButton<String>, Icons.menu),
+      );
       await tester.pumpAndSettle();
 
       // Menu items should appear
@@ -123,9 +103,7 @@ void main() {
               }),
             ),
           ],
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
+          child: const MaterialApp(home: AdminReviewScreen()),
         ),
       );
       await tester.pumpAndSettle();
@@ -152,9 +130,7 @@ void main() {
               }),
             ),
           ],
-          child: MaterialApp(
-            home: AdminReviewScreen(),
-          ),
+          child: const MaterialApp(home: AdminReviewScreen()),
         ),
       );
       await tester.pumpAndSettle();

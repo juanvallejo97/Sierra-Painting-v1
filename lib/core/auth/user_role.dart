@@ -16,6 +16,7 @@ library;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/services/logger_service.dart';
 
 /// User roles in the system
 enum UserRole {
@@ -124,6 +125,8 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return null;
 
+  final logger = ref.read(loggerServiceProvider);
+
   try {
     // Get custom claims from ID token
     var idTokenResult = await user.getIdTokenResult();
@@ -131,20 +134,22 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
 
     // Force token refresh if critical claims are missing
     if (claims['role'] == null || claims['companyId'] == null) {
-      print(
-        '[UserProfile] Claims missing (role=${claims['role']}, companyId=${claims['companyId']}), forcing refresh...',
+      logger.debug(
+        'Claims missing, forcing refresh',
+        data: {'role': claims['role'], 'companyId': claims['companyId']},
       );
       await user.getIdToken(true); // Force refresh
       idTokenResult = await user.getIdTokenResult();
       claims = idTokenResult.claims ?? {};
-      print(
-        '[UserProfile] After refresh: role=${claims['role']}, companyId=${claims['companyId']}',
+      logger.debug(
+        'After refresh',
+        data: {'role': claims['role'], 'companyId': claims['companyId']},
       );
     }
 
     return UserProfile.fromFirebaseUser(user, claims);
   } catch (e) {
-    print('[UserProfile] Error loading claims: $e');
+    logger.error('Error loading claims', error: e);
     // If claims fetch fails, return basic profile with worker role
     return UserProfile(
       uid: user.uid,

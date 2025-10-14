@@ -42,10 +42,12 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/services/logger_service.dart';
 
 /// Provider for Firestore instance with offline persistence
 final firestoreProvider = Provider<FirebaseFirestore>((ref) {
   final firestore = FirebaseFirestore.instance;
+  final logger = ref.read(loggerServiceProvider);
 
   // Note: Web persistence disabled due to WebChannel connection issues
   // Mobile still uses offline persistence for better offline experience
@@ -54,10 +56,10 @@ final firestoreProvider = Provider<FirebaseFirestore>((ref) {
       persistenceEnabled: true,
       cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
     );
-    print('[Firestore] Mobile - persistence ENABLED');
+    logger.info('Firestore: Mobile - persistence ENABLED');
   } else {
     firestore.settings = const Settings(persistenceEnabled: false);
-    print('[Firestore] ✅ Web - persistence DISABLED (FIX v2)');
+    logger.info('Firestore: Web - persistence DISABLED (FIX v2)');
   }
 
   return firestore;
