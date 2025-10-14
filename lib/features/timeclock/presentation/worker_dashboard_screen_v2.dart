@@ -43,7 +43,6 @@ import 'package:sierra_painting/features/jobs/domain/job_context.dart';
 import 'package:sierra_painting/core/services/location_helper.dart';
 import 'package:sierra_painting/core/ui/connectivity_banner.dart';
 import 'package:sierra_painting/features/timeclock/presentation/widgets/location_permission_primer.dart';
-import 'package:sierra_painting/features/timeclock/presentation/widgets/pending_sync_chip.dart';
 
 /// Worker Dashboard Screen — Staging Production Skeleton
 class WorkerDashboardScreenV2 extends ConsumerStatefulWidget {
@@ -67,19 +66,11 @@ class _WorkerDashboardScreenV2State
     // final syncStatus = ref.watch(syncStatusProvider);
 
     final hasActiveEntry = false; // activeEntry != null
-    // ignore: dead_code
-    final hasPendingSync = false; // syncStatus.hasPending
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Timesheet'),
         actions: [
-          // Pending sync indicator
-          if (hasPendingSync)
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: PendingSyncChip(),
-            ),
           // GPS status indicator
           Semantics(
             label: 'GPS Status',
