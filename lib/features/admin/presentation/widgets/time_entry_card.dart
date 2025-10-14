@@ -49,8 +49,6 @@ class TimeEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // TODO: Add invoiceId tracking to TimeEntry model
-    // ignore: dead_code
-    final isInvoiced = false;
     final isApproved = entry.isApproved;
 
     return Card(
@@ -99,13 +97,7 @@ class TimeEntryCard extends StatelessWidget {
                           ),
                         ),
                         // Status badges (top right)
-                        if (isInvoiced)
-                          _buildStatusBadge(
-                            'Invoiced',
-                            Colors.green,
-                            Icons.receipt,
-                          ),
-                        if (isApproved && !isInvoiced)
+                        if (isApproved)
                           _buildStatusBadge(
                             'Approved',
                             Colors.green,
@@ -207,21 +199,21 @@ class TimeEntryCard extends StatelessWidget {
                   if (onEdit != null)
                     IconButton(
                       icon: const Icon(Icons.edit, size: 20),
-                      onPressed: isInvoiced ? null : onEdit,
-                      tooltip: isInvoiced ? 'Invoiced (locked)' : 'Edit',
+                      onPressed: onEdit,
+                      tooltip: 'Edit',
                       color: Colors.blue,
                     ),
                   if (onApprove != null && !isApproved)
                     IconButton(
                       icon: const Icon(Icons.check, size: 20),
-                      onPressed: isInvoiced ? null : onApprove,
+                      onPressed: onApprove,
                       tooltip: 'Approve',
                       color: Colors.green,
                     ),
                   if (onReject != null && !isApproved)
                     IconButton(
                       icon: const Icon(Icons.close, size: 20),
-                      onPressed: isInvoiced ? null : onReject,
+                      onPressed: onReject,
                       tooltip: 'Reject',
                       color: Colors.red,
                     ),
