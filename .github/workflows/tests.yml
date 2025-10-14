@@ -17,11 +17,17 @@ jobs:
         run: flutter test -r expanded --concurrency=1 --timeout=2x
       - name: Generate coverage report
         run: flutter test --coverage -r expanded --concurrency=1 --timeout=2x
+      - name: Install lcov
+        run: sudo apt-get install -y lcov
+      - name: Generate HTML coverage report
+        run: genhtml coverage/lcov.info -o coverage/html
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage/lcov.info
+          path: |
+            coverage/lcov.info
+            coverage/html/
           retention-days: 30
 
   coverage-gate:
