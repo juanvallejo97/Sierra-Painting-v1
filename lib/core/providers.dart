@@ -21,6 +21,9 @@ library;
 
 // Auth providers
 export 'package:sierra_painting/core/providers/auth_provider.dart';
+// User role and company providers
+export 'package:sierra_painting/core/auth/user_role.dart'
+    show currentCompanyIdProvider, currentUserIdProvider, userProfileProvider;
 // Firestore providers
 export 'package:sierra_painting/core/providers/firestore_provider.dart';
 // Feature flag service providers

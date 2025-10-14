@@ -22,10 +22,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sierra_painting/core/widgets/worker_scaffold.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
 import 'package:sierra_painting/features/timeclock/domain/timeclock_api.dart';
 import 'package:sierra_painting/features/timeclock/data/timeclock_api_impl.dart';
 import 'package:sierra_painting/features/timeclock/presentation/providers/timeclock_providers.dart';
+import 'package:sierra_painting/features/timeclock/presentation/widgets/gps_status_dialog.dart';
 import 'package:uuid/uuid.dart';
 
 /// Worker Dashboard Screen
@@ -39,21 +41,19 @@ class WorkerDashboardScreen extends ConsumerWidget {
     final totalHours = ref.watch(thisWeekTotalHoursProvider);
     final jobSitesCount = ref.watch(thisWeekJobSitesProvider);
     final recentEntries = ref.watch(recentTimeEntriesProvider);
+    final currentRoute =
+        ModalRoute.of(context)?.settings.name ?? '/worker/home';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Timesheet'),
-        actions: [
-          // GPS status indicator
-          IconButton(
-            icon: const Icon(Icons.location_on),
-            onPressed: () {
-              // TODO: Show GPS accuracy and location settings
-            },
-            tooltip: 'GPS Status',
-          ),
-        ],
-      ),
+    return WorkerScaffold(
+      title: 'My Timesheet',
+      currentRoute: currentRoute,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.location_on),
+          tooltip: 'GPS Status',
+          onPressed: () => showGpsStatusDialog(context),
+        ),
+      ],
       body: RefreshIndicator(
         onRefresh: () async {
           // TODO: Refresh time entries and jobs

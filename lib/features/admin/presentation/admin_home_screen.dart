@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/services/logger_service.dart';
+import 'package:sierra_painting/core/widgets/admin_scaffold.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 
 /// Lightweight Admin Home Screen
@@ -27,11 +28,15 @@ class AdminHomeScreen extends ConsumerWidget {
       error: (_, _) {},
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin · Dashboard'),
-        actions: [_buildAdminMenu(context, ref)],
-      ),
+    return AdminScaffold(
+      title: 'Admin Dashboard',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () => _refreshAdminToken(ref),
+          tooltip: 'Refresh Token',
+        ),
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -87,79 +92,11 @@ class AdminHomeScreen extends ConsumerWidget {
                   icon: const Icon(Icons.list),
                   label: const Text('Review Entries'),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _refreshAdminToken(ref),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Refresh Admin Token'),
-                ),
               ],
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAdminMenu(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.menu),
-      tooltip: 'Admin Menu',
-      onSelected: (value) {
-        switch (value) {
-          case 'home':
-            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_home');
-            Navigator.pushReplacementNamed(context, '/admin/home');
-            break;
-          case 'review':
-            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_review');
-            Navigator.pushReplacementNamed(context, '/admin/review');
-            break;
-          case 'users':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Users management (coming soon)')),
-            );
-            break;
-          case 'reports':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Reports (coming soon)')),
-            );
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'home',
-          child: ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
-            dense: true,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'review',
-          child: ListTile(
-            leading: Icon(Icons.list),
-            title: Text('Time Review'),
-            dense: true,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'users',
-          child: ListTile(
-            leading: Icon(Icons.people),
-            title: Text('Users (beta)'),
-            dense: true,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'reports',
-          child: ListTile(
-            leading: Icon(Icons.analytics),
-            title: Text('Reports (beta)'),
-            dense: true,
-          ),
-        ),
-      ],
     );
   }
 
