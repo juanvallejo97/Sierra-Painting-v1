@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for:*)",
+      "Bash(while read f)",
+      "Bash(do git mv \"$f\" \"PAST WORK/\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

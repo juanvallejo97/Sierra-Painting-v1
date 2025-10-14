@@ -924,7 +924,7 @@ class _LoadingWithTimeoutState extends State<_LoadingWithTimeout> {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      FirebaseAnalytics.instance.logEvent(
+                      await FirebaseAnalytics.instance.logEvent(
                         name: 'admin_refresh_token',
                       );
                       // Force token refresh

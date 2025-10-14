@@ -8,7 +8,7 @@ void main() {
   group('AdminHomeScreen smoke tests', () {
     testWidgets('renders with loading state', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
+        const ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
       );
       await tester.pump();
 
@@ -23,7 +23,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        ProviderScope(
+        const ProviderScope(
           // exceptionCountsProvider will be in loading state
           // Should gracefully fall back to 0 values
           child: MaterialApp(home: AdminHomeScreen()),
@@ -38,7 +38,7 @@ void main() {
 
     testWidgets('renders admin menu button', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
+        const ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
       );
       await tester.pump();
 
@@ -51,7 +51,7 @@ void main() {
 
     testWidgets('renders quick action buttons', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
+        const ProviderScope(child: MaterialApp(home: AdminHomeScreen())),
       );
       await tester.pump();
 
@@ -68,7 +68,7 @@ void main() {
               (ref) => Future.value({'totalPending': 5, 'outsideGeofence': 3}),
             ),
           ],
-          child: MaterialApp(home: AdminHomeScreen()),
+          child: const MaterialApp(home: AdminHomeScreen()),
         ),
       );
       await tester.pumpAndSettle();
