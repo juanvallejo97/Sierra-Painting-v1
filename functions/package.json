@@ -50,7 +50,7 @@
     "firebase-functions-test": "^3.4.1",
     "jest": "^30.0.0",
     "prettier": "^3.3.3",
-    "ts-jest": "^29.1.1",
+    "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
   },
   "type": "commonjs",
