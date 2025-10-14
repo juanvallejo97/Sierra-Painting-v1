@@ -213,26 +213,26 @@ packages:
     dependency: "direct main"
     description:
       name: cloud_functions
-      sha256: bf3b5b18b794123d452196e407e5952b4fe002043a373f0acac0f8fc6998567f
+      sha256: "8fd4a0d2bb12e83006118f04b6544803557afbacdc47a0e1dee2b625e94eba34"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.2"
+    version: "6.0.3"
   cloud_functions_platform_interface:
     dependency: transitive
     description:
       name: cloud_functions_platform_interface
-      sha256: d3a24cb9bf0a0fe8abe71db47d703d368a175d956c40730f7a216211ccbc5d8d
+      sha256: de3c364af4849295dbe4143984aa24057919647a8aa8dfe1822159f8cf396270
       url: "https://pub.dev"
     source: hosted
-    version: "5.8.5"
+    version: "5.8.6"
   cloud_functions_web:
     dependency: transitive
     description:
       name: cloud_functions_web
-      sha256: dbcde017570afd7186addf8ba7b985a89ddcaf689e76741540d41e7cd0ce5bbe
+      sha256: "79ae1feb15947d0f4e827119a60c098aae3d9cec7c2e85eb2edea1f783a7df28"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.2"
+    version: "5.0.3"
   code_builder:
     dependency: transitive
     description:
@@ -309,10 +309,10 @@ packages:
     dependency: "direct main"
     description:
       name: device_info_plus
-      sha256: a7fd703482b391a87d60b6061d04dfdeab07826b96f9abd8f5ed98068acc0074
+      sha256: "49413c8ca514dea7633e8def233b25efdf83ec8522955cc2c0e3ad802927e7c6"
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.2"
+    version: "12.1.0"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -373,26 +373,26 @@ packages:
     dependency: "direct main"
     description:
       name: firebase_analytics
-      sha256: fce78440ab7b95563054039aac5e342088efed9dc009ac6f81d5cac07155d509
+      sha256: "3cfc4089e61e810ffb531af63cfde2c8cfd36f12dc14fdba359e623992311015"
       url: "https://pub.dev"
     source: hosted
-    version: "12.0.2"
+    version: "12.0.3"
   firebase_analytics_platform_interface:
     dependency: transitive
     description:
       name: firebase_analytics_platform_interface
-      sha256: "75bdcd2d2635c4cdcd7ec13727527751ddf2f9933e5bf1264a2387920246f3c5"
+      sha256: "775fc18d9b00a014362510a33f76f1f34deb30f69a64edcb41a7dfd0ebd9cf98"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.2"
+    version: "5.0.3"
   firebase_analytics_web:
     dependency: transitive
     description:
       name: firebase_analytics_web
-      sha256: ed5767695b131cdd425ee6d49934dca80689d9df40609c0d0aa8907ee6f0f785
+      sha256: "6eafa8fef5fdca6c922ac3e353c9a093c12344a3ba996e65fd40f8db0a00d26f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.6.0+2"
+    version: "0.6.0+3"
   firebase_app_check:
     dependency: "direct main"
     description:
@@ -469,18 +469,18 @@ packages:
     dependency: "direct main"
     description:
       name: firebase_crashlytics
-      sha256: a636096df0d2a4bc72397bfc669a4fffc8896016a58de1a6f45a49d9ba064f94
+      sha256: "2f53d0d3c0875105b166f09bdf026026bb74f26930c6ffcd5d65b311ca5a9f58"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.2"
+    version: "5.0.3"
   firebase_crashlytics_platform_interface:
     dependency: transitive
     description:
       name: firebase_crashlytics_platform_interface
-      sha256: "1ccad077a6fc7bace97d8eace263f42e66dc23a23a839de864a4f10ac4a7c264"
+      sha256: de5c857525fc9576cd3fc30fc72422bc2371179ecae110246c0135ae896c6de3
       url: "https://pub.dev"
     source: hosted
-    version: "3.8.13"
+    version: "3.8.14"
   firebase_performance:
     dependency: "direct main"
     description:
@@ -1645,10 +1645,10 @@ packages:
     dependency: transitive
     description:
       name: win32_registry
-      sha256: "21ec76dfc731550fd3e2ce7a33a9ea90b828fdf19a5c3bcf556fa992cfa99852"
+      sha256: "6f1b564492d0147b330dd794fee8f512cec4977957f310f9951b5f9d83618dae"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.5"
+    version: "2.1.0"
   xdg_directories:
     dependency: transitive
     description:
