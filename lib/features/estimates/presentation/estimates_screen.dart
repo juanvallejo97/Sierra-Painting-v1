@@ -1,158 +1,217 @@
-/// Estimates Screen
-///
-/// PURPOSE:
-/// Manage and view customer estimates/quotes.
-/// Create new estimates and track their status.
-///
-/// FEATURES:
-/// - List all estimates
-/// - Create new estimates
-/// - View estimate details
-/// - Generate estimate PDFs
-/// - Track estimate status (draft, sent, accepted, rejected)
-///
-/// PERFORMANCE:
-/// - Uses PaginatedListView for efficient list rendering
-/// - Automatic pagination at 80% scroll
-/// - Memory-efficient with lazy loading
-///
-/// TODO:
-/// - Implement estimate creation form
-/// - Add PDF generation integration
-/// - Add estimate filtering and search
+/// Estimates List Screen
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sierra_painting/core/widgets/app_navigation.dart';
-import 'package:sierra_painting/design/design.dart';
-import 'package:sierra_painting/features/estimates/data/estimate_repository.dart';
+import 'package:sierra_painting/core/widgets/admin_scaffold.dart';
 import 'package:sierra_painting/features/estimates/domain/estimate.dart';
-// import 'package:sierra_painting/core/widgets/paginated_list_view.dart'; // Uncomment when implementing list
+import 'package:sierra_painting/features/estimates/presentation/providers/estimate_list_provider.dart';
 
-class EstimatesScreen extends ConsumerWidget {
+class EstimatesScreen extends ConsumerStatefulWidget {
   const EstimatesScreen({super.key});
 
-  Future<void> _createEstimate(BuildContext context, WidgetRef ref) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You must be logged in to create estimates'),
-          ),
-        );
-      }
-      return;
-    }
-
-    // Get companyId from custom claims
-    final idTokenResult = await user.getIdTokenResult();
-    final companyId = idTokenResult.claims?['companyId'] as String?;
-
-    if (companyId == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Company ID not found. Please contact support.'),
-          ),
-        );
-      }
-      return;
-    }
-
-    // TODO: Show estimate creation form dialog
-    // For now, create a sample estimate for demonstration
-    final repository = ref.read(estimateRepositoryProvider);
-    final request = CreateEstimateRequest(
-      companyId: companyId,
-      customerId: 'sample-customer', // TODO: Select from customer list
-      items: [
-        EstimateItem(
-          description: 'Sample Service',
-          quantity: 1.0,
-          unitPrice: 100.0,
-        ),
-      ],
-      validUntil: DateTime.now().add(const Duration(days: 30)),
-      notes: 'Sample estimate - please replace with actual form',
-    );
-
-    final result = await repository.createEstimate(request);
-
-    if (context.mounted) {
-      result.when(
-        success: (estimate) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Estimate created: ${estimate.id}')),
-          );
-          // TODO: Navigate to estimate detail screen
-        },
-        failure: (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error creating estimate: $error')),
-          );
-        },
-      );
-    }
-  }
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Estimates')),
-      drawer: const AppDrawer(),
-      body: _EstimatesBody(
-        onCreateEstimate: () => _createEstimate(context, ref),
-      ),
-      bottomNavigationBar: const AppNavigationBar(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _createEstimate(context, ref),
-        tooltip: 'Create Estimate',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+  ConsumerState<EstimatesScreen> createState() => _EstimatesScreenState();
 }
 
-/// Estimates body - separated for better rebuild isolation
-class _EstimatesBody extends StatelessWidget {
-  final VoidCallback onCreateEstimate;
-
-  const _EstimatesBody({required this.onCreateEstimate});
+class _EstimatesScreenState extends ConsumerState<EstimatesScreen> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Replace with actual data from repository
-    final hasEstimates = false;
+    final estimatesAsync = ref.watch(estimateListProvider);
 
-    if (!hasEstimates) {
-      return AppEmpty(
-        icon: Icons.description,
-        title: 'No Estimates Yet',
-        description: 'Create an estimate to send to potential customers.',
-        actionLabel: 'Create Estimate',
-        onAction: onCreateEstimate,
-      );
+    return AdminScaffold(
+      title: 'Estimates',
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search estimates by customer...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => setState(() => _searchQuery = ''),
+                      )
+                    : null,
+              ),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+          ),
+
+          // Estimates List
+          Expanded(
+            child: estimatesAsync.when(
+              data: (estimates) {
+                var filteredEstimates = estimates;
+                if (_searchQuery.isNotEmpty) {
+                  filteredEstimates = estimates
+                      .where(
+                        (e) => e.customerId.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
+                      .toList();
+                }
+
+                if (filteredEstimates.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.description,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          estimates.isEmpty
+                              ? 'No estimates yet'
+                              : 'No matching estimates',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          estimates.isEmpty
+                              ? 'Create your first estimate'
+                              : 'Try adjusting your search',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredEstimates.length,
+                  itemBuilder: (context, index) =>
+                      _buildEstimateCard(filteredEstimates[index]),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Error loading estimates',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(estimateListProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/estimates/create'),
+        icon: const Icon(Icons.add),
+        label: const Text('New Estimate'),
+      ),
+    );
+  }
+
+  Widget _buildEstimateCard(Estimate estimate) {
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (estimate.status) {
+      case EstimateStatus.accepted:
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle;
+        break;
+      case EstimateStatus.sent:
+        statusColor = Colors.blue;
+        statusIcon = Icons.send;
+        break;
+      case EstimateStatus.draft:
+        statusColor = Colors.orange;
+        statusIcon = Icons.drafts;
+        break;
+      case EstimateStatus.rejected:
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel;
+        break;
+      case EstimateStatus.expired:
+        statusColor = Colors.grey;
+        statusIcon = Icons.schedule;
+        break;
     }
 
-    // Performance-optimized list using PaginatedListView
-    // When data is available, replace with:
-    //
-    // return PaginatedListView<Estimate>(
-    //   itemBuilder: (context, estimate, index) => EstimateListItem(estimate: estimate),
-    //   onLoadMore: () async {
-    //     return await ref.read(estimateRepositoryProvider).fetchEstimates(page: currentPage);
-    //   },
-    //   emptyWidget: const AppEmpty(
-    //     icon: Icons.description,
-    //     title: 'No Estimates Yet',
-    //     description: 'Create an estimate to send to potential customers.',
-    //   ),
-    //   itemExtent: 80.0, // Set for fixed-height items for better performance
-    // );
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Icon(statusIcon, color: statusColor, size: 32),
+        title: Text(
+          'Customer: ${estimate.customerId}',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Text(
+              '\$${estimate.amount.toStringAsFixed(2)} ${estimate.currency}',
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text('Valid until: ${_formatDate(estimate.validUntil)}'),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: statusColor),
+                  ),
+                  child: Text(
+                    estimate.status.name.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.pushNamed(context, '/estimates/${estimate.id}'),
+      ),
+    );
+  }
 
-    // ...existing code...
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}/${date.year}';
   }
 }

@@ -11,49 +11,29 @@
 /// - Company-scoped data isolation
 library;
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/features/invoices/data/invoice_repository.dart';
 import 'package:sierra_painting/features/invoices/domain/invoice.dart';
-
-/// Provider for current user's company ID
-final companyIdProvider = FutureProvider<String?>((ref) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return null;
-
-  final idTokenResult = await user.getIdTokenResult();
-  return idTokenResult.claims?['companyId'] as String?;
-});
 
 /// Provider for invoice list
 ///
 /// Automatically fetches invoices for the current user's company.
 /// Returns empty list if no company ID or user not authenticated.
-final invoiceListProvider = FutureProvider<List<Invoice>>((ref) async {
-  final companyId = await ref.watch(companyIdProvider.future);
+final invoiceListProvider = FutureProvider.autoDispose<List<Invoice>>((
+  ref,
+) async {
+  final repository = ref.watch(invoiceRepositoryProvider);
+  final companyId = ref.watch(currentCompanyIdProvider);
 
-  if (companyId == null) {
+  if (companyId == null || companyId.isEmpty) {
     return [];
   }
 
-  final repository = ref.watch(invoiceRepositoryProvider);
-  final result = await repository.getInvoices(companyId: companyId);
+  final result = await repository.getInvoices(companyId: companyId, limit: 100);
 
   return result.when(
     success: (invoices) => invoices,
-    failure: (error) {
-      // Log error and return empty list
-      // In production, you might want to throw or handle differently
-      return [];
-    },
+    failure: (error) => throw Exception(error),
   );
-});
-
-/// Provider for refreshing invoice list
-///
-/// Use this to manually trigger a refresh of the invoice list.
-final invoiceListRefreshProvider = Provider<void Function()>((ref) {
-  return () {
-    ref.invalidate(invoiceListProvider);
-  };
 });

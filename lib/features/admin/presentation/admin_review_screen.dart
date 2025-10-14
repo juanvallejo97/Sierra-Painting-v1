@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/providers.dart';
+import 'package:sierra_painting/core/widgets/admin_scaffold.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';
 
@@ -59,39 +60,34 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
   ExceptionCategory _selectedCategory = ExceptionCategory.outsideGeofence;
   final Set<String> _selectedEntries = {};
   String _searchQuery = '';
-  DateTime? _startDate;
-  DateTime? _endDate;
 
   @override
   Widget build(BuildContext context) {
     final probe = ref.watch(adminPlumbingProbeProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Time Entry Review'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterDialog,
-            tooltip: 'Filters',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
-              ref.invalidate(pendingEntriesProvider);
-              ref.invalidate(exceptionCountsProvider);
-              ref.invalidate(outsideGeofenceEntriesProvider);
-              ref.invalidate(exceedsMaxHoursEntriesProvider);
-              ref.invalidate(disputedEntriesProvider);
-              ref.invalidate(flaggedEntriesProvider);
-              ref.invalidate(adminPlumbingProbeProvider);
-            },
-            tooltip: 'Refresh',
-          ),
-          _buildAdminMenu(context, ref),
-        ],
-      ),
+    return AdminScaffold(
+      title: 'Time Entry Review',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          onPressed: _showFilterDialog,
+          tooltip: 'Filters',
+        ),
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () {
+            FirebaseAnalytics.instance.logEvent(name: 'admin_refresh_token');
+            ref.invalidate(pendingEntriesProvider);
+            ref.invalidate(exceptionCountsProvider);
+            ref.invalidate(outsideGeofenceEntriesProvider);
+            ref.invalidate(exceedsMaxHoursEntriesProvider);
+            ref.invalidate(disputedEntriesProvider);
+            ref.invalidate(flaggedEntriesProvider);
+            ref.invalidate(adminPlumbingProbeProvider);
+          },
+          tooltip: 'Refresh',
+        ),
+      ],
       body: Column(
         children: [
           // Summary Stats Card
@@ -671,147 +667,141 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
   }
 
   void _showFilterDialog() {
+    final currentFilter = ref.read(dateRangeFilterProvider);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Filters'),
+        title: const Text('Date Range Filter'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               title: const Text('Start Date'),
-              subtitle: Text(_startDate?.toString() ?? 'Not set'),
+              subtitle: Text(
+                currentFilter.startDate != null
+                    ? _formatDate(currentFilter.startDate!)
+                    : 'Not set',
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate: _startDate ?? DateTime.now(),
-                  firstDate: DateTime.now().subtract(const Duration(days: 90)),
+                  initialDate: currentFilter.startDate ?? DateTime.now(),
+                  firstDate: DateTime.now().subtract(const Duration(days: 365)),
                   lastDate: DateTime.now(),
                 );
                 if (date != null) {
-                  setState(() {
-                    _startDate = date;
-                  });
+                  ref
+                      .read(dateRangeFilterProvider.notifier)
+                      .update(currentFilter.copyWith(startDate: date));
                   if (mounted && context.mounted) {
                     Navigator.pop(context);
+                    _showFilterDialog(); // Reopen to show updated date
                   }
                 }
               },
             ),
             ListTile(
               title: const Text('End Date'),
-              subtitle: Text(_endDate?.toString() ?? 'Not set'),
+              subtitle: Text(
+                currentFilter.endDate != null
+                    ? _formatDate(currentFilter.endDate!)
+                    : 'Not set',
+              ),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
-                  initialDate: _endDate ?? DateTime.now(),
+                  initialDate: currentFilter.endDate ?? DateTime.now(),
                   firstDate:
-                      _startDate ??
-                      DateTime.now().subtract(const Duration(days: 90)),
-                  lastDate: DateTime.now(),
+                      currentFilter.startDate ??
+                      DateTime.now().subtract(const Duration(days: 365)),
+                  lastDate: DateTime.now().add(const Duration(days: 1)),
                 );
                 if (date != null) {
-                  setState(() {
-                    _endDate = date;
-                  });
+                  ref
+                      .read(dateRangeFilterProvider.notifier)
+                      .update(currentFilter.copyWith(endDate: date));
                   if (mounted && context.mounted) {
                     Navigator.pop(context);
+                    _showFilterDialog(); // Reopen to show updated date
                   }
                 }
               },
             ),
+            if (currentFilter.startDate != null ||
+                currentFilter.endDate != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Active Filter',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (currentFilter.startDate != null)
+                      Text(
+                        'From: ${_formatDate(currentFilter.startDate!)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    if (currentFilter.endDate != null)
+                      Text(
+                        'To: ${_formatDate(currentFilter.endDate!)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () {
-              setState(() {
-                _startDate = null;
-                _endDate = null;
-              });
+              ref.read(dateRangeFilterProvider.notifier).clear();
               Navigator.pop(context);
             },
             child: const Text('Clear'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Apply'),
+            child: const Text('Done'),
           ),
         ],
       ),
     );
   }
 
-  /// Admin navigation menu
-  Widget _buildAdminMenu(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.menu),
-      tooltip: 'Admin Menu',
-      onSelected: (value) {
-        switch (value) {
-          case 'home':
-            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_home');
-            Navigator.pushReplacementNamed(context, '/admin/home');
-            break;
-          case 'review':
-            // Already on review screen, just refresh
-            FirebaseAnalytics.instance.logEvent(name: 'admin_nav_review');
-            ref.invalidate(pendingEntriesProvider);
-            ref.invalidate(exceptionCountsProvider);
-            break;
-          case 'users':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Users management (coming soon)')),
-            );
-            break;
-          case 'reports':
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Reports (coming soon)')),
-            );
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'home',
-          child: ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'review',
-          child: ListTile(
-            leading: Icon(Icons.list),
-            title: Text('Time Review'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'users',
-          child: ListTile(
-            leading: Icon(Icons.people),
-            title: Text('Users (beta)'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'reports',
-          child: ListTile(
-            leading: Icon(Icons.analytics),
-            title: Text('Reports (beta)'),
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-      ],
-    );
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}/${date.year}';
   }
 
   /// Debug probe chip to verify provider wiring

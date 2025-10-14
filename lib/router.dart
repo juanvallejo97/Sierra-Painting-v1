@@ -10,9 +10,16 @@ import 'package:sierra_painting/features/estimates/presentation/estimate_detail_
 import 'package:sierra_painting/features/invoices/presentation/invoice_create_screen.dart';
 import 'package:sierra_painting/features/invoices/presentation/invoice_detail_screen.dart';
 import 'package:sierra_painting/features/settings/privacy_screen.dart';
+import 'package:sierra_painting/features/settings/settings_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/worker_dashboard_screen.dart';
+import 'package:sierra_painting/features/timeclock/presentation/worker_history_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_review_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_home_screen.dart';
+import 'package:sierra_painting/features/jobs/presentation/jobs_screen.dart';
+import 'package:sierra_painting/features/jobs/presentation/job_detail_screen.dart';
+import 'package:sierra_painting/features/jobs/presentation/job_create_screen.dart';
+import 'package:sierra_painting/features/estimates/presentation/estimates_screen.dart';
+import 'package:sierra_painting/features/invoices/presentation/invoices_screen.dart';
 
 /// Role-Based Dashboard Router
 /// Routes users to appropriate dashboard based on their role
@@ -41,9 +48,9 @@ class DashboardScreen extends ConsumerWidget {
             return const WorkerDashboardScreen();
           case 'admin':
           case 'manager':
-            return const AdminReviewScreen();
+            return const AdminHomeScreen();
           default:
-            return _buildUnknownRoleScreen(context, role);
+            return _buildUnknownRoleScreen(context, ref, role);
         }
       },
       loading: () =>
@@ -58,8 +65,14 @@ class DashboardScreen extends ConsumerWidget {
               Text('Error loading dashboard: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed('/login');
+                onPressed: () async {
+                  await FirebaseAuth.instance.signOut();
+                  ref.invalidate(userProfileProvider);
+                  if (context.mounted) {
+                    await Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/login', (route) => false);
+                  }
                 },
                 child: const Text('Back to Login'),
               ),
@@ -78,8 +91,14 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () {
-              Navigator.of(context).pushReplacementNamed('/login');
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              ref.invalidate(userProfileProvider);
+              if (context.mounted) {
+                await Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
             },
           ),
         ],
@@ -114,8 +133,14 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacementNamed('/login');
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                ref.invalidate(userProfileProvider);
+                if (context.mounted) {
+                  await Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
               },
               child: const Text('Back to Login'),
             ),
@@ -125,7 +150,11 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUnknownRoleScreen(BuildContext context, String role) {
+  Widget _buildUnknownRoleScreen(
+    BuildContext context,
+    WidgetRef ref,
+    String role,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sierra Painting'),
@@ -133,8 +162,14 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () {
-              Navigator.of(context).pushReplacementNamed('/login');
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              ref.invalidate(userProfileProvider);
+              if (context.mounted) {
+                await Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
             },
           ),
         ],
@@ -159,8 +194,14 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pushReplacementNamed('/login');
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                ref.invalidate(userProfileProvider);
+                if (context.mounted) {
+                  await Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+                }
               },
               child: const Text('Back to Login'),
             ),
@@ -173,11 +214,9 @@ class DashboardScreen extends ConsumerWidget {
 
 Route<dynamic> _page(Widget child) => MaterialPageRoute(builder: (_) => child);
 
-Route<dynamic> _notFound(String? name) => MaterialPageRoute(
-  builder: (_) => Scaffold(
-    body: Center(child: Text('Route not found: ${name ?? "(null)"}')),
-  ),
-);
+/// Unknown route fallback - redirects to role-based default home
+Route<dynamic> _notFound(String? name) =>
+    MaterialPageRoute(builder: (_) => const DashboardScreen());
 
 Route<dynamic> onGenerateRoute(RouteSettings s) {
   debugPrint('Navigating to route: ${s.name}'); // Debug print
@@ -196,14 +235,34 @@ Route<dynamic> onGenerateRoute(RouteSettings s) {
       return _page(const AdminHomeScreen());
     case '/admin/review':
       return _page(const AdminReviewScreen());
-    case '/invoices/create':
-      return _page(const InvoiceCreateScreen());
-    case '/estimates/create':
-      return _page(const EstimateCreateScreen());
+    case '/settings':
+      return _page(const SettingsScreen());
     case '/settings/privacy':
       return _page(const PrivacyScreen());
+    case '/worker/home':
+      return _page(const WorkerDashboardScreen());
+    case '/worker/history':
+      return _page(const WorkerHistoryScreen());
+    case '/jobs':
+      return _page(const JobsScreen());
+    case '/jobs/create':
+      return _page(const JobCreateScreen());
+    case '/timeclock':
+      return _page(const WorkerDashboardScreen());
+    case '/invoices':
+      return _page(const InvoicesScreen());
+    case '/invoices/create':
+      return _page(const InvoiceCreateScreen());
+    case '/estimates':
+      return _page(const EstimatesScreen());
+    case '/estimates/create':
+      return _page(const EstimateCreateScreen());
     default:
       // Handle parameterized routes
+      if (s.name?.startsWith('/jobs/') == true) {
+        final jobId = s.name!.split('/').last;
+        return _page(JobDetailScreen(jobId: jobId));
+      }
       if (s.name?.startsWith('/invoices/') == true) {
         final invoiceId = s.name!.split('/').last;
         return _page(InvoiceDetailScreen(invoiceId: invoiceId));
