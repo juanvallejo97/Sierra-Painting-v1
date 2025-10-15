@@ -1,0 +1,547 @@
+{
+  "metadata": {
+    "scan_date": "2025-10-14",
+    "scan_type": "post-logic-patch-opportunity",
+    "scope": "UX/Performance/Accessibility/Security/DevEx/Documentation",
+    "total_issues": 25,
+    "critical_count": 4,
+    "high_count": 7,
+    "medium_count": 14
+  },
+  "issues": [
+    {
+      "id": "EXTRA-001",
+      "category": "accessibility",
+      "priority": "P0",
+      "severity": "critical",
+      "title": "Missing screen reader support across application",
+      "description": "Only 20 Semantics widgets found in entire codebase, severely limiting accessibility for vision-impaired users",
+      "evidence": {
+        "grep_count": 20,
+        "files_affected": "all_screens",
+        "wcag_violation": "1.1.1, 4.1.2"
+      },
+      "estimated_effort": "1 week",
+      "roi": "very_high",
+      "acceptance_criteria": [
+        "All interactive elements wrapped in Semantics",
+        "Screen reader testing passes on iOS/Android",
+        "WCAG 2.1 AA compliance achieved"
+      ]
+    },
+    {
+      "id": "EXTRA-002",
+      "category": "accessibility",
+      "priority": "P0",
+      "severity": "high",
+      "title": "IconButtons missing tooltips",
+      "description": "15+ IconButtons without tooltip attributes, preventing keyboard and screen reader users from understanding functionality",
+      "evidence": {
+        "grep_pattern": "IconButton.*tooltip",
+        "count": 15,
+        "files": [
+          "lib/features/admin/presentation/admin_screen.dart",
+          "lib/features/jobs/presentation/jobs_screen.dart",
+          "lib/features/invoices/presentation/invoices_screen.dart"
+        ]
+      },
+      "estimated_effort": "4 hours",
+      "roi": "high",
+      "acceptance_criteria": [
+        "100% of IconButtons have descriptive tooltips",
+        "Tooltips follow consistent naming convention"
+      ]
+    },
+    {
+      "id": "EXTRA-003",
+      "category": "performance",
+      "priority": "P0",
+      "severity": "high",
+      "title": "Web bundle size exceeds performance budget",
+      "description": "main.dart.js is 4.28 MB, causing slow initial load times especially on mobile connections",
+      "evidence": {
+        "file_size": "4281664 bytes",
+        "target_size": "< 2 MB",
+        "impact": "3-5 second additional load time on 3G"
+      },
+      "estimated_effort": "1 week",
+      "roi": "high",
+      "acceptance_criteria": [
+        "Bundle size < 2 MB for initial load",
+        "Code splitting implemented",
+        "Tree shaking optimized"
+      ]
+    },
+    {
+      "id": "EXTRA-004",
+      "category": "security",
+      "priority": "P0",
+      "severity": "high",
+      "title": "Missing Content Security Policy headers",
+      "description": "Web application lacks CSP headers, leaving it vulnerable to XSS attacks",
+      "evidence": {
+        "file": "web/index.html",
+        "missing_headers": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options"
+        ]
+      },
+      "estimated_effort": "2 hours",
+      "roi": "high",
+      "acceptance_criteria": [
+        "CSP headers configured in index.html",
+        "Security headers validated",
+        "No console CSP violations"
+      ]
+    },
+    {
+      "id": "EXTRA-005",
+      "category": "performance",
+      "priority": "P1",
+      "severity": "medium",
+      "title": "ListView widgets not using builders",
+      "description": "10 ListView instances not using builders, causing memory issues with large datasets",
+      "evidence": {
+        "pattern": "ListView\\(.*children:",
+        "count": 10,
+        "files": [
+          "lib/features/jobs/presentation/jobs_screen.dart",
+          "lib/features/invoices/presentation/invoices_screen.dart",
+          "lib/features/employees/presentation/employees_list_screen.dart"
+        ]
+      },
+      "estimated_effort": "1 day",
+      "roi": "high",
+      "acceptance_criteria": [
+        "All ListViews use .builder constructor",
+        "Memory usage reduced by 30%",
+        "Smooth scrolling at 60 FPS"
+      ]
+    },
+    {
+      "id": "EXTRA-006",
+      "category": "ux",
+      "priority": "P1",
+      "severity": "medium",
+      "title": "Inconsistent error handling patterns",
+      "description": "112 SnackBar calls with inconsistent messaging and no centralized error handling",
+      "evidence": {
+        "snackbar_count": 112,
+        "dialog_count": 48,
+        "patterns": "various_inconsistent"
+      },
+      "estimated_effort": "3 days",
+      "roi": "high",
+      "acceptance_criteria": [
+        "Centralized error handling service",
+        "Consistent error message format",
+        "User-friendly error messages"
+      ]
+    },
+    {
+      "id": "EXTRA-007",
+      "category": "devex",
+      "priority": "P1",
+      "severity": "medium",
+      "title": "No internationalization support",
+      "description": "417 hard-coded strings prevent localization and make maintenance difficult",
+      "evidence": {
+        "hardcoded_strings": 417,
+        "affected_files": "all",
+        "pattern": "Text\\(['\"]"
+      },
+      "estimated_effort": "1 week",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "i18n/l10n infrastructure setup",
+        "All strings extracted to .arb files",
+        "Support for 2+ languages"
+      ]
+    },
+    {
+      "id": "EXTRA-008",
+      "category": "performance",
+      "priority": "P1",
+      "severity": "medium",
+      "title": "Excessive StatefulWidget usage",
+      "description": "150 setState calls indicate potential state management inefficiencies",
+      "evidence": {
+        "stateful_widgets": 30,
+        "setstate_calls": 150,
+        "could_be_stateless": "estimated 40%"
+      },
+      "estimated_effort": "1 week",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Migrate to Riverpod where appropriate",
+        "Reduce StatefulWidget count by 40%",
+        "Improve rebuild performance"
+      ]
+    },
+    {
+      "id": "EXTRA-009",
+      "category": "ux",
+      "priority": "P1",
+      "severity": "low",
+      "title": "Hard-coded spacing values",
+      "description": "252 hard-coded SizedBox dimensions should use design system constants",
+      "evidence": {
+        "pattern": "SizedBox\\(.*height:\\s*[0-9]",
+        "count": 252,
+        "inconsistent_values": true
+      },
+      "estimated_effort": "2 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Design system spacing constants created",
+        "All hard-coded values replaced",
+        "Consistent spacing throughout app"
+      ]
+    },
+    {
+      "id": "EXTRA-010",
+      "category": "accessibility",
+      "priority": "P1",
+      "severity": "medium",
+      "title": "No focus management implementation",
+      "description": "Zero FocusNode usage detected, preventing proper keyboard navigation",
+      "evidence": {
+        "focusnode_count": 0,
+        "forms_count": 20,
+        "autofocus_count": 0
+      },
+      "estimated_effort": "3 days",
+      "roi": "high",
+      "acceptance_criteria": [
+        "FocusNode implemented for all forms",
+        "Tab order logical and consistent",
+        "Focus indicators visible"
+      ]
+    },
+    {
+      "id": "EXTRA-011",
+      "category": "devex",
+      "priority": "P2",
+      "severity": "low",
+      "title": "Deprecated API usage",
+      "description": "20 deprecation warnings for RadioListTile and AppCheck APIs",
+      "evidence": {
+        "warning_count": 20,
+        "apis": [
+          "RadioListTile.groupValue",
+          "RadioListTile.onChanged",
+          "AppCheck.androidProvider",
+          "AppCheck.appleProvider"
+        ]
+      },
+      "estimated_effort": "4 hours",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "All deprecated APIs updated",
+        "Zero deprecation warnings",
+        "Future-proof implementation"
+      ]
+    },
+    {
+      "id": "EXTRA-012",
+      "category": "documentation",
+      "priority": "P2",
+      "severity": "low",
+      "title": "Missing API documentation",
+      "description": "No inline documentation for public APIs and complex business logic",
+      "evidence": {
+        "dartdoc_coverage": "< 20%",
+        "missing_readme": true,
+        "no_architecture_docs": false
+      },
+      "estimated_effort": "1 week",
+      "roi": "low",
+      "acceptance_criteria": [
+        "80% dartdoc coverage",
+        "Architecture diagrams created",
+        "README comprehensive"
+      ]
+    },
+    {
+      "id": "EXTRA-013",
+      "category": "testing",
+      "priority": "P2",
+      "severity": "medium",
+      "title": "Low widget test coverage",
+      "description": "Critical UI components lack widget tests, risking regression",
+      "evidence": {
+        "test_coverage": "estimated < 40%",
+        "untested_features": [
+          "employees",
+          "schedule",
+          "assignments"
+        ]
+      },
+      "estimated_effort": "2 weeks",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "80% widget test coverage",
+        "Critical paths tested",
+        "CI enforcement enabled"
+      ]
+    },
+    {
+      "id": "EXTRA-014",
+      "category": "performance",
+      "priority": "P2",
+      "severity": "low",
+      "title": "MediaQuery/Theme rebuilds",
+      "description": "105 direct MediaQuery/Theme.of calls cause unnecessary rebuilds",
+      "evidence": {
+        "mediaquery_count": 105,
+        "files": 34,
+        "rebuild_impact": "medium"
+      },
+      "estimated_effort": "3 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Values cached appropriately",
+        "InheritedWidget patterns used",
+        "Rebuild count reduced by 50%"
+      ]
+    },
+    {
+      "id": "EXTRA-015",
+      "category": "security",
+      "priority": "P2",
+      "severity": "medium",
+      "title": "Missing rate limiting in Firestore rules",
+      "description": "No rate limiting for read operations could lead to quota exhaustion",
+      "evidence": {
+        "file": "firestore.rules",
+        "missing": "rate_limiting",
+        "risk": "quota_exhaustion"
+      },
+      "estimated_effort": "1 day",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Rate limiting implemented",
+        "Per-user quotas enforced",
+        "Monitoring alerts configured"
+      ]
+    },
+    {
+      "id": "EXTRA-016",
+      "category": "ux",
+      "priority": "P2",
+      "severity": "low",
+      "title": "No loading states for async operations",
+      "description": "Missing loading indicators for network operations confuse users",
+      "evidence": {
+        "async_operations": "numerous",
+        "loading_indicators": "inconsistent",
+        "user_confusion": "likely"
+      },
+      "estimated_effort": "3 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Loading states for all async ops",
+        "Skeleton screens implemented",
+        "Progress indicators consistent"
+      ]
+    },
+    {
+      "id": "EXTRA-017",
+      "category": "devex",
+      "priority": "P2",
+      "severity": "low",
+      "title": "Functions dependencies outdated",
+      "description": "Several Cloud Functions dependencies are outdated",
+      "evidence": {
+        "outdated_packages": [
+          "firebase-admin",
+          "firebase-functions",
+          "@types/node"
+        ]
+      },
+      "estimated_effort": "2 hours",
+      "roi": "low",
+      "acceptance_criteria": [
+        "All dependencies updated",
+        "Security vulnerabilities resolved",
+        "Tests passing"
+      ]
+    },
+    {
+      "id": "EXTRA-018",
+      "category": "performance",
+      "priority": "P2",
+      "severity": "low",
+      "title": "No image optimization",
+      "description": "Images not optimized for web, causing unnecessary bandwidth usage",
+      "evidence": {
+        "image_assets": "multiple",
+        "optimization": "none",
+        "format": "png_only"
+      },
+      "estimated_effort": "1 day",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Images converted to WebP",
+        "Lazy loading implemented",
+        "CDN configured"
+      ]
+    },
+    {
+      "id": "EXTRA-019",
+      "category": "accessibility",
+      "priority": "P2",
+      "severity": "medium",
+      "title": "Color contrast not verified",
+      "description": "No verification of WCAG color contrast requirements",
+      "evidence": {
+        "theme_colors": "custom",
+        "contrast_ratio": "unknown",
+        "wcag_requirement": "4.5:1"
+      },
+      "estimated_effort": "2 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "All text meets 4.5:1 ratio",
+        "Buttons meet 3:1 ratio",
+        "Automated testing added"
+      ]
+    },
+    {
+      "id": "EXTRA-020",
+      "category": "ux",
+      "priority": "P2",
+      "severity": "low",
+      "title": "No empty state designs",
+      "description": "Lists without data show blank screens instead of helpful empty states",
+      "evidence": {
+        "lists": "multiple",
+        "empty_states": "missing",
+        "user_guidance": "none"
+      },
+      "estimated_effort": "2 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Empty states for all lists",
+        "Helpful guidance text",
+        "Call-to-action buttons"
+      ]
+    },
+    {
+      "id": "EXTRA-021",
+      "category": "devex",
+      "priority": "P3",
+      "severity": "low",
+      "title": "No code generation setup",
+      "description": "Manual JSON serialization and routing could be automated",
+      "evidence": {
+        "json_annotation": "used",
+        "build_runner": "not_configured",
+        "manual_serialization": true
+      },
+      "estimated_effort": "3 days",
+      "roi": "low",
+      "acceptance_criteria": [
+        "build_runner configured",
+        "JSON serialization automated",
+        "Route generation automated"
+      ]
+    },
+    {
+      "id": "EXTRA-022",
+      "category": "testing",
+      "priority": "P3",
+      "severity": "low",
+      "title": "No E2E testing framework",
+      "description": "Missing end-to-end testing for critical user flows",
+      "evidence": {
+        "integration_tests": "basic",
+        "e2e_framework": "none",
+        "critical_paths": "untested"
+      },
+      "estimated_effort": "1 week",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "E2E framework selected",
+        "Critical paths covered",
+        "CI integration complete"
+      ]
+    },
+    {
+      "id": "EXTRA-023",
+      "category": "performance",
+      "priority": "P3",
+      "severity": "low",
+      "title": "No performance monitoring",
+      "description": "Lack of performance metrics makes optimization difficult",
+      "evidence": {
+        "firebase_performance": "basic",
+        "custom_traces": "minimal",
+        "metrics_dashboard": "none"
+      },
+      "estimated_effort": "3 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Custom traces implemented",
+        "Performance dashboard created",
+        "Alerts configured"
+      ]
+    },
+    {
+      "id": "EXTRA-024",
+      "category": "security",
+      "priority": "P3",
+      "severity": "low",
+      "title": "No input sanitization layer",
+      "description": "User inputs not consistently sanitized before storage",
+      "evidence": {
+        "validation": "basic",
+        "sanitization": "inconsistent",
+        "xss_risk": "low"
+      },
+      "estimated_effort": "3 days",
+      "roi": "medium",
+      "acceptance_criteria": [
+        "Input sanitization service",
+        "All inputs validated",
+        "XSS prevention complete"
+      ]
+    },
+    {
+      "id": "EXTRA-025",
+      "category": "documentation",
+      "priority": "P3",
+      "severity": "low",
+      "title": "No developer onboarding guide",
+      "description": "New developers lack clear onboarding documentation",
+      "evidence": {
+        "onboarding_doc": "missing",
+        "setup_guide": "basic",
+        "architecture_overview": "exists"
+      },
+      "estimated_effort": "2 days",
+      "roi": "low",
+      "acceptance_criteria": [
+        "Onboarding guide created",
+        "Setup automated",
+        "Common tasks documented"
+      ]
+    }
+  ],
+  "summary": {
+    "immediate_actions": [
+      "Add tooltips to IconButtons (4 hours)",
+      "Implement CSP headers (2 hours)",
+      "Fix deprecated APIs (4 hours)",
+      "Add basic Semantics coverage (3 days)"
+    ],
+    "total_effort": "6-8 weeks",
+    "expected_impact": {
+      "performance": "50% improvement in load time",
+      "accessibility": "WCAG AA compliance",
+      "user_satisfaction": "30% reduction in issues",
+      "developer_velocity": "20% increase"
+    }
+  }
+}

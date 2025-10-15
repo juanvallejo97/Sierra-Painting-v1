@@ -1,0 +1,410 @@
+{
+  "audit_metadata": {
+    "timestamp": "2025-10-14T00:00:00Z",
+    "version": "1.0.0",
+    "scope": "full-stack",
+    "total_risk_score": 159,
+    "max_possible_score": 324,
+    "risk_percentage": 49
+  },
+  "hotspots": [
+    {
+      "id": "SEC-001",
+      "title": "Missing Firestore Security Rules",
+      "severity": 3,
+      "recurrence": 3,
+      "surface": 3,
+      "score": 27,
+      "category": "security",
+      "location": {
+        "file": "firestore.rules",
+        "lines": "1-95",
+        "description": "No rules defined for employees and assignments collections"
+      },
+      "impact": "Unrestricted read/write access to sensitive employee and assignment data",
+      "evidence": [
+        "firestore.rules missing match statements for /employees/{document}",
+        "firestore.rules missing match statements for /assignments/{document}",
+        "Collections created in UX Part 2 but rules not updated"
+      ],
+      "recommendation": "Add comprehensive security rules with company isolation and role-based access control",
+      "priority": "P0"
+    },
+    {
+      "id": "FIN-001",
+      "title": "Floating Point Precision Errors in Invoices",
+      "severity": 3,
+      "recurrence": 2,
+      "surface": 4,
+      "score": 24,
+      "category": "financial",
+      "location": {
+        "file": "lib/features/invoices/presentation/invoice_create_screen.dart",
+        "lines": "142-156, 238-252",
+        "description": "Double arithmetic for monetary calculations"
+      },
+      "impact": "Rounding errors in invoice totals, tax calculations, and payment amounts",
+      "evidence": [
+        "double.tryParse() used for all monetary values",
+        "Direct multiplication of doubles for tax: subtotal * (taxRate / 100)",
+        "No rounding strategy defined for cents"
+      ],
+      "recommendation": "Use Decimal package or integer cents for all monetary calculations",
+      "priority": "P0"
+    },
+    {
+      "id": "NAV-001",
+      "title": "Mixed Router API Usage",
+      "severity": 3,
+      "recurrence": 2,
+      "surface": 3,
+      "score": 18,
+      "category": "navigation",
+      "location": {
+        "file": "multiple",
+        "lines": "various",
+        "description": "11 files mixing Navigator.pushNamed with go_router context.go"
+      },
+      "impact": "Navigation stack corruption, lost state on web refresh, deep link failures",
+      "evidence": [
+        "Navigator.pushNamed(context, '/invoices') found in multiple files",
+        "context.go() from go_router used inconsistently",
+        "Route guards can be bypassed with direct Navigator calls"
+      ],
+      "recommendation": "Standardize on go_router throughout the application",
+      "priority": "P1"
+    },
+    {
+      "id": "TEST-001",
+      "title": "Missing Test Coverage for New Features",
+      "severity": 2,
+      "recurrence": 3,
+      "surface": 3,
+      "score": 18,
+      "category": "testing",
+      "location": {
+        "file": "test/features/",
+        "lines": "N/A",
+        "description": "No test directories for employees, jobs, or schedule features"
+      },
+      "impact": "Unvalidated business logic, regression risks, no safety net for refactoring",
+      "evidence": [
+        "0 test files for employee management",
+        "0 test files for job assignments",
+        "0 test files for worker schedule",
+        "git grep shows no test imports for these features"
+      ],
+      "recommendation": "Add minimum 60% test coverage for critical paths",
+      "priority": "P1"
+    },
+    {
+      "id": "PERF-001",
+      "title": "Admin Dashboard Loading Issues",
+      "severity": 2,
+      "recurrence": 3,
+      "surface": 3,
+      "score": 18,
+      "category": "performance",
+      "location": {
+        "file": "lib/features/admin/presentation/admin_dashboard.dart",
+        "lines": "various",
+        "description": "Complex provider chain causing race conditions"
+      },
+      "impact": "Blank screens, infinite loading, stale data after logout",
+      "evidence": [
+        "5+ hotfixes in last 30 days",
+        "git log shows: 'fix(admin): dashboard loading state race condition'",
+        "git log shows: 'emergency fix: admin dashboard infinite loading'",
+        "Complex FutureProvider dependencies"
+      ],
+      "recommendation": "Simplify provider dependencies, add loading state management",
+      "priority": "P1"
+    },
+    {
+      "id": "LOG-001",
+      "title": "LoggerService Using Print Statements",
+      "severity": 2,
+      "recurrence": 3,
+      "surface": 2,
+      "score": 12,
+      "category": "logging",
+      "location": {
+        "file": "lib/core/services/logger_service.dart",
+        "lines": "11, 14, 20, 23, 29, 32, 38, 41, 47, 50, 56, 59, 65, 68",
+        "description": "14 print statements bypassing proper logging"
+      },
+      "impact": "No log aggregation in production, lost debugging information",
+      "evidence": [
+        "print('[INFO] \$message') instead of proper logger",
+        "print('[ERROR] \$message') for error logging",
+        "No integration with Firebase Crashlytics or cloud logging"
+      ],
+      "recommendation": "Implement proper logging with logger package or Firebase",
+      "priority": "P1"
+    },
+    {
+      "id": "ASYNC-001",
+      "title": "Missing mounted Checks After Async",
+      "severity": 2,
+      "recurrence": 2,
+      "surface": 3,
+      "score": 12,
+      "category": "async",
+      "location": {
+        "file": "multiple",
+        "lines": "various",
+        "description": "8 files with potential setState after dispose"
+      },
+      "impact": "Potential crashes from setState on disposed widgets",
+      "evidence": [
+        "Pattern: await ... setState without if (!mounted) return check",
+        "Found in employee screens, invoice screens, job assignment",
+        "Can cause 'setState called after dispose' errors"
+      ],
+      "recommendation": "Add mounted checks after all async operations before setState",
+      "priority": "P2"
+    },
+    {
+      "id": "ERR-001",
+      "title": "Empty Catch Blocks in Scripts",
+      "severity": 2,
+      "recurrence": 2,
+      "surface": 2,
+      "score": 8,
+      "category": "error_handling",
+      "location": {
+        "file": "functions/src/scripts/create_user.js, validate_tokens.js",
+        "lines": "multiple",
+        "description": "Empty catch blocks swallow errors"
+      },
+      "impact": "Silent failures in user creation and token validation",
+      "evidence": [
+        "} catch (error) { /* empty */ }",
+        "No error logging or recovery",
+        "Failures go unnoticed"
+      ],
+      "recommendation": "Add proper error logging and handling",
+      "priority": "P2"
+    },
+    {
+      "id": "VAL-001",
+      "title": "Missing Tax Rate Validation",
+      "severity": 2,
+      "recurrence": 1,
+      "surface": 3,
+      "score": 6,
+      "category": "validation",
+      "location": {
+        "file": "lib/features/invoices/presentation/invoice_create_screen.dart",
+        "lines": "tax rate input",
+        "description": "No bounds checking on tax rate input"
+      },
+      "impact": "Can enter negative or >100% tax rates",
+      "evidence": [
+        "double.tryParse(_taxRateController.text) ?? 0.0",
+        "No validation for reasonable bounds (0-100)",
+        "Could result in negative invoices or excessive charges"
+      ],
+      "recommendation": "Add input validation for 0-100% range",
+      "priority": "P1"
+    },
+    {
+      "id": "ASYNC-002",
+      "title": "Using .then() Without await",
+      "severity": 1,
+      "recurrence": 2,
+      "surface": 2,
+      "score": 4,
+      "category": "async",
+      "location": {
+        "file": "multiple",
+        "lines": "2 instances",
+        "description": "Promise-style .then() instead of async/await"
+      },
+      "impact": "Harder to debug, potential unhandled promise rejections",
+      "evidence": [
+        "firestore.collection().add().then()",
+        "Mixing async patterns"
+      ],
+      "recommendation": "Consistently use async/await pattern",
+      "priority": "P3"
+    },
+    {
+      "id": "CODE-001",
+      "title": "Commented Debug Code",
+      "severity": 1,
+      "recurrence": 2,
+      "surface": 2,
+      "score": 4,
+      "category": "code_quality",
+      "location": {
+        "file": "multiple",
+        "lines": "5 instances",
+        "description": "Commented //print statements left in code"
+      },
+      "impact": "Code clutter, potential to uncomment and leak sensitive data",
+      "evidence": [
+        "5 instances of //print found",
+        "Debug code should be removed before commit"
+      ],
+      "recommendation": "Remove commented debug code",
+      "priority": "P3"
+    },
+    {
+      "id": "STATE-001",
+      "title": "Provider Invalidation Race Conditions",
+      "severity": 1,
+      "recurrence": 2,
+      "surface": 2,
+      "score": 4,
+      "category": "state_management",
+      "location": {
+        "file": "lib/features/admin/",
+        "lines": "provider chains",
+        "description": "Complex provider dependencies"
+      },
+      "impact": "Stale data, unnecessary rebuilds, performance issues",
+      "evidence": [
+        "Multiple dependent FutureProviders",
+        "Invalidation order matters but not enforced",
+        "Can cause cascade of rebuilds"
+      ],
+      "recommendation": "Document and enforce provider dependency order",
+      "priority": "P2"
+    }
+  ],
+  "themes": [
+    {
+      "name": "Financial Accuracy",
+      "hotspot_ids": ["FIN-001", "VAL-001"],
+      "description": "Multiple issues affecting financial calculations and invoice accuracy",
+      "total_score": 30
+    },
+    {
+      "name": "Security Gaps",
+      "hotspot_ids": ["SEC-001"],
+      "description": "Critical security rules missing for new collections",
+      "total_score": 27
+    },
+    {
+      "name": "Navigation Consistency",
+      "hotspot_ids": ["NAV-001"],
+      "description": "Mixed router APIs causing navigation state issues",
+      "total_score": 18
+    },
+    {
+      "name": "Test Coverage",
+      "hotspot_ids": ["TEST-001"],
+      "description": "New features deployed without any test coverage",
+      "total_score": 18
+    },
+    {
+      "name": "Async Safety",
+      "hotspot_ids": ["ASYNC-001", "ASYNC-002"],
+      "description": "Multiple async patterns and missing safety checks",
+      "total_score": 16
+    },
+    {
+      "name": "Error Visibility",
+      "hotspot_ids": ["LOG-001", "ERR-001"],
+      "description": "Errors being swallowed or not properly logged",
+      "total_score": 20
+    },
+    {
+      "name": "Performance",
+      "hotspot_ids": ["PERF-001", "STATE-001"],
+      "description": "Provider chains causing performance and loading issues",
+      "total_score": 22
+    }
+  ],
+  "test_gaps": [
+    {
+      "feature": "Employee Management",
+      "coverage": 0,
+      "critical_paths": [
+        "E.164 phone validation",
+        "Status transitions (invited -> active -> inactive)",
+        "Role-based permissions",
+        "Company isolation"
+      ],
+      "priority": "P1"
+    },
+    {
+      "feature": "Job Assignments",
+      "coverage": 0,
+      "critical_paths": [
+        "Multi-worker selection",
+        "Shift overlap detection",
+        "Duration calculations",
+        "Batch Firestore writes"
+      ],
+      "priority": "P1"
+    },
+    {
+      "feature": "Worker Schedule",
+      "coverage": 0,
+      "critical_paths": [
+        "Real-time Firestore streams",
+        "Filter logic (today/week/all)",
+        "Timezone handling",
+        "Pull-to-refresh"
+      ],
+      "priority": "P1"
+    },
+    {
+      "feature": "Invoice Tax Calculations",
+      "coverage": 40,
+      "critical_paths": [
+        "Floating point precision",
+        "Tax rate validation",
+        "Currency rounding",
+        "Negative amount handling"
+      ],
+      "priority": "P0"
+    },
+    {
+      "feature": "Navigation Guards",
+      "coverage": 20,
+      "critical_paths": [
+        "Authentication checks",
+        "Role-based routing",
+        "Deep link handling",
+        "Back navigation"
+      ],
+      "priority": "P2"
+    }
+  ],
+  "ci_flakes": [
+    {
+      "test": "Admin Dashboard Loading",
+      "frequency": "5+ times in 30 days",
+      "type": "race_condition",
+      "evidence": "Multiple emergency hotfixes deployed"
+    },
+    {
+      "test": "Firebase Emulator Connection",
+      "frequency": "Intermittent",
+      "type": "timeout",
+      "evidence": "Port conflicts when running tests in parallel"
+    }
+  ],
+  "recommendations_summary": {
+    "immediate_p0": [
+      "Add Firestore security rules for employees/assignments collections",
+      "Fix floating-point precision in invoice calculations",
+      "Add tax rate validation (0-100% bounds)"
+    ],
+    "short_term_p1": [
+      "Standardize on go_router, remove Navigator.pushNamed",
+      "Add test coverage for new features (minimum 60%)",
+      "Replace print statements with proper logging",
+      "Simplify admin dashboard provider dependencies"
+    ],
+    "medium_term_p2": [
+      "Add comprehensive integration tests",
+      "Implement Firestore write retry logic",
+      "Add navigation error monitoring",
+      "Document provider best practices"
+    ]
+  }
+}

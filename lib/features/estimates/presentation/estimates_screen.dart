@@ -38,6 +38,7 @@ class _EstimatesScreenState extends ConsumerState<EstimatesScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
+                        tooltip: 'Clear search',
                         onPressed: () => setState(() => _searchQuery = ''),
                       )
                     : null,

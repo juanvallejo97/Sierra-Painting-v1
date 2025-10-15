@@ -4,6 +4,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/app/router_facade.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/core/widgets/logout_dialog.dart';
 
@@ -84,7 +85,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_home');
-              Navigator.pushReplacementNamed(context, '/admin/home');
+              RouterFacade.replace(context, '/admin/home');
             },
           ),
           _DrawerItem(
@@ -94,7 +95,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_review');
-              Navigator.pushReplacementNamed(context, '/admin/review');
+              RouterFacade.replace(context, '/admin/review');
             },
           ),
           _DrawerItem(
@@ -104,7 +105,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_jobs');
-              Navigator.pushNamed(context, '/jobs');
+              RouterFacade.push(context, '/jobs');
             },
           ),
           _DrawerItem(
@@ -114,7 +115,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_estimates');
-              Navigator.pushNamed(context, '/estimates');
+              RouterFacade.push(context, '/estimates');
             },
           ),
           _DrawerItem(
@@ -124,7 +125,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_invoices');
-              Navigator.pushNamed(context, '/invoices');
+              RouterFacade.push(context, '/invoices');
             },
           ),
           _DrawerItem(
@@ -134,7 +135,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_employees');
-              Navigator.pushNamed(context, '/employees');
+              RouterFacade.push(context, '/employees');
             },
           ),
           _DrawerItem(
@@ -144,7 +145,7 @@ class _AdminDrawer extends ConsumerWidget {
             currentRoute: currentRoute,
             onTap: () {
               FirebaseAnalytics.instance.logEvent(name: 'admin_nav_settings');
-              Navigator.pushNamed(context, '/settings');
+              RouterFacade.push(context, '/settings');
             },
           ),
           const Divider(),
@@ -167,7 +168,7 @@ class _AdminDrawer extends ConsumerWidget {
                   FirebaseAnalytics.instance.logEvent(name: 'admin_logout'),
                 );
                 if (!context.mounted) return;
-                Navigator.pop(context); // Close drawer first
+                RouterFacade.pop(context); // Close drawer first
                 if (!context.mounted) return;
                 final confirmed = await showLogoutConfirmation(context);
                 if (confirmed && context.mounted) {
@@ -179,9 +180,7 @@ class _AdminDrawer extends ConsumerWidget {
 
                   // Clear navigation stack and go to login
                   if (context.mounted) {
-                    await Navigator.of(
-                      context,
-                    ).pushNamedAndRemoveUntil('/login', (route) => false);
+                    await RouterFacade.pushAndRemoveAll(context, '/login');
                   }
                 }
               },
@@ -240,7 +239,7 @@ class _DrawerItem extends StatelessWidget {
           context,
         ).colorScheme.primary.withValues(alpha: 0.1),
         onTap: () {
-          Navigator.pop(context); // Close drawer
+          RouterFacade.pop(context); // Close drawer
           onTap();
         },
       ),

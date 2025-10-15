@@ -42,6 +42,8 @@ module.exports = [
           AbortController: 'readonly',
           setTimeout: 'readonly',
           clearTimeout: 'readonly',
+          __dirname: 'readonly',
+          __filename: 'readonly',
         },
       };
     })(),

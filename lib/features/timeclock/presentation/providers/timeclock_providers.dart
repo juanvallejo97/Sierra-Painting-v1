@@ -8,7 +8,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/auth/company_claims.dart';
-import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/domain/company_settings.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/features/timeclock/domain/time_entry.dart';

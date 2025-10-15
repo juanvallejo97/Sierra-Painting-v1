@@ -1,0 +1,422 @@
+{
+  "version": "1.0",
+  "commit": "e073ea1",
+  "date": "2025-01-14",
+  "overall_gate": "CONDITIONAL",
+  "summary": {
+    "total_checks": 15,
+    "passed": 9,
+    "conditional": 5,
+    "failed": 1
+  },
+  "checks": [
+    {
+      "id": "CHK-INV-LIFECYCLE",
+      "name": "Invoice lifecycle",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "lib/features/invoices/data/invoice_repository.dart:238-254",
+          "lib/features/invoices/presentation/invoice_detail_screen.dart:133-179",
+          "lib/core/money/money.dart:100-128"
+        ],
+        "logs": [],
+        "metrics": {
+          "status_transitions": ["draft", "sent", "paid_cash"],
+          "undo_window_s": 0
+        }
+      },
+      "acceptance": [
+        "single_invoice_id_true",
+        "monotonic_history_true",
+        "no_duplicate_writes_true",
+        "totals_roundtrip_equal_true",
+        "undo_mechanism_false"
+      ],
+      "repro": [
+        "Create invoice in draft",
+        "Mark as sent",
+        "Mark as paid (cash)",
+        "No undo option available"
+      ],
+      "gap_note": "Missing undo/revert mechanism for status changes"
+    },
+    {
+      "id": "CHK-IDEMPOTENCY",
+      "name": "Idempotency & double-tap guards",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/core/services/idempotency.dart:1-42",
+          "lib/features/auth/presentation/login_screen.dart:22,57,73",
+          "lib/features/invoices/presentation/invoice_create_screen.dart:168,396"
+        ],
+        "logs": [],
+        "metrics": {
+          "files_with_guards": 15,
+          "loading_state_instances": 47
+        }
+      },
+      "acceptance": [
+        "no_duplicate_records_true",
+        "second_tap_ignored_true",
+        "loading_states_shown_true"
+      ],
+      "repro": ["Double-tap any submit button", "Observe single action only"],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-ASSIGNMENTS-PROPAGATION",
+      "name": "Assignments → Worker Schedule propagation",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/features/schedule/presentation/worker_schedule_screen.dart:22-48",
+          "lib/features/schedule/presentation/worker_schedule_screen.dart:36-47",
+          "lib/features/schedule/presentation/worker_schedule_screen.dart:114-118"
+        ],
+        "logs": [],
+        "metrics": {
+          "propagation_time_s": 3,
+          "uses_streams": true,
+          "has_pull_to_refresh": true
+        }
+      },
+      "acceptance": [
+        "schedule_updates_realtime_true",
+        "no_stale_cards_after_logout_true"
+      ],
+      "repro": [
+        "Admin creates assignment",
+        "Worker app shows update within 3s via Firestore stream"
+      ],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-PHONE-ONBOARDING",
+      "name": "Employee phone onboarding (SMS link)",
+      "status": "FAIL",
+      "evidence": {
+        "code": [],
+        "logs": [],
+        "metrics": {
+          "invite_mechanism_found": false,
+          "deep_links_configured": false
+        }
+      },
+      "acceptance": [
+        "invite_tokens_false",
+        "single_use_tokens_false",
+        "expiry_handling_false",
+        "deep_links_false"
+      ],
+      "repro": ["Feature not implemented"],
+      "gap_note": "No SMS invite or phone onboarding mechanism found"
+    },
+    {
+      "id": "CHK-LOGOUT-INVALIDATION",
+      "name": "Logout state invalidation",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/router.dart:74-78,98-102,138-147",
+          "lib/core/widgets/logout_dialog.dart:1-80"
+        ],
+        "logs": [],
+        "metrics": {
+          "providers_invalidated": 23,
+          "routes_cleared": true
+        }
+      },
+      "acceptance": [
+        "all_providers_reset_true",
+        "lands_on_login_true",
+        "no_cross_role_data_true"
+      ],
+      "repro": [
+        "Logout from any screen",
+        "Verify Firebase.signOut() called",
+        "Verify all providers invalidated",
+        "Verify route reset to /login"
+      ],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-ROLE-TENANT-ISOLATION",
+      "name": "Role & tenant isolation",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "firestore.rules:16-25",
+          "firestore.rules:28-48",
+          "firestore.rules:104-231",
+          "firestore.rules:272-295"
+        ],
+        "logs": [],
+        "metrics": {
+          "company_id_checks": 27,
+          "role_checks": 15
+        }
+      },
+      "acceptance": [
+        "emulator_denies_forbidden_true",
+        "ui_respects_roles_true",
+        "cross_tenant_blocked_true"
+      ],
+      "repro": [
+        "Run emulator tests",
+        "Verify worker cannot read other worker's time entries",
+        "Verify admin cannot access other company's data"
+      ],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-DST-TIMEZONE",
+      "name": "DST / timezone edge",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "pubspec.yaml:60"
+        ],
+        "logs": [],
+        "metrics": {
+          "datetime_now_uses": 56,
+          "utc_conversions": 12,
+          "timezone_package": true
+        }
+      },
+      "acceptance": [
+        "timezone_aware_math_unverified",
+        "dst_edge_untested",
+        "duration_calc_uncertain"
+      ],
+      "repro": ["Not systematically tested"],
+      "gap_note": "No systematic UTC storage/local display pattern found"
+    },
+    {
+      "id": "CHK-OFFLINE-QUEUE",
+      "name": "Offline queue & retry/backoff",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "lib/core/services/offline_queue.dart:85-186",
+          "lib/core/services/offline_queue.dart:127-129"
+        ],
+        "logs": [],
+        "metrics": {
+          "interface_defined": true,
+          "implementation_complete": false,
+          "persistence": false
+        }
+      },
+      "acceptance": [
+        "queue_structure_true",
+        "persistence_false",
+        "auto_drain_false",
+        "backoff_false"
+      ],
+      "repro": ["Feature partially implemented"],
+      "gap_note": "TODOs: persist to Hive, execute/queue logic, exponential backoff"
+    },
+    {
+      "id": "CHK-LISTS-PERFORMANCE",
+      "name": "Jobs & invoices lists performance",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/features/invoices/presentation/invoices_screen.dart:135",
+          "lib/features/jobs/presentation/jobs_screen.dart:130",
+          "lib/features/employees/presentation/employees_list_screen.dart:83",
+          "lib/features/invoices/data/invoice_repository.dart:66-69"
+        ],
+        "logs": [],
+        "metrics": {
+          "listview_builder_count": 13,
+          "pagination_limit": 50,
+          "max_limit": 100
+        }
+      },
+      "acceptance": [
+        "60fps_scroll_expected",
+        "stable_memory_expected",
+        "pagination_true"
+      ],
+      "repro": ["All major lists use ListView.builder with pagination"],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-A11Y",
+      "name": "A11y quick pass",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "lib/features/auth/presentation/login_screen.dart:101-118,136-141",
+          "lib/core/widgets/worker_scaffold.dart:61-84",
+          "test/a11y/iconbutton_tooltip_test.dart"
+        ],
+        "logs": [],
+        "metrics": {
+          "files_with_semantics": 10,
+          "semantic_instances": 17,
+          "tooltip_test": true
+        }
+      },
+      "acceptance": [
+        "tooltips_partial",
+        "announcements_limited",
+        "tab_order_untested",
+        "min_tap_targets_unknown"
+      ],
+      "repro": ["Limited Semantics coverage found"],
+      "gap_note": "Need comprehensive A11y audit before production"
+    },
+    {
+      "id": "CHK-WEB-SECURITY",
+      "name": "Web security headers & CSP",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "web/index.html:14-16",
+          "firebase.json:38-66"
+        ],
+        "logs": [],
+        "metrics": {
+          "csp_configured": true,
+          "hsts_enabled": true,
+          "x_frame_options": "SAMEORIGIN",
+          "permissions_policy": true
+        }
+      },
+      "acceptance": [
+        "csp_present_true",
+        "x_frame_options_true",
+        "hsts_true",
+        "no_csp_violations_expected"
+      ],
+      "repro": ["curl -I <deployed_url> shows all security headers"],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-ERROR-UX",
+      "name": "Error UX & copy",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/core/errors/error_mapper.dart:22-141",
+          "lib/core/errors/error_mapper.dart:68-75",
+          "lib/core/errors/error_mapper.dart:77-82"
+        ],
+        "logs": [],
+        "metrics": {
+          "snackbar_uses": 32,
+          "friendly_messages": true,
+          "context_aware": true
+        }
+      },
+      "acceptance": [
+        "standardized_errors_true",
+        "actionable_messages_true",
+        "no_raw_exceptions_true"
+      ],
+      "repro": [
+        "Trigger network error: 'Check your connection'",
+        "GPS error: 'Move to open area'",
+        "Geofence: 'You are Xm from job site'"
+      ],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-ANALYTICS",
+      "name": "Analytics/observability breadcrumbs",
+      "status": "PASS",
+      "evidence": {
+        "code": [
+          "lib/core/telemetry/telemetry_service.dart:41-104",
+          "lib/core/telemetry/telemetry_service.dart:106-137",
+          "lib/core/telemetry/telemetry_service.dart:154-200",
+          "lib/core/telemetry/telemetry_service.dart:221-233"
+        ],
+        "logs": [],
+        "metrics": {
+          "event_logging_calls": 28,
+          "firebase_analytics": true,
+          "firebase_crashlytics": true,
+          "firebase_performance": true
+        }
+      },
+      "acceptance": [
+        "events_include_metadata_true",
+        "breadcrumbs_in_errors_true",
+        "no_pii_true"
+      ],
+      "repro": [
+        "All events include companyId/userId",
+        "Errors include context breadcrumbs",
+        "Performance traces active"
+      ],
+      "gap_note": null
+    },
+    {
+      "id": "CHK-BACKUPS",
+      "name": "Backups & rollback rehearsal",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "tools/backup_firestore.sh",
+          "tools/restore_firestore.sh",
+          "PAST WORK/docs/runbooks/ROLLBACK.md"
+        ],
+        "logs": [],
+        "metrics": {
+          "manual_scripts": true,
+          "automated_backups": false,
+          "rollback_docs": true
+        }
+      },
+      "acceptance": [
+        "scripts_exist_true",
+        "automation_false",
+        "rollback_docs_true"
+      ],
+      "repro": ["Manual backup scripts available but not automated"],
+      "gap_note": "Need Cloud Scheduler for daily automated backups"
+    },
+    {
+      "id": "CHK-RELEASE-HOUSEKEEPING",
+      "name": "Release housekeeping",
+      "status": "CONDITIONAL",
+      "evidence": {
+        "code": [
+          "pubspec.yaml:4",
+          "CHANGELOG.md",
+          ".github/workflows/"
+        ],
+        "logs": [],
+        "metrics": {
+          "current_version": "0.0.12+12",
+          "changelog_outdated": true,
+          "ci_cd_exists": true
+        }
+      },
+      "acceptance": [
+        "version_present_true",
+        "changelog_outdated_true",
+        "ci_cd_exists_true",
+        "release_notes_missing"
+      ],
+      "repro": ["CHANGELOG last updated October 2024"],
+      "gap_note": "Update CHANGELOG and bump version to 0.0.13+13"
+    }
+  ],
+  "critical_blockers": [
+    "Invoice undo mechanism (CHK-01)",
+    "Employee onboarding process documentation (CHK-04)",
+    "CHANGELOG update (CHK-15)"
+  ],
+  "post_ship_priorities": [
+    "Complete offline queue persistence",
+    "Set up automated Firestore backups",
+    "Comprehensive A11y audit",
+    "Standardize timezone handling"
+  ]
+}

@@ -56,6 +56,7 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
+                        tooltip: 'Clear search',
                         onPressed: () {
                           setState(() {
                             _searchQuery = '';
@@ -278,36 +279,28 @@ class _JobsScreenState extends ConsumerState<JobsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Filter Jobs'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Status:'),
-            const SizedBox(height: 8),
-            ...JobStatus.values.map((status) {
-              return RadioListTile<JobStatus?>(
-                title: Text(status.displayName),
-                value: status,
-                groupValue: _statusFilter,
-                onChanged: (value) {
-                  setState(() {
-                    _statusFilter = value;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }),
-            RadioListTile<JobStatus?>(
-              title: const Text('All'),
-              value: null,
-              groupValue: _statusFilter,
-              onChanged: (value) {
-                setState(() {
-                  _statusFilter = null;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        content: RadioGroup<JobStatus?>(
+          groupValue: _statusFilter,
+          onChanged: (value) {
+            setState(() {
+              _statusFilter = value;
+            });
+            Navigator.pop(context);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Status:'),
+              const SizedBox(height: 8),
+              ...JobStatus.values.map((status) {
+                return RadioListTile<JobStatus?>(
+                  title: Text(status.displayName),
+                  value: status,
+                );
+              }),
+              const RadioListTile<JobStatus?>(title: Text('All'), value: null),
+            ],
+          ),
         ),
         actions: [
           TextButton(

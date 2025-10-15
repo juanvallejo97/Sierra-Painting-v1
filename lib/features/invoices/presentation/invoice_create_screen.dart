@@ -16,6 +16,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sierra_painting/core/money/money.dart';
 import 'package:sierra_painting/design/design.dart';
 import 'package:sierra_painting/features/invoices/domain/invoice.dart';
 import 'package:sierra_painting/features/invoices/presentation/providers/invoice_form_provider.dart';
@@ -56,22 +57,27 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
     super.dispose();
   }
 
-  double _calculateSubtotal() {
-    return _lineItems.fold(0.0, (total, item) {
+  Money _calculateSubtotal() {
+    return _lineItems.fold(Money.zero, (total, item) {
       final quantity = double.tryParse(item.quantityController.text) ?? 0.0;
-      final unitPrice = double.tryParse(item.unitPriceController.text) ?? 0.0;
-      final discount = double.tryParse(item.discountController.text) ?? 0.0;
-      return total + (quantity * unitPrice - discount);
+      final unitPrice =
+          Money.tryParse(item.unitPriceController.text) ?? Money.zero;
+      final discount =
+          Money.tryParse(item.discountController.text) ?? Money.zero;
+
+      // Calculate: (unitPrice * quantity) - discount
+      final lineTotal = unitPrice.multiply(quantity).subtract(discount);
+      return total.add(lineTotal);
     });
   }
 
-  double _calculateTax() {
+  Money _calculateTax() {
     final taxRate = double.tryParse(_taxRateController.text) ?? 0.0;
-    return _calculateSubtotal() * (taxRate / 100.0);
+    return _calculateSubtotal().percentage(taxRate);
   }
 
-  double _calculateTotal() {
-    return _calculateSubtotal() + _calculateTax();
+  Money _calculateTotal() {
+    return _calculateSubtotal().add(_calculateTax());
   }
 
   void _addLineItem() {
@@ -169,10 +175,15 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
               ),
             )
           else
-            TextButton.icon(
-              onPressed: _submit,
-              icon: const Icon(Icons.save),
-              label: const Text('Save'),
+            Semantics(
+              label: 'Save Invoice',
+              hint: 'Save the invoice',
+              button: true,
+              child: TextButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.save),
+                label: const Text('Save'),
+              ),
             ),
         ],
       ),
@@ -311,10 +322,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                       children: [
                         Text('Subtotal', style: theme.textTheme.titleMedium),
                         Text(
-                          NumberFormat.currency(
-                            symbol: '\$',
-                            decimalDigits: 2,
-                          ).format(_calculateSubtotal()),
+                          _calculateSubtotal().format(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -331,10 +339,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                           style: theme.textTheme.titleMedium,
                         ),
                         Text(
-                          NumberFormat.currency(
-                            symbol: '\$',
-                            decimalDigits: 2,
-                          ).format(_calculateTax()),
+                          _calculateTax().format(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w500,
                           ),
@@ -353,10 +358,7 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
                           ),
                         ),
                         Text(
-                          NumberFormat.currency(
-                            symbol: '\$',
-                            decimalDigits: 2,
-                          ).format(_calculateTotal()),
+                          _calculateTotal().format(),
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.primary,

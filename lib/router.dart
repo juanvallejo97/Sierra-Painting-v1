@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/app/router_facade.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/features/auth/presentation/forgot_password_screen.dart';
 import 'package:sierra_painting/features/auth/presentation/login_screen.dart';
@@ -73,9 +74,7 @@ class DashboardScreen extends ConsumerWidget {
                   await FirebaseAuth.instance.signOut();
                   ref.invalidate(userProfileProvider);
                   if (context.mounted) {
-                    await Navigator.of(
-                      context,
-                    ).pushNamedAndRemoveUntil('/login', (route) => false);
+                    await RouterFacade.pushAndRemoveAll(context, '/login');
                   }
                 },
                 child: const Text('Back to Login'),
@@ -99,9 +98,7 @@ class DashboardScreen extends ConsumerWidget {
               await FirebaseAuth.instance.signOut();
               ref.invalidate(userProfileProvider);
               if (context.mounted) {
-                await Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/login', (route) => false);
+                await RouterFacade.pushAndRemoveAll(context, '/login');
               }
             },
           ),
@@ -170,9 +167,7 @@ class DashboardScreen extends ConsumerWidget {
               await FirebaseAuth.instance.signOut();
               ref.invalidate(userProfileProvider);
               if (context.mounted) {
-                await Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil('/login', (route) => false);
+                await RouterFacade.pushAndRemoveAll(context, '/login');
               }
             },
           ),

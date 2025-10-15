@@ -58,25 +58,30 @@ class WorkerScaffold extends ConsumerWidget {
         title: Text(title),
         actions: [
           ...?actions,
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              unawaited(
-                FirebaseAnalytics.instance.logEvent(name: 'worker_logout'),
-              );
-              if (!context.mounted) return;
-              final confirmed = await _showLogoutConfirmation(context);
-              if (confirmed && context.mounted) {
-                await FirebaseAuth.instance.signOut();
-                ref.invalidate(userProfileProvider);
-                if (context.mounted) {
-                  await Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil('/login', (route) => false);
+          Semantics(
+            label: 'Logout',
+            hint: 'Sign out of your account',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Logout',
+              onPressed: () async {
+                unawaited(
+                  FirebaseAnalytics.instance.logEvent(name: 'worker_logout'),
+                );
+                if (!context.mounted) return;
+                final confirmed = await _showLogoutConfirmation(context);
+                if (confirmed && context.mounted) {
+                  await FirebaseAuth.instance.signOut();
+                  ref.invalidate(userProfileProvider);
+                  if (context.mounted) {
+                    await Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/login', (route) => false);
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
         ],
       ),

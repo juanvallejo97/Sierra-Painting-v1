@@ -13,6 +13,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sierra_painting/app/router_facade.dart';
 import 'package:sierra_painting/core/widgets/admin_scaffold.dart';
 import 'package:sierra_painting/features/invoices/domain/invoice.dart';
 import 'package:sierra_painting/features/invoices/presentation/providers/invoice_list_provider.dart';
@@ -56,6 +57,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
+                        tooltip: 'Clear search',
                         onPressed: () {
                           setState(() {
                             _searchQuery = '';
@@ -174,7 +176,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/invoices/create'),
+        onPressed: () => RouterFacade.push(context, '/invoices/create'),
         icon: const Icon(Icons.add),
         label: const Text('New Invoice'),
       ),
@@ -272,7 +274,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
           ],
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.pushNamed(context, '/invoices/${invoice.id}'),
+        onTap: () => RouterFacade.push(context, '/invoices/${invoice.id}'),
       ),
     );
   }
@@ -305,40 +307,35 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Filter Invoices'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Status:'),
-            const SizedBox(height: 8),
-            ...InvoiceStatus.values.map((status) {
-              return RadioListTile<InvoiceStatus?>(
-                title: Text(_getStatusLabel(status)),
-                value: status,
-                groupValue: _statusFilter,
-                onChanged: (value) {
-                  setState(() {
-                    _statusFilter = value;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }),
-            RadioListTile<InvoiceStatus?>(
-              title: const Text('All'),
-              value: null,
-              groupValue: _statusFilter,
-              onChanged: (value) {
-                setState(() {
-                  _statusFilter = null;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        content: RadioGroup<InvoiceStatus?>(
+          groupValue: _statusFilter,
+          onChanged: (value) {
+            setState(() {
+              _statusFilter = value;
+            });
+            RouterFacade.pop(context);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Status:'),
+              const SizedBox(height: 8),
+              ...InvoiceStatus.values.map((status) {
+                return RadioListTile<InvoiceStatus?>(
+                  title: Text(_getStatusLabel(status)),
+                  value: status,
+                );
+              }),
+              const RadioListTile<InvoiceStatus?>(
+                title: Text('All'),
+                value: null,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => RouterFacade.pop(context),
             child: const Text('Close'),
           ),
         ],

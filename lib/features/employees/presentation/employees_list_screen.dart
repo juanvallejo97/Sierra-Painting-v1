@@ -251,36 +251,31 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Filter Employees'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Status:'),
-            const SizedBox(height: 8),
-            ...EmployeeStatus.values.map((status) {
-              return RadioListTile<EmployeeStatus?>(
-                title: Text(status.displayName),
-                value: status,
-                groupValue: _statusFilter,
-                onChanged: (value) {
-                  setState(() {
-                    _statusFilter = value;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }),
-            RadioListTile<EmployeeStatus?>(
-              title: const Text('All'),
-              value: null,
-              groupValue: _statusFilter,
-              onChanged: (value) {
-                setState(() {
-                  _statusFilter = null;
-                });
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        content: RadioGroup<EmployeeStatus?>(
+          groupValue: _statusFilter,
+          onChanged: (value) {
+            setState(() {
+              _statusFilter = value;
+            });
+            Navigator.pop(context);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Status:'),
+              const SizedBox(height: 8),
+              ...EmployeeStatus.values.map((status) {
+                return RadioListTile<EmployeeStatus?>(
+                  title: Text(status.displayName),
+                  value: status,
+                );
+              }),
+              const RadioListTile<EmployeeStatus?>(
+                title: Text('All'),
+                value: null,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
