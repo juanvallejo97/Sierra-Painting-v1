@@ -26,7 +26,6 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sierra_painting/core/auth/user_role.dart';
 import 'package:sierra_painting/core/providers.dart';
 import 'package:sierra_painting/core/widgets/admin_scaffold.dart';
 import 'package:sierra_painting/features/admin/presentation/providers/admin_review_providers.dart';
@@ -223,6 +222,7 @@ class _AdminReviewScreenState extends ConsumerState<AdminReviewScreen> {
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear),
+                  tooltip: 'Clear search',
                   onPressed: () {
                     setState(() {
                       _searchQuery = '';

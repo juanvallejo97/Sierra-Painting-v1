@@ -35,13 +35,13 @@ Future<void> activateAppCheck() async {
       // Debug tokens are set via native layer/env; no explicit set in SDK.
     }
     await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.debug,
-      appleProvider: AppleProvider.debug,
+      providerAndroid: const AndroidDebugProvider(),
+      providerApple: const AppleDebugProvider(),
     );
   } else {
     await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+      providerAndroid: const AndroidPlayIntegrityProvider(),
+      providerApple: const AppleAppAttestProvider(),
     );
   }
 }

@@ -204,12 +204,40 @@ service cloud.firestore {
         && resource.data.companyId == claimCompany();
     }
 
-    // /assignments/{assignmentId}
-    // Worker-to-job assignments for access control
-    match /assignments/{assignmentId} {
+    // /employees/{employeeId}
+    // Employee records with E.164 phone validation and role management
+    match /employees/{employeeId} {
       // Read: Anyone in the same company
       allow read: if authed()
         && resource.data.companyId == claimCompany();
+
+      // Create: Admin/Manager only, must set correct companyId
+      allow create: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && request.resource.data.companyId == claimCompany()
+        && request.resource.data.keys().hasAll(["companyId", "displayName", "phone", "status", "role"]);
+
+      // Update: Admin/Manager only, cannot change companyId or createdAt
+      allow update: if authed()
+        && hasAnyRole(["admin", "manager"])
+        && resource.data.companyId == claimCompany()
+        && request.resource.data.companyId == resource.data.companyId
+        && (!request.resource.data.keys().hasAny(["createdAt"]) || request.resource.data.createdAt == resource.data.createdAt);
+
+      // Delete: Admin only
+      allow delete: if authed()
+        && isAdmin()
+        && resource.data.companyId == claimCompany();
+    }
+
+    // /assignments/{assignmentId}
+    // Worker-to-job assignments for access control
+    match /assignments/{assignmentId} {
+      // Read: Workers can read their own assignments; Admins/Managers can read all
+      allow read: if authed() && (
+        (resource.data.companyId == claimCompany() && resource.data.userId == request.auth.uid) ||
+        (resource.data.companyId == claimCompany() && hasAnyRole(["admin", "manager"]))
+      );
 
       // Create/Update/Delete: Admin/Manager only
       allow create, update, delete: if authed()

@@ -190,13 +190,13 @@ Future<void> _activateAppCheck() async {
     if (kIsWeb && v3Key != null && v3Key.isNotEmpty) {
       // Web: ReCaptchaV3Provider, but debug mode in index.html will override it
       await FirebaseAppCheck.instance.activate(
-        webProvider: ReCaptchaV3Provider(v3Key),
-        androidProvider: kReleaseMode
-            ? AndroidProvider.playIntegrity
-            : AndroidProvider.debug,
-        appleProvider: kReleaseMode
-            ? AppleProvider.appAttest
-            : AppleProvider.debug,
+        providerWeb: ReCaptchaV3Provider(v3Key),
+        providerAndroid: kReleaseMode
+            ? const AndroidPlayIntegrityProvider()
+            : const AndroidDebugProvider(),
+        providerApple: kReleaseMode
+            ? const AppleAppAttestProvider()
+            : const AppleDebugProvider(),
       );
       // ignore: avoid_print
       debugPrint(
@@ -205,12 +205,12 @@ Future<void> _activateAppCheck() async {
     } else {
       // Mobile or no site key on web — still activate (debug providers ok for dev)
       await FirebaseAppCheck.instance.activate(
-        androidProvider: kReleaseMode
-            ? AndroidProvider.playIntegrity
-            : AndroidProvider.debug,
-        appleProvider: kReleaseMode
-            ? AppleProvider.appAttest
-            : AppleProvider.debug,
+        providerAndroid: kReleaseMode
+            ? const AndroidPlayIntegrityProvider()
+            : const AndroidDebugProvider(),
+        providerApple: kReleaseMode
+            ? const AppleAppAttestProvider()
+            : const AppleDebugProvider(),
       );
       // ignore: avoid_print
       debugPrint('App Check: activation succeeded (mobile or debug).');

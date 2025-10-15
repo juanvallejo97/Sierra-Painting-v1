@@ -191,7 +191,7 @@ class _EmployeeNewScreenState extends ConsumerState<EmployeeNewScreen> {
 
             // Role
             DropdownButtonFormField<EmployeeRole>(
-              value: _selectedRole,
+              initialValue: _selectedRole,
               decoration: const InputDecoration(
                 labelText: 'Role',
                 prefixIcon: Icon(Icons.work),

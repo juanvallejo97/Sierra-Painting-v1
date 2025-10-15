@@ -17,6 +17,8 @@ class _S extends ConsumerState<LoginScreen> {
   final _form = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _pw = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _pwFocus = FocusNode();
   bool _busy = false;
   TraceHandle? _firstFrame;
 
@@ -24,6 +26,8 @@ class _S extends ConsumerState<LoginScreen> {
   void dispose() {
     _email.dispose();
     _pw.dispose();
+    _emailFocus.dispose();
+    _pwFocus.dispose();
     super.dispose();
   }
 
@@ -99,11 +103,15 @@ class _S extends ConsumerState<LoginScreen> {
                             child: TextFormField(
                               key: UIKeys.email,
                               controller: _email,
+                              focusNode: _emailFocus,
                               decoration: const InputDecoration(
                                 labelText: 'Email',
                               ),
                               validator: _emailV,
                               keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) => _pwFocus.requestFocus(),
+                              autofocus: true,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -112,6 +120,7 @@ class _S extends ConsumerState<LoginScreen> {
                             child: TextFormField(
                               key: UIKeys.password,
                               controller: _pw,
+                              focusNode: _pwFocus,
                               decoration: const InputDecoration(
                                 labelText: 'Password',
                               ),
@@ -119,27 +128,34 @@ class _S extends ConsumerState<LoginScreen> {
                               validator: (v) => (v == null || v.isEmpty)
                                   ? 'Password required'
                                   : null,
+                              textInputAction: TextInputAction.done,
                               onFieldSubmitted: (_) => _submit(),
                             ),
                           ),
                           const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              key: UIKeys.signIn,
-                              onPressed: _busy ? null : _submit,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(48, 48),
+                          Semantics(
+                            label: 'Log In',
+                            hint: 'Submit login form',
+                            button: true,
+                            enabled: !_busy,
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                key: UIKeys.signIn,
+                                onPressed: _busy ? null : _submit,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(48, 48),
+                                ),
+                                child: _busy
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text('Log In'),
                               ),
-                              child: _busy
-                                  ? const SizedBox(
-                                      height: 18,
-                                      width: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Log In'),
                             ),
                           ),
                           TextButton(
