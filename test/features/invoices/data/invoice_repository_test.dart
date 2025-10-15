@@ -39,6 +39,7 @@ void main() {
         final request = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 12, 31),
         );
@@ -71,6 +72,7 @@ void main() {
           companyId: 'company-1',
           estimateId: 'estimate-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           jobId: 'job-1',
           items: items,
           notes: 'Test notes',
@@ -102,6 +104,7 @@ void main() {
         final request = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 12, 31),
         );
@@ -124,6 +127,7 @@ void main() {
         final createRequest = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 12, 31),
         );
@@ -156,8 +160,11 @@ void main() {
         await fakeFirestore.collection('invoices').add({
           'companyId': 'company-1',
           'customerId': 'customer-1',
+          'customerName': 'Customer One',
           'status': 'pending',
           'amount': 100.0,
+          'subtotal': 90.0,
+          'tax': 10.0,
           'currency': 'USD',
           'items': [],
           'dueDate': Timestamp.fromDate(DateTime(2025, 12, 31)),
@@ -168,8 +175,11 @@ void main() {
         await fakeFirestore.collection('invoices').add({
           'companyId': 'company-1',
           'customerId': 'customer-2',
+          'customerName': 'Customer Two',
           'status': 'paid',
           'amount': 200.0,
+          'subtotal': 180.0,
+          'tax': 20.0,
           'currency': 'USD',
           'items': [],
           'dueDate': Timestamp.fromDate(DateTime(2025, 12, 31)),
@@ -181,8 +191,11 @@ void main() {
         await fakeFirestore.collection('invoices').add({
           'companyId': 'company-2',
           'customerId': 'customer-3',
+          'customerName': 'Customer Three',
           'status': 'pending',
           'amount': 300.0,
+          'subtotal': 270.0,
+          'tax': 30.0,
           'currency': 'USD',
           'items': [],
           'dueDate': Timestamp.fromDate(DateTime(2025, 12, 31)),
@@ -231,8 +244,11 @@ void main() {
           await fakeFirestore.collection('invoices').add({
             'companyId': 'company-3',
             'customerId': 'customer-$i',
+            'customerName': 'Customer $i',
             'status': 'pending',
             'amount': 100.0,
+            'subtotal': 90.0,
+            'tax': 10.0,
             'currency': 'USD',
             'items': [],
             'dueDate': Timestamp.fromDate(DateTime(2025, 12, 31)),
@@ -277,6 +293,7 @@ void main() {
         final createRequest = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 12, 31),
         );
@@ -303,8 +320,11 @@ void main() {
         final docRef = await fakeFirestore.collection('invoices').add({
           'companyId': 'company-1',
           'customerId': 'customer-1',
+          'customerName': 'Test Customer',
           'status': 'overdue',
           'amount': 100.0,
+          'subtotal': 90.0,
+          'tax': 10.0,
           'currency': 'USD',
           'items': [],
           'dueDate': Timestamp.fromDate(DateTime(2025, 1, 1)),
@@ -336,6 +356,7 @@ void main() {
         final createRequest = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 12, 31),
         );
@@ -364,6 +385,7 @@ void main() {
         final createRequest = CreateInvoiceRequest(
           companyId: 'company-1',
           customerId: 'customer-1',
+          customerName: 'Test Customer',
           items: items,
           dueDate: DateTime(2025, 1, 1), // Past due
         );

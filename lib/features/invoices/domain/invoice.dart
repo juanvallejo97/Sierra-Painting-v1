@@ -23,7 +23,15 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum InvoiceStatus { pending, paid, overdue, cancelled }
+enum InvoiceStatus {
+  draft, // Initial state, not yet sent
+  sent, // Sent to customer
+  paid, // Paid (legacy - keep for backwards compatibility)
+  paidCash, // Paid with cash
+  overdue, // Overdue (computed from pending/sent + due date)
+  cancelled, // Cancelled
+  pending, // Legacy - keep for backwards compatibility
+}
 
 class InvoiceItem {
   final String description;
@@ -72,9 +80,14 @@ class Invoice {
   final String companyId;
   final String? estimateId;
   final String customerId;
+  final String customerName; // Added: friendly customer name
   final String? jobId;
   final InvoiceStatus status;
+  final String?
+  number; // Added: auto-generated invoice number (INV-YYYYMM-####)
   final double amount;
+  final double subtotal; // Added: sum of items before tax
+  final double tax; // Added: tax amount
   final String currency;
   final List<InvoiceItem> items;
   final String? notes;
@@ -88,9 +101,13 @@ class Invoice {
     required this.companyId,
     this.estimateId,
     required this.customerId,
+    required this.customerName,
     this.jobId,
-    this.status = InvoiceStatus.pending,
+    this.status = InvoiceStatus.draft,
+    this.number,
     required this.amount,
+    required this.subtotal,
+    required this.tax,
     this.currency = 'USD',
     required this.items,
     this.notes,
@@ -102,7 +119,9 @@ class Invoice {
 
   /// Check if invoice is overdue
   bool get isOverdue {
-    if (status == InvoiceStatus.paid || status == InvoiceStatus.cancelled) {
+    if (status == InvoiceStatus.paid ||
+        status == InvoiceStatus.paidCash ||
+        status == InvoiceStatus.cancelled) {
       return false;
     }
     return DateTime.now().isAfter(dueDate);
@@ -116,9 +135,21 @@ class Invoice {
       companyId: data['companyId'] as String,
       estimateId: data['estimateId'] as String?,
       customerId: data['customerId'] as String,
+      customerName:
+          data['customerName'] as String? ??
+          data['customerId']
+              as String, // Fallback to ID for backwards compatibility
       jobId: data['jobId'] as String?,
       status: statusFromString(data['status'] as String),
+      number: data['number'] as String?,
       amount: (data['amount'] as num).toDouble(),
+      subtotal: data['subtotal'] != null
+          ? (data['subtotal'] as num).toDouble()
+          : (data['amount'] as num)
+                .toDouble(), // Fallback for backwards compatibility
+      tax: data['tax'] != null
+          ? (data['tax'] as num).toDouble()
+          : 0.0, // Default to 0 for backwards compatibility
       currency: data['currency'] as String? ?? 'USD',
       items: (data['items'] as List)
           .map((item) => InvoiceItem.fromMap(item as Map<String, dynamic>))
@@ -139,9 +170,13 @@ class Invoice {
       'companyId': companyId,
       if (estimateId != null) 'estimateId': estimateId,
       'customerId': customerId,
+      'customerName': customerName,
       if (jobId != null) 'jobId': jobId,
       'status': statusToString(status),
+      if (number != null) 'number': number,
       'amount': amount,
+      'subtotal': subtotal,
+      'tax': tax,
       'currency': currency,
       'items': items.map((item) => item.toMap()).toList(),
       if (notes != null) 'notes': notes,
@@ -157,9 +192,13 @@ class Invoice {
     String? companyId,
     String? estimateId,
     String? customerId,
+    String? customerName,
     String? jobId,
     InvoiceStatus? status,
+    String? number,
     double? amount,
+    double? subtotal,
+    double? tax,
     String? currency,
     List<InvoiceItem>? items,
     String? notes,
@@ -173,9 +212,13 @@ class Invoice {
       companyId: companyId ?? this.companyId,
       estimateId: estimateId ?? this.estimateId,
       customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
       jobId: jobId ?? this.jobId,
       status: status ?? this.status,
+      number: number ?? this.number,
       amount: amount ?? this.amount,
+      subtotal: subtotal ?? this.subtotal,
+      tax: tax ?? this.tax,
       currency: currency ?? this.currency,
       items: items ?? this.items,
       notes: notes ?? this.notes,
@@ -188,8 +231,15 @@ class Invoice {
 
   static InvoiceStatus statusFromString(String status) {
     switch (status) {
+      case 'draft':
+        return InvoiceStatus.draft;
+      case 'sent':
+        return InvoiceStatus.sent;
       case 'paid':
         return InvoiceStatus.paid;
+      case 'paid_cash':
+      case 'paidCash':
+        return InvoiceStatus.paidCash;
       case 'overdue':
         return InvoiceStatus.overdue;
       case 'cancelled':
@@ -202,8 +252,14 @@ class Invoice {
 
   static String statusToString(InvoiceStatus status) {
     switch (status) {
+      case InvoiceStatus.draft:
+        return 'draft';
+      case InvoiceStatus.sent:
+        return 'sent';
       case InvoiceStatus.paid:
         return 'paid';
+      case InvoiceStatus.paidCash:
+        return 'paid_cash';
       case InvoiceStatus.overdue:
         return 'overdue';
       case InvoiceStatus.cancelled:

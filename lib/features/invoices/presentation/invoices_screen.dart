@@ -82,7 +82,10 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
                 if (_searchQuery.isNotEmpty) {
                   final query = _searchQuery.toLowerCase();
                   filteredInvoices = invoices.where((invoice) {
-                    return invoice.customerId.toLowerCase().contains(query);
+                    return invoice.customerName.toLowerCase().contains(query) ||
+                        invoice.customerId.toLowerCase().contains(query) ||
+                        (invoice.number?.toLowerCase().contains(query) ??
+                            false);
                   }).toList();
                 }
 
@@ -184,12 +187,23 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 
     // Determine actual status (check if overdue)
     final effectiveStatus =
-        invoice.isOverdue && invoice.status == InvoiceStatus.pending
+        invoice.isOverdue &&
+            (invoice.status == InvoiceStatus.pending ||
+                invoice.status == InvoiceStatus.sent)
         ? InvoiceStatus.overdue
         : invoice.status;
 
     switch (effectiveStatus) {
+      case InvoiceStatus.draft:
+        statusColor = Colors.grey;
+        statusIcon = Icons.edit;
+        break;
+      case InvoiceStatus.sent:
+        statusColor = Colors.blue;
+        statusIcon = Icons.send;
+        break;
       case InvoiceStatus.paid:
+      case InvoiceStatus.paidCash:
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
         break;
@@ -213,13 +227,18 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
         contentPadding: const EdgeInsets.all(16),
         leading: Icon(statusIcon, color: statusColor, size: 32),
         title: Text(
-          'Customer: ${invoice.customerId}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          invoice.number ?? 'Invoice #${invoice.id?.substring(0, 8) ?? 'NEW'}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8),
+            Text(
+              'Customer: ${invoice.customerName}',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 4),
             Text(
               '\$${invoice.amount.toStringAsFixed(2)} ${invoice.currency}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -260,8 +279,14 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 
   String _getStatusLabel(InvoiceStatus status) {
     switch (status) {
+      case InvoiceStatus.draft:
+        return 'DRAFT';
+      case InvoiceStatus.sent:
+        return 'SENT';
       case InvoiceStatus.paid:
         return 'PAID';
+      case InvoiceStatus.paidCash:
+        return 'PAID (CASH)';
       case InvoiceStatus.pending:
         return 'PENDING';
       case InvoiceStatus.overdue:

@@ -38,7 +38,12 @@ class InvoiceDetailScreen extends ConsumerWidget {
 
   Color _getStatusColor(BuildContext context, InvoiceStatus status) {
     switch (status) {
+      case InvoiceStatus.draft:
+        return Colors.grey;
+      case InvoiceStatus.sent:
+        return Colors.blue;
       case InvoiceStatus.paid:
+      case InvoiceStatus.paidCash:
         return Colors.green;
       case InvoiceStatus.overdue:
         return Colors.red;
@@ -51,8 +56,14 @@ class InvoiceDetailScreen extends ConsumerWidget {
 
   String _getStatusLabel(InvoiceStatus status) {
     switch (status) {
+      case InvoiceStatus.draft:
+        return 'Draft';
+      case InvoiceStatus.sent:
+        return 'Sent';
       case InvoiceStatus.paid:
         return 'Paid';
+      case InvoiceStatus.paidCash:
+        return 'Paid (Cash)';
       case InvoiceStatus.overdue:
         return 'Overdue';
       case InvoiceStatus.cancelled:
@@ -70,13 +81,62 @@ class InvoiceDetailScreen extends ConsumerWidget {
     return DateFormat('MMM d, yyyy').format(date);
   }
 
-  Future<void> _markAsPaid(BuildContext context, WidgetRef ref) async {
+  Future<void> _markAsSent(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Mark as Paid'),
+        title: const Text('Mark as Sent'),
         content: const Text(
-          'Are you sure you want to mark this invoice as paid?',
+          'Are you sure you want to mark this invoice as sent to the customer?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Mark as Sent'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final repository = ref.read(invoiceRepositoryProvider);
+      final result = await repository.markAsSent(invoiceId: invoiceId);
+
+      if (context.mounted) {
+        result.when(
+          success: (invoice) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Invoice marked as sent'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            ref.invalidate(invoiceDetailProvider);
+          },
+          failure: (error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to mark as sent: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          },
+        );
+      }
+    }
+  }
+
+  Future<void> _markAsPaidCash(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark as Paid (Cash)'),
+        content: const Text(
+          'Are you sure you want to mark this invoice as paid with cash?',
         ),
         actions: [
           TextButton(
@@ -93,7 +153,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
 
     if (confirmed == true) {
       final repository = ref.read(invoiceRepositoryProvider);
-      final result = await repository.markAsPaid(
+      final result = await repository.markAsPaidCash(
         invoiceId: invoiceId,
         paidAt: DateTime.now(),
       );
@@ -103,7 +163,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
           success: (invoice) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Invoice marked as paid'),
+                content: Text('Invoice marked as paid (cash)'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -182,7 +242,8 @@ class InvoiceDetailScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Invoice #${invoice.id?.substring(0, 8) ?? 'NEW'}',
+                              invoice.number ??
+                                  'Invoice #${invoice.id?.substring(0, 8) ?? 'NEW'}',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -196,11 +257,11 @@ class InvoiceDetailScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: DesignTokens.spaceLG),
 
-                        // Customer ID
+                        // Customer Name
                         _InfoRow(
                           icon: Icons.person,
                           label: 'Customer',
-                          value: invoice.customerId,
+                          value: invoice.customerName,
                         ),
                         const SizedBox(height: DesignTokens.spaceSM),
 
@@ -320,21 +381,57 @@ class InvoiceDetailScreen extends ConsumerWidget {
                 AppCard(
                   child: Padding(
                     padding: const EdgeInsets.all(DesignTokens.spaceLG),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
                       children: [
-                        Text(
-                          'Total Amount',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        // Subtotal
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Subtotal',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            Text(
+                              _formatCurrency(invoice.subtotal),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          _formatCurrency(invoice.amount),
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
+                        const SizedBox(height: DesignTokens.spaceSM),
+                        // Tax
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Tax', style: theme.textTheme.titleMedium),
+                            Text(
+                              _formatCurrency(invoice.tax),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: DesignTokens.spaceLG),
+                        // Total
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Amount',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              _formatCurrency(invoice.amount),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -365,14 +462,24 @@ class InvoiceDetailScreen extends ConsumerWidget {
                 const SizedBox(height: DesignTokens.spaceXL),
 
                 // Actions
-                if (invoice.status == InvoiceStatus.pending ||
+                if (invoice.status == InvoiceStatus.draft)
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(
+                      label: 'Mark as Sent',
+                      icon: Icons.send,
+                      onPressed: () => _markAsSent(context, ref),
+                    ),
+                  ),
+                if (invoice.status == InvoiceStatus.sent ||
+                    invoice.status == InvoiceStatus.pending ||
                     invoice.status == InvoiceStatus.overdue)
                   SizedBox(
                     width: double.infinity,
                     child: AppButton(
-                      label: 'Mark as Paid',
-                      icon: Icons.check_circle,
-                      onPressed: () => _markAsPaid(context, ref),
+                      label: 'Mark as Paid (Cash)',
+                      icon: Icons.attach_money,
+                      onPressed: () => _markAsPaidCash(context, ref),
                     ),
                   ),
               ],

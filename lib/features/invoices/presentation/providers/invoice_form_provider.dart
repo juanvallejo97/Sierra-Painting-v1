@@ -61,14 +61,21 @@ class InvoiceFormNotifier extends Notifier<InvoiceFormState> {
   /// Create invoice
   Future<void> createInvoice({
     required String customerId,
+    required String customerName,
     String? jobId,
     required List<InvoiceItem> items,
+    double taxRate = 0.0,
     String? notes,
     required DateTime dueDate,
   }) async {
     // Validation
     if (customerId.isEmpty) {
       state = state.copyWith(error: 'Customer ID is required');
+      return;
+    }
+
+    if (customerName.isEmpty) {
+      state = state.copyWith(error: 'Customer name is required');
       return;
     }
 
@@ -94,8 +101,10 @@ class InvoiceFormNotifier extends Notifier<InvoiceFormState> {
       final request = CreateInvoiceRequest(
         companyId: companyId,
         customerId: customerId,
+        customerName: customerName,
         jobId: jobId?.isNotEmpty == true ? jobId : null,
         items: items,
+        taxRate: taxRate,
         notes: notes?.isNotEmpty == true ? notes : null,
         dueDate: dueDate,
       );

@@ -12,14 +12,18 @@ import 'package:sierra_painting/features/invoices/presentation/invoice_detail_sc
 import 'package:sierra_painting/features/settings/privacy_screen.dart';
 import 'package:sierra_painting/features/settings/settings_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/worker_dashboard_screen.dart';
-import 'package:sierra_painting/features/timeclock/presentation/worker_history_screen.dart';
+// import 'package:sierra_painting/features/timeclock/presentation/worker_history_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_review_screen.dart';
 import 'package:sierra_painting/features/admin/presentation/admin_home_screen.dart';
 import 'package:sierra_painting/features/jobs/presentation/jobs_screen.dart';
-import 'package:sierra_painting/features/jobs/presentation/job_detail_screen.dart';
+// import 'package:sierra_painting/features/jobs/presentation/job_detail_screen.dart';
 import 'package:sierra_painting/features/jobs/presentation/job_create_screen.dart';
+import 'package:sierra_painting/features/jobs/presentation/job_assign_screen.dart';
 import 'package:sierra_painting/features/estimates/presentation/estimates_screen.dart';
 import 'package:sierra_painting/features/invoices/presentation/invoices_screen.dart';
+import 'package:sierra_painting/features/employees/presentation/employees_list_screen.dart';
+import 'package:sierra_painting/features/employees/presentation/employee_new_screen.dart';
+import 'package:sierra_painting/features/schedule/presentation/worker_schedule_screen.dart';
 
 /// Role-Based Dashboard Router
 /// Routes users to appropriate dashboard based on their role
@@ -241,8 +245,10 @@ Route<dynamic> onGenerateRoute(RouteSettings s) {
       return _page(const PrivacyScreen());
     case '/worker/home':
       return _page(const WorkerDashboardScreen());
-    case '/worker/history':
-      return _page(const WorkerHistoryScreen());
+    // case '/worker/history':
+    //   return _page(const WorkerHistoryScreen());
+    case '/worker/schedule':
+      return _page(const WorkerScheduleScreen());
     case '/jobs':
       return _page(const JobsScreen());
     case '/jobs/create':
@@ -257,12 +263,21 @@ Route<dynamic> onGenerateRoute(RouteSettings s) {
       return _page(const EstimatesScreen());
     case '/estimates/create':
       return _page(const EstimateCreateScreen());
+    case '/employees':
+      return _page(const EmployeesListScreen());
+    case '/employees/new':
+      return _page(const EmployeeNewScreen());
     default:
       // Handle parameterized routes
-      if (s.name?.startsWith('/jobs/') == true) {
-        final jobId = s.name!.split('/').last;
-        return _page(JobDetailScreen(jobId: jobId));
+      if (s.name?.contains('/assign') == true &&
+          s.name?.startsWith('/jobs/') == true) {
+        final jobId = s.name!.split('/')[2]; // /jobs/:jobId/assign
+        return _page(JobAssignScreen(jobId: jobId));
       }
+      // if (s.name?.startsWith('/jobs/') == true) {
+      //   final jobId = s.name!.split('/').last;
+      //   return _page(JobDetailScreen(jobId: jobId));
+      // }
       if (s.name?.startsWith('/invoices/') == true) {
         final invoiceId = s.name!.split('/').last;
         return _page(InvoiceDetailScreen(invoiceId: invoiceId));

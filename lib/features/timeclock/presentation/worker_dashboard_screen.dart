@@ -41,17 +41,15 @@ class WorkerDashboardScreen extends ConsumerWidget {
     final totalHours = ref.watch(thisWeekTotalHoursProvider);
     final jobSitesCount = ref.watch(thisWeekJobSitesProvider);
     final recentEntries = ref.watch(recentTimeEntriesProvider);
-    final currentRoute =
-        ModalRoute.of(context)?.settings.name ?? '/worker/home';
 
     return WorkerScaffold(
       title: 'My Timesheet',
-      currentRoute: currentRoute,
       actions: [
         IconButton(
           icon: const Icon(Icons.location_on),
           tooltip: 'GPS Status',
-          onPressed: () => showGpsStatusDialog(context),
+          onPressed: () =>
+              showGPSStatusDialog(context, isEnabled: true, errorMessage: null),
         ),
       ],
       body: RefreshIndicator(

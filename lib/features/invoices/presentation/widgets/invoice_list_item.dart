@@ -25,7 +25,13 @@ class InvoiceListItem extends StatelessWidget {
   Color _getStatusColor(BuildContext context, InvoiceStatus status) {
     final theme = Theme.of(context);
     switch (status) {
+      case InvoiceStatus.draft:
+        return Colors.grey;
+      case InvoiceStatus.sent:
+        return Colors.blue;
       case InvoiceStatus.paid:
+        return Colors.green;
+      case InvoiceStatus.paidCash:
         return Colors.green;
       case InvoiceStatus.overdue:
         return Colors.red;
@@ -38,8 +44,14 @@ class InvoiceListItem extends StatelessWidget {
 
   String _getStatusLabel(InvoiceStatus status) {
     switch (status) {
+      case InvoiceStatus.draft:
+        return 'Draft';
+      case InvoiceStatus.sent:
+        return 'Sent';
       case InvoiceStatus.paid:
         return 'Paid';
+      case InvoiceStatus.paidCash:
+        return 'Paid (Cash)';
       case InvoiceStatus.overdue:
         return 'Overdue';
       case InvoiceStatus.cancelled:

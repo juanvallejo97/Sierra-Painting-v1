@@ -31,18 +31,24 @@ class InvoiceCreateScreen extends ConsumerStatefulWidget {
 class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   final _customerIdController = TextEditingController();
+  final _customerNameController = TextEditingController();
   final _jobIdController = TextEditingController();
+  final _taxRateController = TextEditingController(text: '0.0');
   final _notesController = TextEditingController();
 
   // Line items state
   final List<_LineItemData> _lineItems = [_LineItemData()];
 
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 30));
+  DateTime _dueDate = DateTime.now().add(
+    const Duration(days: 7),
+  ); // Default 7 days
 
   @override
   void dispose() {
     _customerIdController.dispose();
+    _customerNameController.dispose();
     _jobIdController.dispose();
+    _taxRateController.dispose();
     _notesController.dispose();
     for (final item in _lineItems) {
       item.dispose();
@@ -50,13 +56,22 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
     super.dispose();
   }
 
-  double _calculateTotal() {
+  double _calculateSubtotal() {
     return _lineItems.fold(0.0, (total, item) {
       final quantity = double.tryParse(item.quantityController.text) ?? 0.0;
       final unitPrice = double.tryParse(item.unitPriceController.text) ?? 0.0;
       final discount = double.tryParse(item.discountController.text) ?? 0.0;
       return total + (quantity * unitPrice - discount);
     });
+  }
+
+  double _calculateTax() {
+    final taxRate = double.tryParse(_taxRateController.text) ?? 0.0;
+    return _calculateSubtotal() * (taxRate / 100.0);
+  }
+
+  double _calculateTotal() {
+    return _calculateSubtotal() + _calculateTax();
   }
 
   void _addLineItem() {
@@ -111,8 +126,10 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
         .read(invoiceFormProvider.notifier)
         .createInvoice(
           customerId: _customerIdController.text,
+          customerName: _customerNameController.text,
           jobId: _jobIdController.text,
           items: items,
+          taxRate: double.tryParse(_taxRateController.text) ?? 0.0,
           notes: _notesController.text,
           dueDate: _dueDate,
         );
@@ -173,12 +190,28 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
             ),
             const SizedBox(height: DesignTokens.spaceMD),
 
+            // Customer Name
+            AppInput(
+              controller: _customerNameController,
+              label: 'Customer Name',
+              hint: 'Enter customer name',
+              prefixIcon: Icons.person,
+              keyboardType: TextInputType.text,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Customer name is required';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: DesignTokens.spaceMD),
+
             // Customer ID
             AppInput(
               controller: _customerIdController,
               label: 'Customer ID',
-              hint: 'Enter customer ID',
-              prefixIcon: Icons.person,
+              hint: 'Enter customer ID (for reference)',
+              prefixIcon: Icons.badge,
               keyboardType: TextInputType.text,
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -196,6 +229,26 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
               hint: 'Enter job ID',
               prefixIcon: Icons.work,
               keyboardType: TextInputType.text,
+            ),
+            const SizedBox(height: DesignTokens.spaceMD),
+
+            // Tax Rate
+            AppInput(
+              controller: _taxRateController,
+              label: 'Tax Rate (%)',
+              hint: 'Enter tax rate (e.g., 8.5 for 8.5%)',
+              prefixIcon: Icons.percent,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => setState(() {}), // Trigger total recalculation
+              validator: (value) {
+                if (value != null && value.isNotEmpty) {
+                  final rate = double.tryParse(value);
+                  if (rate == null || rate < 0 || rate > 100) {
+                    return 'Invalid tax rate';
+                  }
+                }
+                return null;
+              },
             ),
             const SizedBox(height: DesignTokens.spaceMD),
 
@@ -246,28 +299,70 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
 
             const SizedBox(height: DesignTokens.spaceMD),
 
-            // Total
+            // Total Breakdown
             AppCard(
               child: Padding(
                 padding: const EdgeInsets.all(DesignTokens.spaceMD),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
                   children: [
-                    Text(
-                      'Total',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    // Subtotal
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Subtotal', style: theme.textTheme.titleMedium),
+                        Text(
+                          NumberFormat.currency(
+                            symbol: '\$',
+                            decimalDigits: 2,
+                          ).format(_calculateSubtotal()),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      NumberFormat.currency(
-                        symbol: '\$',
-                        decimalDigits: 2,
-                      ).format(_calculateTotal()),
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                    const SizedBox(height: DesignTokens.spaceSM),
+                    // Tax
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Tax (${_taxRateController.text}%)',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        Text(
+                          NumberFormat.currency(
+                            symbol: '\$',
+                            decimalDigits: 2,
+                          ).format(_calculateTax()),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: DesignTokens.spaceLG),
+                    // Total
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          NumberFormat.currency(
+                            symbol: '\$',
+                            decimalDigits: 2,
+                          ).format(_calculateTotal()),
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

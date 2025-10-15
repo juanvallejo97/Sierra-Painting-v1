@@ -26,8 +26,10 @@ class CreateInvoiceRequest {
   final String companyId;
   final String? estimateId;
   final String customerId;
+  final String customerName;
   final String? jobId;
   final List<InvoiceItem> items;
+  final double taxRate; // Tax rate as percentage (e.g., 8.5 for 8.5%)
   final String? notes;
   final DateTime dueDate;
 
@@ -35,14 +37,24 @@ class CreateInvoiceRequest {
     required this.companyId,
     this.estimateId,
     required this.customerId,
+    required this.customerName,
     this.jobId,
     required this.items,
+    this.taxRate = 0.0,
     this.notes,
     required this.dueDate,
   });
 
-  double get totalAmount {
+  double get subtotal {
     return items.fold(0.0, (total, item) => total + item.total);
+  }
+
+  double get tax {
+    return subtotal * (taxRate / 100.0);
+  }
+
+  double get totalAmount {
+    return subtotal + tax;
   }
 }
 
@@ -59,6 +71,35 @@ class InvoiceRepository {
   InvoiceRepository({required FirebaseFirestore firestore})
     : _firestore = firestore;
 
+  /// Generate invoice number (INV-YYYYMM-####)
+  Future<String> _generateInvoiceNumber(String companyId) async {
+    final now = DateTime.now();
+    final prefix = 'INV-${now.year}${now.month.toString().padLeft(2, '0')}';
+
+    // Query for invoices in current month to get next number
+    final snapshot = await _firestore
+        .collection('invoices')
+        .where('companyId', isEqualTo: companyId)
+        .where('number', isGreaterThanOrEqualTo: prefix)
+        .where('number', isLessThan: '$prefix-9999')
+        .orderBy('number', descending: true)
+        .limit(1)
+        .get();
+
+    int nextNum = 1;
+    if (snapshot.docs.isNotEmpty) {
+      final lastNumber = snapshot.docs.first.data()['number'] as String?;
+      if (lastNumber != null) {
+        final parts = lastNumber.split('-');
+        if (parts.length == 3) {
+          nextNum = (int.tryParse(parts[2]) ?? 0) + 1;
+        }
+      }
+    }
+
+    return '$prefix-${nextNum.toString().padLeft(4, '0')}';
+  }
+
   /// Create a new invoice
   ///
   /// SECURITY: Requires companyId to be set (enforced by Firestore rules)
@@ -68,13 +109,19 @@ class InvoiceRepository {
   ) async {
     try {
       final now = DateTime.now();
+      final invoiceNumber = await _generateInvoiceNumber(request.companyId);
+
       final invoice = Invoice(
         companyId: request.companyId,
         estimateId: request.estimateId,
         customerId: request.customerId,
+        customerName: request.customerName,
         jobId: request.jobId,
-        status: InvoiceStatus.pending,
+        status: InvoiceStatus.draft,
+        number: invoiceNumber,
         amount: request.totalAmount,
+        subtotal: request.subtotal,
+        tax: request.tax,
         items: request.items,
         notes: request.notes,
         dueDate: request.dueDate,
@@ -170,7 +217,43 @@ class InvoiceRepository {
     }
   }
 
-  /// Mark invoice as paid
+  /// Mark invoice as sent to customer
+  Future<Result<Invoice, String>> markAsSent({
+    required String invoiceId,
+  }) async {
+    try {
+      await _firestore.collection('invoices').doc(invoiceId).update({
+        'status': 'sent',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Fetch updated invoice
+      return await getInvoice(invoiceId);
+    } catch (e) {
+      return Result.failure(_mapError(e));
+    }
+  }
+
+  /// Mark invoice as paid (cash)
+  Future<Result<Invoice, String>> markAsPaidCash({
+    required String invoiceId,
+    required DateTime paidAt,
+  }) async {
+    try {
+      await _firestore.collection('invoices').doc(invoiceId).update({
+        'status': 'paid_cash',
+        'paidAt': Timestamp.fromDate(paidAt),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Fetch updated invoice
+      return await getInvoice(invoiceId);
+    } catch (e) {
+      return Result.failure(_mapError(e));
+    }
+  }
+
+  /// Mark invoice as paid (legacy method - kept for backwards compatibility)
   Future<Result<Invoice, String>> markAsPaid({
     required String invoiceId,
     required DateTime paidAt,

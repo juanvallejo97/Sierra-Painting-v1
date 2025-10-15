@@ -128,6 +128,16 @@ class _AdminDrawer extends ConsumerWidget {
             },
           ),
           _DrawerItem(
+            icon: Icons.people,
+            title: 'Employees',
+            route: '/employees',
+            currentRoute: currentRoute,
+            onTap: () {
+              FirebaseAnalytics.instance.logEvent(name: 'admin_nav_employees');
+              Navigator.pushNamed(context, '/employees');
+            },
+          ),
+          _DrawerItem(
             icon: Icons.settings,
             title: 'Settings',
             route: '/settings',
