@@ -9,6 +9,6 @@
 // IMPORTANT: This should be kept in sync with pubspec.yaml version field.
 // Consider using code generation (e.g., build_runner) for automatic sync.
 
-const String kAppVersion = '0.0.14';
-const String kAppBuildNumber = '14';
+const String kAppVersion = '0.0.15';
+const String kAppBuildNumber = '15';
 const String kAppVersionFull = '$kAppVersion+$kAppBuildNumber';
