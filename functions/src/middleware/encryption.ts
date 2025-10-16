@@ -280,7 +280,7 @@ export async function decryptFields<T extends Record<string, any>>(
  *
  * @example
  * const newKey = generateMasterKey();
- * console.log(`Set environment variable: ENCRYPTION_MASTER_KEY=${newKey}`);
+ * // Set environment variable: ENCRYPTION_MASTER_KEY={newKey}
  */
 export function generateMasterKey(): string {
   return crypto.randomBytes(MASTER_KEY_LENGTH).toString('hex');

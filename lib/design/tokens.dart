@@ -11,15 +11,18 @@ class DesignTokens {
   DesignTokens._();
 
   // ============================================================================
-  // BRAND COLORS
+  // BRAND COLORS (D'Sierra Painting)
   // ============================================================================
 
-  /// Primary brand color - Sierra Blue
-  /// Trust, professionalism, reliability
+  /// Primary brand color - D'Sierra Red
+  /// Bold, professional, trustworthy
+  static const Color dsierraRed = Color(0xFFB71C1C);
+
+  /// Legacy colors (deprecated - use dsierraRed instead)
+  @Deprecated('Use dsierraRed instead')
   static const Color sierraBlue = Color(0xFF1976D2);
 
-  /// Accent color - Painting Orange
-  /// Energy, action, warmth
+  @Deprecated('Use dsierraRed for primary actions')
   static const Color paintingOrange = Color(0xFFFF9800);
 
   // ============================================================================

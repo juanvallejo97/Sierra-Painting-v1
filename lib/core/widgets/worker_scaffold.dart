@@ -14,6 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sierra_painting/core/providers.dart';
+import 'package:sierra_painting/ui/widgets/version_indicator.dart';
 import 'dart:async';
 
 class WorkerScaffold extends ConsumerWidget {
@@ -85,7 +86,17 @@ class WorkerScaffold extends ConsumerWidget {
           ),
         ],
       ),
-      body: body,
+      body: Stack(
+        children: [
+          body,
+          // Version indicator for cache debugging
+          const Positioned(
+            bottom: 8,
+            right: 8,
+            child: VersionIndicator(),
+          ),
+        ],
+      ),
       floatingActionButton: floatingActionButton,
     );
   }

@@ -282,4 +282,4 @@ export async function generateInvoiceHandler(
 /**
  * Generate invoice from approved time entries (wrapped for Firebase)
  */
-export const generateInvoice = onCall({ region: 'us-east4' }, generateInvoiceHandler);
+export const generateInvoice = onCall({ region: 'us-east4', enforceAppCheck: true }, generateInvoiceHandler);

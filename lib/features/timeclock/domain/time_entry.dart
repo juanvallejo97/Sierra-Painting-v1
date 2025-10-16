@@ -157,6 +157,13 @@ class TimeEntry {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Offline support
+  final String origin; // 'online' | 'offline'
+  final bool needsReview; // Flag for admin review
+  final String? deviceId; // Device identifier
+  final DateTime? submittedAt; // When synced to server
+  final GeoPoint? approxLocation; // Approximate location if GPS unavailable
+
   // Approval
   final String? approvedBy;
   final DateTime? approvedAt;
@@ -185,6 +192,11 @@ class TimeEntry {
     this.source = 'mobile',
     required this.createdAt,
     required this.updatedAt,
+    this.origin = 'online',
+    this.needsReview = false,
+    this.deviceId,
+    this.submittedAt,
+    this.approxLocation,
     this.approvedBy,
     this.approvedAt,
   }) : clientEventId = clientEventId ?? const Uuid().v4(),
@@ -278,6 +290,13 @@ class TimeEntry {
       source: data['source'] as String? ?? 'function',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      origin: data['origin'] as String? ?? 'online',
+      needsReview: data['needsReview'] as bool? ?? false,
+      deviceId: data['deviceId'] as String?,
+      submittedAt: data['submittedAt'] != null
+          ? (data['submittedAt'] as Timestamp).toDate()
+          : null,
+      approxLocation: data['approxLocation'] as GeoPoint?,
       approvedBy: data['approvedBy'] as String?,
       approvedAt: data['approvedAt'] != null
           ? (data['approvedAt'] as Timestamp).toDate()
@@ -312,6 +331,11 @@ class TimeEntry {
       'source': source,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'origin': origin,
+      'needsReview': needsReview,
+      if (deviceId != null) 'deviceId': deviceId,
+      if (submittedAt != null) 'submittedAt': Timestamp.fromDate(submittedAt!),
+      if (approxLocation != null) 'approxLocation': approxLocation,
       if (approvedBy != null) 'approvedBy': approvedBy,
       if (approvedAt != null) 'approvedAt': Timestamp.fromDate(approvedAt!),
     };
@@ -339,6 +363,11 @@ class TimeEntry {
     String? source,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? origin,
+    bool? needsReview,
+    String? deviceId,
+    DateTime? submittedAt,
+    GeoPoint? approxLocation,
     String? approvedBy,
     DateTime? approvedAt,
   }) {
@@ -365,6 +394,11 @@ class TimeEntry {
       source: source ?? this.source,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      origin: origin ?? this.origin,
+      needsReview: needsReview ?? this.needsReview,
+      deviceId: deviceId ?? this.deviceId,
+      submittedAt: submittedAt ?? this.submittedAt,
+      approxLocation: approxLocation ?? this.approxLocation,
       approvedBy: approvedBy ?? this.approvedBy,
       approvedAt: approvedAt ?? this.approvedAt,
     );

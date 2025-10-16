@@ -18,14 +18,14 @@ class AppTheme {
 
   static ThemeData get light {
     final colorScheme = const ColorScheme.light(
-      primary: DesignTokens.sierraBlue,
+      primary: DesignTokens.dsierraRed,
       onPrimary: Colors.white,
-      primaryContainer: Color(0xFFD3E4FF),
-      onPrimaryContainer: Color(0xFF001D36),
-      secondary: DesignTokens.paintingOrange,
+      primaryContainer: Color(0xFFFFDAD6),
+      onPrimaryContainer: Color(0xFF410002),
+      secondary: Color(0xFF775652),
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFFFFDCC4),
-      onSecondaryContainer: Color(0xFF2B1700),
+      secondaryContainer: Color(0xFFFFDAD6),
+      onSecondaryContainer: Color(0xFF2C1512),
       tertiary: DesignTokens.successGreen,
       onTertiary: Colors.white,
       tertiaryContainer: Color(0xFFC8E6C9),
@@ -44,7 +44,7 @@ class AppTheme {
       scrim: Colors.black,
       inverseSurface: Color(0xFF2F3033),
       onInverseSurface: Color(0xFFF1F0F4),
-      inversePrimary: Color(0xFF9ECAFF),
+      inversePrimary: Color(0xFFFFB4AB),
     );
 
     return _buildTheme(colorScheme, Brightness.light);
@@ -56,14 +56,14 @@ class AppTheme {
 
   static ThemeData get dark {
     final colorScheme = const ColorScheme.dark(
-      primary: Color(0xFF90CAF9),
-      onPrimary: Color(0xFF003258),
-      primaryContainer: Color(0xFF00497D),
-      onPrimaryContainer: Color(0xFFD3E4FF),
-      secondary: Color(0xFFFFB74D),
-      onSecondary: Color(0xFF472A00),
-      secondaryContainer: Color(0xFF653F00),
-      onSecondaryContainer: Color(0xFFFFDCC4),
+      primary: Color(0xFFFFB4AB),
+      onPrimary: Color(0xFF690005),
+      primaryContainer: Color(0xFF93000A),
+      onPrimaryContainer: Color(0xFFFFDAD6),
+      secondary: Color(0xFFE7BDB7),
+      onSecondary: Color(0xFF442926),
+      secondaryContainer: Color(0xFF5D3F3C),
+      onSecondaryContainer: Color(0xFFFFDAD6),
       tertiary: Color(0xFF81C784),
       onTertiary: Color(0xFF003910),
       tertiaryContainer: Color(0xFF005319),
@@ -82,7 +82,7 @@ class AppTheme {
       scrim: Colors.black,
       inverseSurface: Color(0xFFE3E2E6),
       onInverseSurface: Color(0xFF1A1C1E),
-      inversePrimary: Color(0xFF0061A4),
+      inversePrimary: Color(0xFFB71C1C),
     );
 
     return _buildTheme(colorScheme, Brightness.dark);

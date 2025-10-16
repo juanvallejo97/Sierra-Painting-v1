@@ -5,6 +5,7 @@ import 'package:sierra_painting/infra/perf/performance_monitor.dart';
 import 'package:sierra_painting/ui/desktop_web_scaffold.dart';
 import 'package:sierra_painting/ui/responsive.dart';
 import 'package:sierra_painting/ui/ui_keys.dart';
+import 'package:sierra_painting/ui/widgets/version_indicator.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -83,21 +84,23 @@ class _S extends ConsumerState<LoginScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Log in')),
       resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: DesktopWebScaffold(
-          child: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxW),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SingleChildScrollView(
-                    child: Form(
-                      key: _form,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+      body: Stack(
+        children: [
+          GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: DesktopWebScaffold(
+              child: SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxW),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SingleChildScrollView(
+                        child: Form(
+                          key: _form,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
                           Semantics(
                             label: 'Email input field',
                             child: TextFormField(
@@ -178,7 +181,9 @@ class _S extends ConsumerState<LoginScreen> {
                             ),
                             child: const Text('Create account'),
                           ),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -186,7 +191,13 @@ class _S extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-        ),
+          // Version indicator for cache debugging
+          const Positioned(
+            bottom: 8,
+            right: 8,
+            child: VersionIndicator(),
+          ),
+        ],
       ),
     );
   }

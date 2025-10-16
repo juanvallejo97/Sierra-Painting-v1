@@ -76,6 +76,7 @@ export const clockIn = functions.onCall({
   concurrency: 20,
   timeoutSeconds: 10,
   memory: '256MiB',
+  enforceAppCheck: true, // Native App Check enforcement (Firebase SDK)
 }, async (req) => {
   ensureAppCheck(req);
 
@@ -308,6 +309,7 @@ export const clockOut = functions.onCall({
   concurrency: 20,
   timeoutSeconds: 10,
   memory: '256MiB',
+  enforceAppCheck: true, // Native App Check enforcement (Firebase SDK)
 }, async (req) => {
   ensureAppCheck(req);
 

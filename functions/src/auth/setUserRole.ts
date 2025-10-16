@@ -41,6 +41,7 @@ export const setUserRole = onCall<SetUserRoleRequest>(
     region: 'us-east4',
     memory: '256MiB',
     timeoutSeconds: 30,
+    enforceAppCheck: true, // Native App Check enforcement (Firebase SDK)
   },
   async (request) => {
     // 1. Verify App Check token (defense-in-depth)
@@ -157,14 +158,14 @@ export async function bootstrapFirstAdmin(
     let user: admin.auth.UserRecord;
     try {
       user = await admin.auth().getUserByEmail(email);
-      console.log('User already exists:', user.uid);
+      // User already exists - continue with setting claims
     } catch {
       user = await admin.auth().createUser({
         email,
         password,
         emailVerified: false,
       });
-      console.log('Created new user:', user.uid);
+      // Created new user successfully
     }
 
     // Set admin claims
@@ -186,9 +187,7 @@ export async function bootstrapFirstAdmin(
       { merge: true }
     );
 
-    console.log(`✅ Admin user created successfully: ${email}`);
-    console.log(`   UID: ${user.uid}`);
-    console.log(`   Company ID: ${companyId}`);
+    // Admin user bootstrapped successfully
   } catch (error) {
     console.error('Error bootstrapping admin:', error);
     throw error;

@@ -1,401 +1,177 @@
-/// Invoice Create Screen
+/// Enhanced Invoice Creation Screen
 ///
 /// PURPOSE:
-/// Full-page form for creating new invoices.
-/// Handles line items, validation, and total calculation.
+/// Create professional invoices with D'Sierra branding
+/// Supports draft → sent → paid workflow
 ///
 /// FEATURES:
-/// - Customer and job ID fields
-/// - Dynamic line items (add/remove)
-/// - Real-time total calculation
-/// - Date picker for due date
-/// - Form validation
-/// - Loading/error states
+/// - Customer name and tax rate fields
+/// - Line item editor (description, quantity, rate)
+/// - Real-time subtotal/tax/total calculation
+/// - Auto-generated invoice numbers (INV-YYYYMM-####)
+/// - PDF generation with D'Sierra logo
+/// - Save as draft or send immediately
+///
+/// HAIKU TODO:
+/// - Enhance existing invoice form
+/// - Add customer name field (not just ID)
+/// - Add tax rate selector
+/// - Implement PDF template with branding
+/// - Wire up send email functionality
 library;
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:sierra_painting/core/money/money.dart';
-import 'package:sierra_painting/design/design.dart';
-import 'package:sierra_painting/features/invoices/domain/invoice.dart';
-import 'package:sierra_painting/features/invoices/presentation/providers/invoice_form_provider.dart';
+import 'package:sierra_painting/core/providers/auth_provider.dart';
+import 'package:sierra_painting/design/tokens.dart';
 
 class InvoiceCreateScreen extends ConsumerStatefulWidget {
-  const InvoiceCreateScreen({super.key});
+  final String? invoiceId; // For editing existing draft
+
+  const InvoiceCreateScreen({super.key, this.invoiceId});
 
   @override
-  ConsumerState<InvoiceCreateScreen> createState() =>
-      _InvoiceCreateScreenState();
+  ConsumerState<InvoiceCreateScreen> createState() => _InvoiceCreateScreenState();
 }
 
 class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _customerIdController = TextEditingController();
   final _customerNameController = TextEditingController();
-  final _jobIdController = TextEditingController();
-  final _taxRateController = TextEditingController(text: '0.0');
-  final _notesController = TextEditingController();
-
-  // Line items state
-  final List<_LineItemData> _lineItems = [_LineItemData()];
-
-  DateTime _dueDate = DateTime.now().add(
-    const Duration(days: 7),
-  ); // Default 7 days
+  double _taxRate = 0.0825; // Default 8.25%
+  final List<LineItem> _lineItems = [];
+  String? _invoiceNumber;
+  bool _isLoading = false;
 
   @override
-  void dispose() {
-    _customerIdController.dispose();
-    _customerNameController.dispose();
-    _jobIdController.dispose();
-    _taxRateController.dispose();
-    _notesController.dispose();
-    for (final item in _lineItems) {
-      item.dispose();
+  void initState() {
+    super.initState();
+    if (widget.invoiceId != null) {
+      _loadInvoice(widget.invoiceId!);
+    } else {
+      // Add one empty line item and generate invoice number
+      _lineItems.add(LineItem());
+      _generateInvoiceNumber();
     }
-    super.dispose();
   }
 
-  Money _calculateSubtotal() {
-    return _lineItems.fold(Money.zero, (total, item) {
-      final quantity = double.tryParse(item.quantityController.text) ?? 0.0;
-      final unitPrice =
-          Money.tryParse(item.unitPriceController.text) ?? Money.zero;
-      final discount =
-          Money.tryParse(item.discountController.text) ?? Money.zero;
+  /// Generate auto-incrementing invoice number (INV-YYYYMM-####)
+  Future<void> _generateInvoiceNumber() async {
+    try {
+      final companyId = ref.read(userCompanyProvider);
+      if (companyId == null) return;
 
-      // Calculate: (unitPrice * quantity) - discount
-      final lineTotal = unitPrice.multiply(quantity).subtract(discount);
-      return total.add(lineTotal);
-    });
-  }
+      final now = DateTime.now();
+      final monthStart = DateTime(now.year, now.month, 1);
+      final monthEnd = DateTime(now.year, now.month + 1, 0);
 
-  Money _calculateTax() {
-    final taxRate = double.tryParse(_taxRateController.text) ?? 0.0;
-    return _calculateSubtotal().percentage(taxRate);
-  }
+      final invoicesSnap = await FirebaseFirestore.instance
+          .collection('companies/$companyId/invoices')
+          .where('createdAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart))
+          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(monthEnd))
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
 
-  Money _calculateTotal() {
-    return _calculateSubtotal().add(_calculateTax());
-  }
+      int nextNumber = 1;
+      if (invoicesSnap.docs.isNotEmpty) {
+        final lastNumber = invoicesSnap.docs.first.data()['number'] as String;
+        final parts = lastNumber.split('-');
+        nextNumber = int.parse(parts[2]) + 1;
+      }
 
-  void _addLineItem() {
-    setState(() {
-      _lineItems.add(_LineItemData());
-    });
-  }
-
-  void _removeLineItem(int index) {
-    if (_lineItems.length > 1) {
       setState(() {
-        _lineItems[index].dispose();
-        _lineItems.removeAt(index);
+        _invoiceNumber =
+            'INV-${now.year}${now.month.toString().padLeft(2, '0')}-${nextNumber.toString().padLeft(4, '0')}';
       });
+    } catch (e) {
+      debugPrint('Error generating invoice number: $e');
     }
-  }
-
-  Future<void> _selectDueDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dueDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _dueDate = picked;
-      });
-    }
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    // Convert line items to domain models
-    final items = _lineItems.map((item) {
-      return InvoiceItem(
-        description: item.descriptionController.text,
-        quantity: double.parse(item.quantityController.text),
-        unitPrice: double.parse(item.unitPriceController.text),
-        discount: item.discountController.text.isNotEmpty
-            ? double.parse(item.discountController.text)
-            : null,
-      );
-    }).toList();
-
-    // Submit form
-    ref
-        .read(invoiceFormProvider.notifier)
-        .createInvoice(
-          customerId: _customerIdController.text,
-          customerName: _customerNameController.text,
-          jobId: _jobIdController.text,
-          items: items,
-          taxRate: double.tryParse(_taxRateController.text) ?? 0.0,
-          notes: _notesController.text,
-          dueDate: _dueDate,
-        );
   }
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(invoiceFormProvider);
-    final theme = Theme.of(context);
-
-    // Listen for successful creation
-    ref.listen<InvoiceFormState>(invoiceFormProvider, (previous, next) {
-      if (next.createdInvoice != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invoice created successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop(true); // Return true to indicate success
-      } else if (next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
-        );
-      }
-    });
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Invoice'),
+        title: Text(widget.invoiceId == null ? 'New Invoice' : 'Edit Invoice'),
         actions: [
-          if (formState.isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else
-            Semantics(
-              label: 'Save Invoice',
-              hint: 'Save the invoice',
-              button: true,
-              child: TextButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.save),
-                label: const Text('Save'),
-              ),
-            ),
+          // HAIKU TODO: Save as draft button
+          TextButton(
+            onPressed: _saveDraft,
+            child: const Text('SAVE DRAFT'),
+          ),
+          // HAIKU TODO: Preview PDF button
+          IconButton(
+            icon: const Icon(Icons.preview),
+            onPressed: _previewPDF,
+            tooltip: 'Preview PDF',
+          ),
         ],
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(DesignTokens.spaceLG),
+          padding: const EdgeInsets.all(DesignTokens.spaceMD),
           children: [
-            // Header
-            Text(
-              'Invoice Details',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.spaceMD),
+            // HAIKU TODO: Invoice number display (auto-generated)
+            _buildInvoiceNumber(),
 
-            // Customer Name
-            AppInput(
+            const SizedBox(height: DesignTokens.spaceLG),
+
+            // HAIKU TODO: Customer name field
+            TextFormField(
               controller: _customerNameController,
-              label: 'Customer Name',
-              hint: 'Enter customer name',
-              prefixIcon: Icons.person,
-              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                labelText: 'Customer Name',
+                prefixIcon: Icon(Icons.person),
+              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Customer name is required';
+                  return 'Please enter customer name';
                 }
                 return null;
               },
             ),
+
             const SizedBox(height: DesignTokens.spaceMD),
 
-            // Customer ID
-            AppInput(
-              controller: _customerIdController,
-              label: 'Customer ID',
-              hint: 'Enter customer ID (for reference)',
-              prefixIcon: Icons.badge,
-              keyboardType: TextInputType.text,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Customer ID is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: DesignTokens.spaceMD),
+            // HAIKU TODO: Tax rate selector
+            _buildTaxRateSelector(),
 
-            // Job ID (optional)
-            AppInput(
-              controller: _jobIdController,
-              label: 'Job ID (Optional)',
-              hint: 'Enter job ID',
-              prefixIcon: Icons.work,
-              keyboardType: TextInputType.text,
-            ),
-            const SizedBox(height: DesignTokens.spaceMD),
-
-            // Tax Rate
-            AppInput(
-              controller: _taxRateController,
-              label: 'Tax Rate (%)',
-              hint: 'Enter tax rate (e.g., 8.5 for 8.5%)',
-              prefixIcon: Icons.percent,
-              keyboardType: TextInputType.number,
-              onChanged: (_) => setState(() {}), // Trigger total recalculation
-              validator: (value) {
-                if (value != null && value.isNotEmpty) {
-                  final rate = double.tryParse(value);
-                  if (rate == null || rate < 0 || rate > 100) {
-                    return 'Invalid tax rate';
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: DesignTokens.spaceMD),
-
-            // Due Date
-            AppCard(
-              child: ListTile(
-                leading: const Icon(Icons.calendar_today),
-                title: const Text('Due Date'),
-                subtitle: Text(DateFormat('MMM d, yyyy').format(_dueDate)),
-                trailing: const Icon(Icons.edit),
-                onTap: _selectDueDate,
-              ),
-            ),
             const SizedBox(height: DesignTokens.spaceLG),
 
-            // Line Items Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Line Items',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _addLineItem,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Item'),
-                ),
-              ],
-            ),
-            const SizedBox(height: DesignTokens.spaceSM),
-
-            // Line items list
-            ..._lineItems.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              return _LineItemCard(
-                key: ValueKey(item),
-                item: item,
-                index: index,
-                canRemove: _lineItems.length > 1,
-                onRemove: () => _removeLineItem(index),
-                onChanged: () => setState(() {}), // Trigger total recalculation
-              );
-            }),
-
-            const SizedBox(height: DesignTokens.spaceMD),
-
-            // Total Breakdown
-            AppCard(
-              child: Padding(
-                padding: const EdgeInsets.all(DesignTokens.spaceMD),
-                child: Column(
-                  children: [
-                    // Subtotal
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Subtotal', style: theme.textTheme.titleMedium),
-                        Text(
-                          _calculateSubtotal().format(),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: DesignTokens.spaceSM),
-                    // Tax
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Tax (${_taxRateController.text}%)',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        Text(
-                          _calculateTax().format(),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: DesignTokens.spaceLG),
-                    // Total
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Total',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          _calculateTotal().format(),
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: DesignTokens.spaceLG),
-
-            // Notes
+            // HAIKU TODO: Line items section
             Text(
-              'Notes (Optional)',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              'Line Items',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: DesignTokens.spaceSM),
-            AppInput(
-              controller: _notesController,
-              label: 'Notes',
-              hint: 'Add any additional notes',
-              maxLines: 4,
-              keyboardType: TextInputType.multiline,
+            const SizedBox(height: DesignTokens.spaceMD),
+            ..._buildLineItems(),
+
+            // HAIKU TODO: Add line item button
+            OutlinedButton.icon(
+              onPressed: _addLineItem,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Line Item'),
             ),
+
             const SizedBox(height: DesignTokens.spaceXL),
 
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: AppButton(
-                label: 'Create Invoice',
-                icon: Icons.check,
-                onPressed: formState.isLoading ? null : _submit,
+            // HAIKU TODO: Totals summary
+            _buildTotalsSummary(),
+
+            const SizedBox(height: DesignTokens.spaceXL),
+
+            // HAIKU TODO: Send invoice button
+            FilledButton.icon(
+              onPressed: _sendInvoice,
+              icon: const Icon(Icons.send),
+              label: const Text('Send Invoice'),
+              style: FilledButton.styleFrom(
+                backgroundColor: DesignTokens.dsierraRed,
+                padding: const EdgeInsets.all(DesignTokens.spaceMD),
               ),
             ),
           ],
@@ -403,147 +179,333 @@ class _InvoiceCreateScreenState extends ConsumerState<InvoiceCreateScreen> {
       ),
     );
   }
+
+  Widget _buildInvoiceNumber() {
+    final invoiceNumber = _invoiceNumber ?? 'Generating...';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceMD),
+        child: Row(
+          children: [
+            const Icon(Icons.receipt_long),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Invoice Number',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  invoiceNumber,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaxRateSelector() {
+    return Row(
+      children: [
+        const Text('Tax Rate:'),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Slider(
+            value: _taxRate,
+            min: 0.0,
+            max: 0.15,
+            divisions: 30,
+            label: '${(_taxRate * 100).toStringAsFixed(2)}%',
+            onChanged: (value) {
+              setState(() {
+                _taxRate = value;
+              });
+            },
+          ),
+        ),
+        Text('${(_taxRate * 100).toStringAsFixed(2)}%'),
+      ],
+    );
+  }
+
+  List<Widget> _buildLineItems() {
+    return _lineItems.asMap().entries.map((entry) {
+      final index = entry.key;
+      final item = entry.value;
+      return _buildLineItemCard(index, item);
+    }).toList();
+  }
+
+  Widget _buildLineItemCard(int index, LineItem item) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: DesignTokens.spaceMD),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceMD),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Item ${index + 1}',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                if (_lineItems.length > 1)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: DesignTokens.errorRed),
+                    onPressed: () {
+                      setState(() {
+                        _lineItems.removeAt(index);
+                      });
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // HAIKU TODO: Description field
+            TextFormField(
+              controller: item.descriptionController,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                hintText: 'e.g., Interior painting',
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // HAIKU TODO: Quantity field
+                Expanded(
+                  child: TextFormField(
+                    controller: item.quantityController,
+                    decoration: const InputDecoration(labelText: 'Qty'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // HAIKU TODO: Rate field
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: item.rateController,
+                    decoration: const InputDecoration(
+                      labelText: 'Rate',
+                      prefixText: '\$',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // HAIKU TODO: Line total
+                Expanded(
+                  child: Text(
+                    '\$${item.total.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalsSummary() {
+    // HAIKU TODO: Calculate totals
+    final subtotal = _lineItems.fold(0.0, (sum, item) => sum + item.total);
+    final tax = subtotal * _taxRate;
+    final total = subtotal + tax;
+
+    return Card(
+      color: DesignTokens.dsierraRed.withValues(alpha: 0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceMD),
+        child: Column(
+          children: [
+            _buildTotalRow('Subtotal', subtotal),
+            const Divider(),
+            _buildTotalRow('Tax (${(_taxRate * 100).toStringAsFixed(2)}%)', tax),
+            const Divider(),
+            _buildTotalRow(
+              'Total',
+              total,
+              isTotal: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalRow(String label, double amount, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: isTotal
+              ? Theme.of(context).textTheme.titleLarge
+              : Theme.of(context).textTheme.bodyLarge,
+        ),
+        Text(
+          '\$${amount.toStringAsFixed(2)}',
+          style: isTotal
+              ? Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: DesignTokens.dsierraRed,
+                  )
+              : Theme.of(context).textTheme.bodyLarge,
+        ),
+      ],
+    );
+  }
+
+  void _addLineItem() {
+    setState(() {
+      _lineItems.add(LineItem());
+    });
+  }
+
+  void _loadInvoice(String invoiceId) {
+    // TODO: Load invoice from Firestore for editing
+    // This would populate _customerNameController, _taxRate, _lineItems
+    // and _invoiceNumber from existing invoice document
+  }
+
+  Future<void> _saveDraft() async {
+    if (!_formKey.currentState!.validate() || _invoiceNumber == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final companyId = ref.read(userCompanyProvider);
+      final userId = ref.read(currentUserProvider)?.uid;
+      if (companyId == null || userId == null) return;
+
+      final subtotal =
+          _lineItems.fold(0.0, (sum, item) => sum + item.total);
+      final tax = subtotal * _taxRate;
+      final total = subtotal + tax;
+
+      // Save invoice as draft
+      await FirebaseFirestore.instance
+          .collection('companies/$companyId/invoices')
+          .doc(widget.invoiceId)
+          .set({
+            'number': _invoiceNumber,
+            'customerName': _customerNameController.text,
+            'lineItems': _lineItems
+                .map((item) => {
+                      'description': item.descriptionController.text,
+                      'quantity': double.tryParse(item.quantityController.text) ?? 0,
+                      'rate': double.tryParse(item.rateController.text) ?? 0,
+                    })
+                .toList(),
+            'subtotal': subtotal,
+            'taxRate': _taxRate,
+            'tax': tax,
+            'amount': total,
+            'status': 'draft',
+            'createdBy': userId,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invoice saved as draft')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving draft: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _previewPDF() async {
+    // TODO: Generate PDF preview using pdf package
+    // Show PDF in a dialog or new screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PDF preview coming soon')),
+    );
+  }
+
+  Future<void> _sendInvoice() async {
+    if (!_formKey.currentState!.validate() || _invoiceNumber == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final companyId = ref.read(userCompanyProvider);
+      if (companyId == null) return;
+
+      // First save as draft
+      await _saveDraft();
+
+      // Call Cloud Function to send email
+      await FirebaseFunctions.instance
+          .httpsCallable('sendInvoiceEmail')
+          .call({
+            'invoiceId': widget.invoiceId,
+            'invoiceNumber': _invoiceNumber,
+            'customerName': _customerNameController.text,
+          });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invoice sent successfully')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sending invoice: $e')),
+        );
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _customerNameController.dispose();
+    for (final item in _lineItems) {
+      item.dispose();
+    }
+    super.dispose();
+  }
 }
 
-/// Line item data holder
-class _LineItemData {
+class LineItem {
   final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController quantityController = TextEditingController();
-  final TextEditingController unitPriceController = TextEditingController();
-  final TextEditingController discountController = TextEditingController();
+  final TextEditingController quantityController = TextEditingController(text: '1');
+  final TextEditingController rateController = TextEditingController();
+
+  double get total {
+    final qty = double.tryParse(quantityController.text) ?? 0;
+    final rate = double.tryParse(rateController.text) ?? 0;
+    return qty * rate;
+  }
 
   void dispose() {
     descriptionController.dispose();
     quantityController.dispose();
-    unitPriceController.dispose();
-    discountController.dispose();
-  }
-}
-
-/// Line item card widget
-class _LineItemCard extends StatelessWidget {
-  final _LineItemData item;
-  final int index;
-  final bool canRemove;
-  final VoidCallback onRemove;
-  final VoidCallback onChanged;
-
-  const _LineItemCard({
-    super.key,
-    required this.item,
-    required this.index,
-    required this.canRemove,
-    required this.onRemove,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.spaceMD),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with remove button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Item ${index + 1}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (canRemove)
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: onRemove,
-                    tooltip: 'Remove item',
-                  ),
-              ],
-            ),
-            const SizedBox(height: DesignTokens.spaceSM),
-
-            // Description
-            AppInput(
-              controller: item.descriptionController,
-              label: 'Description',
-              hint: 'Item description',
-              keyboardType: TextInputType.text,
-              onChanged: (_) => onChanged(),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Description is required';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: DesignTokens.spaceSM),
-
-            // Quantity and Unit Price
-            Row(
-              children: [
-                Expanded(
-                  child: AppInput(
-                    controller: item.quantityController,
-                    label: 'Quantity',
-                    hint: '0',
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => onChanged(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: DesignTokens.spaceSM),
-                Expanded(
-                  child: AppInput(
-                    controller: item.unitPriceController,
-                    label: 'Unit Price',
-                    hint: '0.00',
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => onChanged(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Required';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Invalid';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: DesignTokens.spaceSM),
-
-            // Discount
-            AppInput(
-              controller: item.discountController,
-              label: 'Discount (Optional)',
-              hint: '0.00',
-              keyboardType: TextInputType.number,
-              onChanged: (_) => onChanged(),
-              validator: (value) {
-                if (value != null &&
-                    value.isNotEmpty &&
-                    double.tryParse(value) == null) {
-                  return 'Invalid discount amount';
-                }
-                return null;
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+    rateController.dispose();
   }
 }
