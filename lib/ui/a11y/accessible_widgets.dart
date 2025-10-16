@@ -1,4 +1,4 @@
-/// PHASE 1: PSEUDOCODE - Accessible Widget Components
+/// PHASE 2: SKELETON CODE - Accessible Widget Components
 ///
 /// PURPOSE:
 /// - WCAG 2.2 AA compliant widgets
@@ -7,28 +7,16 @@
 /// - Screen reader friendly
 /// - Focus management
 /// - Never rely on color alone for status
-///
-/// WIDGETS:
-/// - A11yCard: Accessible card with proper focus/semantics
-/// - StatusChip: Status indicator with icon + text + color
-/// - A11yButton: Button with proper touch target and feedback
-/// - FocusableContainer: Container with keyboard focus support
 
 library accessible_widgets;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // ============================================================================
 // A11Y CARD - Accessible Card Component
 // ============================================================================
 
-/// Accessible card widget with WCAG AA compliance
-///
-/// FEATURES:
-/// - Enforces 4.5:1 contrast ratio
-/// - Proper focus traversal
-/// - Semantic labels for screen readers
-/// - Touch target minimum 44x44
 class A11yCard extends StatelessWidget {
   final Widget child;
   final String? semanticLabel;
@@ -37,67 +25,57 @@ class A11yCard extends StatelessWidget {
   final Color? backgroundColor;
 
   const A11yCard({
-    Key? key,
+    super.key,
     required this.child,
     this.semanticLabel,
     this.onTap,
     this.excludeSemantics = false,
     this.backgroundColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // PSEUDOCODE:
-    // return Semantics(
-    //   label: semanticLabel,
-    //   button: onTap != null,
-    //   excludeSemantics: excludeSemantics,
-    //   child: FocusTraversalGroup(
-    //     policy: OrderedTraversalPolicy(),
-    //     child: _buildCard(context),
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement A11yCard');
+    return Semantics(
+      label: semanticLabel,
+      button: onTap != null,
+      excludeSemantics: excludeSemantics,
+      child: FocusTraversalGroup(
+        policy: OrderedTraversalPolicy(),
+        child: _buildCard(context),
+      ),
+    );
   }
 
   Widget _buildCard(BuildContext context) {
-    // PSEUDOCODE:
-    // final bgColor = backgroundColor ?? _getAccessibleBackgroundColor(context);
-    //
-    // return Card(
-    //   color: bgColor,
-    //   elevation: _getAccessibleElevation(context),
-    //   child: InkWell(
-    //     onTap: onTap,
-    //     borderRadius: BorderRadius.circular(8),
-    //     child: Padding(
-    //       padding: EdgeInsets.all(16),
-    //       child: child,
-    //     ),
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement _buildCard');
+    // TODO(Phase 3): Calculate contrast ratios and adjust colors
+    final bgColor = backgroundColor ?? _getAccessibleBackgroundColor(context);
+
+    return Card(
+      color: bgColor,
+      elevation: _getAccessibleElevation(context),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: child,
+        ),
+      ),
+    );
   }
 
-  /// Get background color with proper contrast
   Color _getAccessibleBackgroundColor(BuildContext context) {
-    // PSEUDOCODE:
-    // final theme = Theme.of(context);
-    // final brightness = theme.brightness;
-    //
-    // // Ensure 4.5:1 contrast ratio
-    // return brightness == Brightness.dark
-    //   ? Colors.grey[850]!
-    //   : Colors.white;
-    throw UnimplementedError('Phase 2: Implement color selection');
+    // TODO(Phase 3): Ensure 4.5:1 contrast ratio
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+
+    return brightness == Brightness.dark ? Colors.grey[850]! : Colors.white;
   }
 
-  /// Get elevation that works in high contrast mode
   double _getAccessibleElevation(BuildContext context) {
-    // PSEUDOCODE:
-    // final highContrast = MediaQuery.of(context).highContrast;
-    // return highContrast ? 4.0 : 2.0; // Increase elevation for visibility
-    throw UnimplementedError('Phase 2: Implement elevation');
+    // TODO(Phase 3): Increase elevation in high contrast mode
+    final highContrast = MediaQuery.of(context).highContrast;
+    return highContrast ? 4.0 : 2.0;
   }
 }
 
@@ -105,20 +83,13 @@ class A11yCard extends StatelessWidget {
 // STATUS CHIP - Status Indicator with Icon + Text + Color
 // ============================================================================
 
-/// Status chip that NEVER relies on color alone
-///
-/// FEATURES:
-/// - Icon + text + color (triple redundancy)
-/// - WCAG AA contrast
-/// - Screen reader friendly
-/// - Semantic role (status)
 enum StatusType {
-  ACTIVE,
-  PENDING,
-  ERROR,
-  SUCCESS,
-  WARNING,
-  INFO,
+  active,
+  pending,
+  error,
+  success,
+  warning,
+  info,
 }
 
 class StatusChip extends StatelessWidget {
@@ -127,68 +98,88 @@ class StatusChip extends StatelessWidget {
   final bool compact;
 
   const StatusChip({
-    Key? key,
+    super.key,
     required this.status,
     this.customLabel,
     this.compact = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // PSEUDOCODE:
-    // final config = _getStatusConfig();
-    //
-    // return Semantics(
-    //   label: 'Status: ${config.label}',
-    //   liveRegion: true, // Announce changes
-    //   child: Chip(
-    //     avatar: Icon(config.icon, size: 16, color: config.color),
-    //     label: Text(
-    //       customLabel ?? config.label,
-    //       style: TextStyle(
-    //         color: _getContrastingTextColor(config.color),
-    //         fontWeight: FontWeight.bold,
-    //       ),
-    //     ),
-    //     backgroundColor: config.backgroundColor,
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement StatusChip');
+    final config = _getStatusConfig();
+
+    return Semantics(
+      label: 'Status: ${customLabel ?? config.label}',
+      liveRegion: true,
+      child: Chip(
+        avatar: Icon(config.icon, size: 16, color: config.color),
+        label: Text(
+          customLabel ?? config.label,
+          style: TextStyle(
+            color: _getContrastingTextColor(config.backgroundColor),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: config.backgroundColor,
+      ),
+    );
   }
 
-  /// Get configuration for status type
   _StatusConfig _getStatusConfig() {
-    // PSEUDOCODE:
-    // switch (status) {
-    //   case StatusType.ACTIVE:
-    //     return _StatusConfig(
-    //       icon: Icons.check_circle,
-    //       label: 'Active',
-    //       color: Colors.green[700]!,
-    //       backgroundColor: Colors.green[50]!,
-    //     );
-    //   case StatusType.ERROR:
-    //     return _StatusConfig(
-    //       icon: Icons.error_outline,
-    //       label: 'Error',
-    //       color: Colors.red[700]!,
-    //       backgroundColor: Colors.red[50]!,
-    //     );
-    //   // ... other cases
-    // }
-    throw UnimplementedError('Phase 2: Implement status config');
+    // TODO(Phase 3): Load colors from theme
+    switch (status) {
+      case StatusType.active:
+        return _StatusConfig(
+          icon: Icons.check_circle,
+          label: 'Active',
+          color: Colors.green[700]!,
+          backgroundColor: Colors.green[50]!,
+        );
+      case StatusType.pending:
+        return _StatusConfig(
+          icon: Icons.schedule,
+          label: 'Pending',
+          color: Colors.orange[700]!,
+          backgroundColor: Colors.orange[50]!,
+        );
+      case StatusType.error:
+        return _StatusConfig(
+          icon: Icons.error_outline,
+          label: 'Error',
+          color: Colors.red[700]!,
+          backgroundColor: Colors.red[50]!,
+        );
+      case StatusType.success:
+        return _StatusConfig(
+          icon: Icons.check_circle_outline,
+          label: 'Success',
+          color: Colors.green[700]!,
+          backgroundColor: Colors.green[50]!,
+        );
+      case StatusType.warning:
+        return _StatusConfig(
+          icon: Icons.warning_amber,
+          label: 'Warning',
+          color: Colors.amber[700]!,
+          backgroundColor: Colors.amber[50]!,
+        );
+      case StatusType.info:
+        return _StatusConfig(
+          icon: Icons.info_outline,
+          label: 'Info',
+          color: Colors.blue[700]!,
+          backgroundColor: Colors.blue[50]!,
+        );
+    }
   }
 
-  /// Get text color that contrasts with background
   Color _getContrastingTextColor(Color backgroundColor) {
-    // PSEUDOCODE:
-    // final luminance = backgroundColor.computeLuminance();
-    // return luminance > 0.5 ? Colors.black87 : Colors.white;
-    throw UnimplementedError('Phase 2: Implement contrast calculation');
+    // TODO(Phase 3): Calculate proper contrast ratio
+    final luminance = backgroundColor.computeLuminance();
+    return luminance > 0.5 ? Colors.black87 : Colors.white;
   }
 }
 
-/// Status configuration data
 class _StatusConfig {
   final IconData icon;
   final String label;
@@ -207,13 +198,6 @@ class _StatusConfig {
 // A11Y BUTTON - Accessible Button Component
 // ============================================================================
 
-/// Accessible button with proper touch targets and feedback
-///
-/// FEATURES:
-/// - Minimum 44x44 touch target (WCAG)
-/// - Visible focus ring
-/// - Keyboard activation (Enter/Space)
-/// - Proper loading/disabled states
 class A11yButton extends StatelessWidget {
   final Widget child;
   final VoidCallback? onPressed;
@@ -222,64 +206,54 @@ class A11yButton extends StatelessWidget {
   final String? semanticLabel;
 
   const A11yButton({
-    Key? key,
+    super.key,
     required this.child,
     required this.onPressed,
     this.isLoading = false,
     this.style,
     this.semanticLabel,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // PSEUDOCODE:
-    // return Semantics(
-    //   label: semanticLabel,
-    //   button: true,
-    //   enabled: onPressed != null && !isLoading,
-    //   child: FilledButton(
-    //     onPressed: isLoading ? null : onPressed,
-    //     style: _getAccessibleButtonStyle(context),
-    //     child: isLoading
-    //       ? _buildLoadingIndicator()
-    //       : child,
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement A11yButton');
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      enabled: onPressed != null && !isLoading,
+      child: FilledButton(
+        onPressed: isLoading ? null : onPressed,
+        style: _getAccessibleButtonStyle(context),
+        child: isLoading ? _buildLoadingIndicator() : child,
+      ),
+    );
   }
 
-  /// Get button style with accessible touch targets
   ButtonStyle _getAccessibleButtonStyle(BuildContext context) {
-    // PSEUDOCODE:
-    // return (style ?? FilledButton.styleFrom()).copyWith(
-    //   minimumSize: MaterialStateProperty.all(Size(44, 44)),
-    //   padding: MaterialStateProperty.all(EdgeInsets.symmetric(
-    //     horizontal: 16,
-    //     vertical: 12,
-    //   )),
-    //   // Visible focus ring
-    //   overlayColor: MaterialStateProperty.resolveWith((states) {
-    //     if (states.contains(MaterialState.focused)) {
-    //       return Theme.of(context).colorScheme.primary.withOpacity(0.12);
-    //     }
-    //     return null;
-    //   }),
-    // );
-    throw UnimplementedError('Phase 2: Implement button style');
+    // TODO(Phase 3): Ensure minimum 44x44 touch target
+    return (style ?? FilledButton.styleFrom()).copyWith(
+      minimumSize: MaterialStateProperty.all(const Size(44, 44)),
+      padding: MaterialStateProperty.all(
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      // Visible focus ring
+      overlayColor: MaterialStateProperty.resolveWith((states) {
+        if (states.contains(MaterialState.focused)) {
+          return Theme.of(context).colorScheme.primary.withOpacity(0.12);
+        }
+        return null;
+      }),
+    );
   }
 
-  /// Build loading indicator
   Widget _buildLoadingIndicator() {
-    // PSEUDOCODE:
-    // return SizedBox(
-    //   height: 16,
-    //   width: 16,
-    //   child: CircularProgressIndicator(
-    //     strokeWidth: 2,
-    //     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement loading indicator');
+    return const SizedBox(
+      height: 16,
+      width: 16,
+      child: CircularProgressIndicator(
+        strokeWidth: 2,
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      ),
+    );
   }
 }
 
@@ -287,13 +261,6 @@ class A11yButton extends StatelessWidget {
 // FOCUSABLE CONTAINER - Keyboard Focus Support
 // ============================================================================
 
-/// Container that can receive keyboard focus
-///
-/// FEATURES:
-/// - Tab navigation
-/// - Visible focus indicator
-/// - Enter/Space activation
-/// - Arrow key navigation (when in list)
 class FocusableContainer extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -301,12 +268,12 @@ class FocusableContainer extends StatefulWidget {
   final bool autofocus;
 
   const FocusableContainer({
-    Key? key,
+    super.key,
     required this.child,
     this.onTap,
     this.semanticLabel,
     this.autofocus = false,
-  }) : super(key: key);
+  });
 
   @override
   State<FocusableContainer> createState() => _FocusableContainerState();
@@ -319,76 +286,62 @@ class _FocusableContainerState extends State<FocusableContainer> {
   @override
   void initState() {
     super.initState();
-    // PSEUDOCODE:
-    // _focusNode.addListener(_onFocusChange);
-    throw UnimplementedError('Phase 2: Implement initState');
+    _focusNode.addListener(_onFocusChange);
   }
 
   @override
   void dispose() {
-    // PSEUDOCODE:
-    // _focusNode.removeListener(_onFocusChange);
-    // _focusNode.dispose();
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
     super.dispose();
-    throw UnimplementedError('Phase 2: Implement dispose');
   }
 
   void _onFocusChange() {
-    // PSEUDOCODE:
-    // setState(() {
-    //   _isFocused = _focusNode.hasFocus;
-    // });
-    throw UnimplementedError('Phase 2: Implement focus change');
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // PSEUDOCODE:
-    // return Semantics(
-    //   label: widget.semanticLabel,
-    //   button: widget.onTap != null,
-    //   child: Focus(
-    //     focusNode: _focusNode,
-    //     autofocus: widget.autofocus,
-    //     onKey: _handleKeyPress,
-    //     child: GestureDetector(
-    //       onTap: widget.onTap,
-    //       child: Container(
-    //         decoration: _isFocused
-    //           ? _buildFocusDecoration(context)
-    //           : null,
-    //         child: widget.child,
-    //       ),
-    //     ),
-    //   ),
-    // );
-    throw UnimplementedError('Phase 2: Implement build');
+    return Semantics(
+      label: widget.semanticLabel,
+      button: widget.onTap != null,
+      child: Focus(
+        focusNode: _focusNode,
+        autofocus: widget.autofocus,
+        onKey: _handleKeyPress,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            decoration: _isFocused ? _buildFocusDecoration(context) : null,
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
   }
 
-  /// Handle keyboard events
   KeyEventResult _handleKeyPress(FocusNode node, RawKeyEvent event) {
-    // PSEUDOCODE:
-    // if (event is RawKeyDownEvent) {
-    //   if (event.logicalKey == LogicalKeyboardKey.enter ||
-    //       event.logicalKey == LogicalKeyboardKey.space) {
-    //     widget.onTap?.call();
-    //     return KeyEventResult.handled;
-    //   }
-    // }
-    // return KeyEventResult.ignored;
-    throw UnimplementedError('Phase 2: Implement key press');
+    // TODO(Phase 3): Handle keyboard events
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.space) {
+        widget.onTap?.call();
+        return KeyEventResult.handled;
+      }
+    }
+    return KeyEventResult.ignored;
   }
 
-  /// Build visible focus indicator
   BoxDecoration _buildFocusDecoration(BuildContext context) {
-    // PSEUDOCODE:
-    // return BoxDecoration(
-    //   border: Border.all(
-    //     color: Theme.of(context).colorScheme.primary,
-    //     width: 2,
-    //   ),
-    //   borderRadius: BorderRadius.circular(8),
-    // );
-    throw UnimplementedError('Phase 2: Implement focus decoration');
+    // TODO(Phase 3): Make focus ring more visible
+    return BoxDecoration(
+      border: Border.all(
+        color: Theme.of(context).colorScheme.primary,
+        width: 2,
+      ),
+      borderRadius: BorderRadius.circular(8),
+    );
   }
 }
