@@ -33,7 +33,9 @@
       "Bash(rm:*)",
       "Bash(npm install:*)",
       "Bash(npm --prefix functions run build)",
-      "Read(//home/j-p-v/**)"
+      "Read(//home/j-p-v/**)",
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
