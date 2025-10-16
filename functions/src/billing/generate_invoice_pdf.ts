@@ -19,6 +19,7 @@
  */
 
 import PDFDocument from 'pdfkit';
+import type PDFKit from 'pdfkit';
 import * as admin from 'firebase-admin';
 
 /**

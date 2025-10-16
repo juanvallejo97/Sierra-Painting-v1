@@ -1,0 +1,52 @@
+name: Firestore Backup
+
+on:
+  # Daily backup at 7 AM UTC
+  schedule:
+    - cron: '0 7 * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: 'functions/package-lock.json'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install dependencies
+        run: npm --prefix functions install
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT }}'
+
+      - name: Run Firestore backup
+        run: |
+          bash tools/backup_firestore.sh
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firestore-backup-${{ github.run_number }}
+          path: backups/
+          retention-days: 30
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Firestore backup failed. Check workflow logs."

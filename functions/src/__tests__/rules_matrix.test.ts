@@ -48,7 +48,7 @@ const ADMIN_A_UID = 'admin-a';
 const MANAGER_A_UID = 'manager-a';
 const STAFF_A_UID = 'staff-a';
 const STAFF_B_UID = 'staff-b';
-const CUSTOMER_A_UID = 'customer-a';
+const _CUSTOMER_A_UID = 'customer-a';
 
 beforeAll(async () => {
   testEnv = await initializeTestEnvironment({

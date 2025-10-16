@@ -209,11 +209,17 @@ firebase deploy --only firestore:indexes --project sierra-painting-staging
 **Prerequisites:**
 - Backup file from `tools/backup_firestore.sh`
 - Backup stored in `gs://sierra-painting-staging-backups/`
+- **Automated backups:** Daily at 7 AM UTC via GitHub Actions (`.github/workflows/backup_firestore.yml`)
 
 **Rollback Steps:**
 
-1. **List available backups:**
+1. **Verify backup exists:**
 ```bash
+# Check GitHub Actions for recent backup runs
+# Navigate to Actions → Firestore Backup workflow
+# Download backup artifact from workflow run
+
+# Or check GCS bucket
 gsutil ls gs://sierra-painting-staging-backups/
 ```
 

@@ -57,7 +57,7 @@ async function probeFirestoreRead(): Promise<ProbeResult> {
   const operation = 'firestore_read';
 
   try {
-    const { result, durationMs } = await measureTimeAsync(async () => {
+    const { result: _result, durationMs } = await measureTimeAsync(async () => {
       // Read a test document (or create one if doesn't exist)
       const testDoc = await db.collection('_probes').doc('latency_test').get();
 
@@ -341,7 +341,7 @@ export const latencyProbe = onSchedule(
     region: 'us-east4',
     timeZone: 'America/New_York',
   },
-  async (event) => {
+  async (_event) => {
   logger.info('Starting latency probe...');
 
   const results: ProbeResult[] = [];

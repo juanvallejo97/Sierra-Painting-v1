@@ -36,6 +36,11 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen> {
       title: 'Employees',
       actions: [
         IconButton(
+          icon: const Icon(Icons.help_outline),
+          tooltip: 'Manual Onboarding Guide',
+          onPressed: _showOnboardingHelp,
+        ),
+        IconButton(
           icon: const Icon(Icons.filter_list),
           tooltip: 'Filter',
           onPressed: _showFilterDialog,
@@ -120,7 +125,7 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/employees/new'),
         icon: const Icon(Icons.person_add),
-        label: const Text('Add Employee'),
+        label: const Text('Add Employee (manual)'),
       ),
     );
   }
@@ -244,6 +249,81 @@ class _EmployeesListScreenState extends ConsumerState<EmployeesListScreen> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
+  }
+
+  void _showOnboardingHelp() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('Manual Onboarding'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Phone-based employee invites are not yet available. '
+                'Please follow the manual onboarding process:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '1. Click "Add Employee (manual)"',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '2. Fill in employee details (name, phone, role)',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '3. Share login instructions with employee',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '4. Employee signs up using their phone number',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.article_outlined, color: Colors.blue, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'See docs/onboarding_manual.md for complete instructions',
+                        style: TextStyle(fontSize: 12, color: Colors.blue),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showFilterDialog() {

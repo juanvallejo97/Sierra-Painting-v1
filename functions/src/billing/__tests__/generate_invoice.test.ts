@@ -63,7 +63,7 @@ jest.mock('../calculate_hours', () => ({
 
 // Import after mocking
 import { generateInvoiceHandler } from '../generate_invoice';
-import { calculateHours, groupEntriesByJob } from '../calculate_hours';
+import { calculateHours } from '../calculate_hours';
 
 describe('generateInvoice', () => {
   let mockDb: any;

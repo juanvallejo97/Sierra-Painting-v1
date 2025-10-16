@@ -28,7 +28,16 @@
       "Bash(npm audit)",
       "Bash(npm outdated)",
       "Bash(npm update:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npm --prefix functions run lint)",
+      "Bash(rm:*)",
+      "Bash(npm install:*)",
+      "Bash(npm --prefix functions run build)",
+      "Read(//home/j-p-v/**)",
+      "Bash(git rm:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh pr create --title \"chore: add git rm and checkout permissions to Claude settings\" --body \"$(cat <<''EOF''\n## Summary\n- Added git rm and git checkout commands to Claude Code''s allowed permissions\n- Enhances development workflow capabilities\n\n## Changes\n- Updated `.claude/settings.local.json` to include:\n  - `Bash(git rm:*)` - Allows removing files from Git\n  - `Bash(git checkout:*)` - Allows switching branches and checking out files\n  - `Bash(gh auth:*)` - Allows GitHub authentication commands\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

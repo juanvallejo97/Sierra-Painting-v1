@@ -103,6 +103,15 @@ scripts/firebase_config.json
 logs/
 reports/
 
+# Performance reports (may contain API keys from snapshots)
+perf_reports/
+lighthouse-*.json
+lighthouse-*.html
+
+# Token probe tools (contain hardcoded keys for testing)
+scripts/tokens.html
+scripts/firebase_config.json
+
 # --- Deployment History (tracked in git) ---
 # Keep deployment history tracked for audit purposes
 # .deployment-history/

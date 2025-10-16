@@ -9,7 +9,7 @@
  */
 
 import * as admin from 'firebase-admin';
-import { CallableRequest, HttpsError } from 'firebase-functions/v2/https';
+import { CallableRequest } from 'firebase-functions/v2/https';
 
 // Mock Firebase Admin before importing
 jest.mock('firebase-admin', () => {
@@ -26,7 +26,7 @@ jest.mock('firebase-admin', () => {
     bucket: jest.fn(() => mockBucket),
   };
 
-  const mockDocRef = {
+  const _mockDocRef = {
     update: jest.fn().mockResolvedValue(undefined),
   };
 
@@ -61,7 +61,7 @@ jest.mock('../generate_invoice_pdf', () => ({
 
 // Import after mocking
 import { getInvoicePDFUrlHandler, regenerateInvoicePDFHandler } from '../invoice_pdf_functions';
-import { generateInvoicePDF, getInvoicePDFPath } from '../generate_invoice_pdf';
+import { generateInvoicePDF } from '../generate_invoice_pdf';
 
 describe('getInvoicePDFUrl', () => {
   let mockDb: any;
@@ -104,7 +104,7 @@ describe('getInvoicePDFUrl', () => {
 
     // Setup Firestore mock
     const mockCollectionRef = {
-      doc: jest.fn((docId: string) => ({
+      doc: jest.fn((_docId: string) => ({
         get: jest.fn().mockResolvedValue(mockInvoiceDoc),
       })),
     };

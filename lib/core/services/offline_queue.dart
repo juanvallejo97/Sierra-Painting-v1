@@ -25,6 +25,7 @@
 library;
 
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Operation to be queued
@@ -106,16 +107,98 @@ abstract class OfflineQueue {
   Future<void> clearAll();
 }
 
-/// Minimal implementation (to be fleshed out)
+/// Minimal implementation with auto-drain on connectivity restoration
 ///
-/// TODO: Implement with Hive/Isar for persistence
-/// TODO: Add connectivity listener for automatic replay
-/// TODO: Add exponential backoff for retries
-/// TODO: Add transaction-like semantics for complex operations
+/// FEATURES (Phase 1 - CHK-08):
+/// - Connectivity listener for automatic drain
+/// - Single drain pass on reconnect (no duplicates)
+/// - "Synced" toast notification callback
+/// - Prevents concurrent drains with isDraining flag
+///
+/// TODO (Future phases):
+/// - Persist to Hive (survive app restart)
+/// - Exponential backoff for retries
+/// - Transaction-like semantics for complex operations
 class OfflineQueueImpl implements OfflineQueue {
   final StreamController<int> _countController =
       StreamController<int>.broadcast();
   final List<QueuedOperation> _queue = [];
+  final Map<String, Future<void> Function()> _operations = {};
+
+  bool _isDraining = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  Function()? _onSyncComplete; // Callback for "Synced" toast
+
+  OfflineQueueImpl() {
+    _initConnectivityListener();
+  }
+
+  /// Initialize connectivity listener for auto-drain
+  void _initConnectivityListener() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      (List<ConnectivityResult> results) {
+        final hasConnection = results.any(
+          (result) => result != ConnectivityResult.none,
+        );
+        if (hasConnection && _queue.isNotEmpty && !_isDraining) {
+          drainOnce();
+        }
+      },
+    );
+  }
+
+  /// Set callback for sync completion (for "Synced" toast)
+  void setOnSyncComplete(Function() callback) {
+    _onSyncComplete = callback;
+  }
+
+  /// Drain queue once (single pass, in order, no duplicates)
+  Future<void> drainOnce() async {
+    if (_isDraining) return; // Prevent concurrent drains
+
+    _isDraining = true;
+
+    try {
+      // Process operations in order (FIFO)
+      final operationsToProcess = List<QueuedOperation>.from(_queue);
+      int successCount = 0;
+
+      for (final queuedOp in operationsToProcess) {
+        final operation = _operations[queuedOp.id];
+        if (operation != null) {
+          try {
+            await operation();
+            // Success: remove from queue
+            _queue.removeWhere((op) => op.id == queuedOp.id);
+            _operations.remove(queuedOp.id);
+            successCount++;
+          } catch (e) {
+            // Failed: leave in queue for next drain attempt
+            // Update retry count
+            final index = _queue.indexWhere((op) => op.id == queuedOp.id);
+            if (index != -1) {
+              _queue[index] = queuedOp.copyWith(
+                retryCount: queuedOp.retryCount + 1,
+                lastAttemptAt: DateTime.now(),
+              );
+            }
+          }
+        } else {
+          // Operation function not found, remove stale entry
+          _queue.removeWhere((op) => op.id == queuedOp.id);
+        }
+      }
+
+      _countController.add(_queue.length);
+
+      // Notify sync completion if any operations succeeded
+      if (successCount > 0 && _onSyncComplete != null) {
+        _onSyncComplete!();
+      }
+    } finally {
+      _isDraining = false;
+    }
+  }
 
   @override
   Future<void> enqueue(
@@ -124,9 +207,10 @@ class OfflineQueueImpl implements OfflineQueue {
     required String type,
     Map<String, dynamic>? metadata,
   }) async {
-    // TODO: Check for duplicates via key (clientEventId)
-    // TODO: Persist to Hive/Isar
-    // TODO: Execute immediately if online, otherwise queue
+    // Check for duplicates via key (clientEventId)
+    if (_queue.any((op) => op.id == key)) {
+      return; // Already queued, skip duplicate
+    }
 
     final queuedOp = QueuedOperation(
       id: key,
@@ -136,10 +220,24 @@ class OfflineQueueImpl implements OfflineQueue {
     );
 
     _queue.add(queuedOp);
+    _operations[key] = operation;
     _countController.add(_queue.length);
 
-    // Try to execute immediately if online
-    // await _attemptExecution(operation, queuedOp);
+    // Try to execute immediately if we have connectivity (best effort)
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final hasConnection = connectivityResult.any(
+        (result) => result != ConnectivityResult.none,
+      );
+
+      if (hasConnection) {
+        // Fire and forget - don't block enqueue
+        unawaited(drainOnce());
+      }
+    } catch (e) {
+      // Connectivity check failed (e.g., in tests) - skip immediate drain
+      // Will be drained on next connectivity change or manual replay
+    }
   }
 
   @override
@@ -149,39 +247,21 @@ class OfflineQueueImpl implements OfflineQueue {
 
   @override
   Future<void> replayWhenOnline() async {
-    // TODO: Iterate queue, retry failed operations with exponential backoff
-    // TODO: Remove successful operations from queue
-    // TODO: Update _countController
+    // Calls drainOnce() - single pass through queue
+    await drainOnce();
   }
 
   @override
   Future<void> clearAll() async {
     _queue.clear();
+    _operations.clear();
     _countController.add(0);
   }
 
-  /// Attempt to execute operation with retry logic
-  // ignore: unused_element
-  Future<void> _attemptExecution(
-    Future<void> Function() operation,
-    QueuedOperation queuedOp,
-  ) async {
-    try {
-      await operation();
-      // Success: remove from queue
-      _queue.removeWhere((op) => op.id == queuedOp.id);
-      _countController.add(_queue.length);
-    } catch (e) {
-      // Failed: increment retry count, apply backoff
-      final updated = queuedOp.copyWith(
-        retryCount: queuedOp.retryCount + 1,
-        lastAttemptAt: DateTime.now(),
-      );
-      final index = _queue.indexWhere((op) => op.id == queuedOp.id);
-      if (index != -1) {
-        _queue[index] = updated;
-      }
-    }
+  /// Dispose of resources
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    _countController.close();
   }
 }
 

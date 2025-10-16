@@ -8,7 +8,6 @@
  * - getInvoicePDFPath: Correct path generation
  */
 
-import * as admin from 'firebase-admin';
 import {
   generateInvoicePDF,
   getInvoicePDFPath,

@@ -105,7 +105,7 @@ export const createInvoiceFromTime = functions.onCall({ region: 'us-east4' }, as
   const db = admin.firestore();
 
   // 3) Fetch and validate all time entries
-  const entries: Array<{id: string; data: FirebaseFirestore.DocumentData}> = [];
+  const entries: Array<{id: string; data: admin.firestore.DocumentData}> = [];
   let totalHours = 0;
 
   for (const entryId of timeEntryIds) {
