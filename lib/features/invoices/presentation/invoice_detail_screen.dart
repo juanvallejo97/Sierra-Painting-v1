@@ -109,10 +109,42 @@ class InvoiceDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         result.when(
           success: (invoice) {
+            // Show success with Undo button (15s window)
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invoice marked as sent'),
+              SnackBar(
+                content: const Text('Invoice marked as sent'),
                 backgroundColor: Colors.green,
+                duration: const Duration(seconds: 15),
+                action: SnackBarAction(
+                  label: 'Undo',
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    final undoResult =
+                        await repository.revertStatus(invoiceId: invoiceId);
+                    if (context.mounted) {
+                      undoResult.when(
+                        success: (invoice) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Status reverted'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          ref.invalidate(invoiceDetailProvider);
+                        },
+                        failure: (error) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(error),
+                              backgroundColor: Colors.orange,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
               ),
             );
             ref.invalidate(invoiceDetailProvider);
@@ -161,10 +193,42 @@ class InvoiceDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         result.when(
           success: (invoice) {
+            // Show success with Undo button (15s window)
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Invoice marked as paid (cash)'),
+              SnackBar(
+                content: const Text('Invoice marked as paid (cash)'),
                 backgroundColor: Colors.green,
+                duration: const Duration(seconds: 15),
+                action: SnackBarAction(
+                  label: 'Undo',
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    final undoResult =
+                        await repository.revertStatus(invoiceId: invoiceId);
+                    if (context.mounted) {
+                      undoResult.when(
+                        success: (invoice) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Payment status reverted'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          ref.invalidate(invoiceDetailProvider);
+                        },
+                        failure: (error) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(error),
+                              backgroundColor: Colors.orange,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
               ),
             );
             ref.invalidate(invoiceDetailProvider);

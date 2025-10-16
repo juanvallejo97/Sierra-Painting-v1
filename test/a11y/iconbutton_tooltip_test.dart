@@ -68,19 +68,11 @@ void main() {
         }
       }
 
-      if (violations.isNotEmpty) {
-        print('\nIconButtons without tooltips found:');
-        for (final violation in violations) {
-          print('  - $violation');
-        }
-        print('\nTotal violations: ${violations.length}');
-      }
-
       expect(
         violations,
         isEmpty,
         reason:
-            'All IconButtons must have tooltips for accessibility. Found ${violations.length} violations.',
+            'All IconButtons must have tooltips for accessibility. Found ${violations.length} violations:\n${violations.join('\n')}',
       );
     });
   });

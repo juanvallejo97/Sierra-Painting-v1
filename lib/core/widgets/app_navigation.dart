@@ -90,8 +90,13 @@ class AppNavigationBar extends ConsumerWidget {
       items: visibleItems
           .map(
             (item) => BottomNavigationBarItem(
-              icon: Icon(item.icon),
+              icon: Semantics(
+                label: '${item.label} tab',
+                button: true,
+                child: Icon(item.icon),
+              ),
               label: item.label,
+              tooltip: 'Navigate to ${item.label}',
             ),
           )
           .toList(),
@@ -141,25 +146,33 @@ class AppDrawer extends ConsumerWidget {
           ..._navigationItems
               .where((item) => !item.adminOnly || isAdmin)
               .map(
-                (item) => ListTile(
-                  leading: Icon(item.icon),
-                  title: Text(item.label),
-                  onTap: () {
-                    context.go(item.route);
-                    Navigator.pop(context);
-                  },
+                (item) => Semantics(
+                  label: 'Navigate to ${item.label}',
+                  button: true,
+                  child: ListTile(
+                    leading: Icon(item.icon),
+                    title: Text(item.label),
+                    onTap: () {
+                      context.go(item.route);
+                      Navigator.pop(context);
+                    },
+                  ),
                 ),
               ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Sign Out'),
-            onTap: () async {
-              await ref.read(firebaseAuthProvider).signOut();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
+          Semantics(
+            label: 'Sign out of your account',
+            button: true,
+            child: ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap: () async {
+                await ref.read(firebaseAuthProvider).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
+            ),
           ),
         ],
       ),

@@ -222,9 +222,35 @@ class InvoiceRepository {
     required String invoiceId,
   }) async {
     try {
-      await _firestore.collection('invoices').doc(invoiceId).update({
-        'status': 'sent',
-        'updatedAt': FieldValue.serverTimestamp(),
+      // Use transaction to maintain status history
+      await _firestore.runTransaction((tx) async {
+        final docRef = _firestore.collection('invoices').doc(invoiceId);
+        final doc = await tx.get(docRef);
+
+        if (!doc.exists) {
+          throw Exception('Invoice not found');
+        }
+
+        final data = doc.data()!;
+        final currentStatus = data['status'] as String;
+        final statusHistory =
+            data['statusHistory'] as List<dynamic>? ?? <dynamic>[];
+
+        // Add current status to history with timestamp
+        final updatedHistory = List<Map<String, dynamic>>.from(
+          statusHistory.map((e) => Map<String, dynamic>.from(e as Map)),
+        );
+        updatedHistory.add({
+          'status': 'sent',
+          'changedAt': FieldValue.serverTimestamp(),
+          'previousStatus': currentStatus,
+        });
+
+        tx.update(docRef, {
+          'status': 'sent',
+          'statusHistory': updatedHistory,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       });
 
       // Fetch updated invoice
@@ -240,10 +266,36 @@ class InvoiceRepository {
     required DateTime paidAt,
   }) async {
     try {
-      await _firestore.collection('invoices').doc(invoiceId).update({
-        'status': 'paid_cash',
-        'paidAt': Timestamp.fromDate(paidAt),
-        'updatedAt': FieldValue.serverTimestamp(),
+      // Use transaction to maintain status history
+      await _firestore.runTransaction((tx) async {
+        final docRef = _firestore.collection('invoices').doc(invoiceId);
+        final doc = await tx.get(docRef);
+
+        if (!doc.exists) {
+          throw Exception('Invoice not found');
+        }
+
+        final data = doc.data()!;
+        final currentStatus = data['status'] as String;
+        final statusHistory =
+            data['statusHistory'] as List<dynamic>? ?? <dynamic>[];
+
+        // Add current status to history with timestamp
+        final updatedHistory = List<Map<String, dynamic>>.from(
+          statusHistory.map((e) => Map<String, dynamic>.from(e as Map)),
+        );
+        updatedHistory.add({
+          'status': 'paid_cash',
+          'changedAt': FieldValue.serverTimestamp(),
+          'previousStatus': currentStatus,
+        });
+
+        tx.update(docRef, {
+          'status': 'paid_cash',
+          'paidAt': Timestamp.fromDate(paidAt),
+          'statusHistory': updatedHistory,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       });
 
       // Fetch updated invoice
@@ -286,6 +338,79 @@ class InvoiceRepository {
       // Fetch updated invoice
       return await getInvoice(invoiceId);
     } catch (e) {
+      return Result.failure(_mapError(e));
+    }
+  }
+
+  /// Revert invoice to previous status (for undo within 15s window)
+  ///
+  /// UNDO MECHANISM:
+  /// - Maintains status history in statusHistory array
+  /// - Allows reverting to previous status within 15s
+  /// - Idempotent: prevents duplicate reverts
+  /// - Audit trail: preserves all transitions
+  Future<Result<Invoice, String>> revertStatus({
+    required String invoiceId,
+  }) async {
+    try {
+      // Use transaction to ensure atomic read-modify-write
+      await _firestore.runTransaction<void>((tx) async {
+        final docRef = _firestore.collection('invoices').doc(invoiceId);
+        final doc = await tx.get(docRef);
+
+        if (!doc.exists) {
+          throw Exception('Invoice not found');
+        }
+
+        final data = doc.data()!;
+        final statusHistory =
+            data['statusHistory'] as List<dynamic>? ?? <dynamic>[];
+
+        // Need at least 2 entries (current + previous)
+        if (statusHistory.length < 2) {
+          throw Exception('No previous status to revert to');
+        }
+
+        // Get the last two status entries
+        final currentEntry = statusHistory.last as Map<String, dynamic>;
+        final previousEntry =
+            statusHistory[statusHistory.length - 2] as Map<String, dynamic>;
+
+        // Check 15s window (using client time for UX, server time for audit)
+        final changedAt = (currentEntry['changedAt'] as Timestamp).toDate();
+        final now = DateTime.now();
+        final elapsed = now.difference(changedAt);
+
+        if (elapsed.inSeconds > 15) {
+          throw Exception('Undo window expired (>15s)');
+        }
+
+        // Remove current entry and revert to previous status
+        final newHistory = List<Map<String, dynamic>>.from(
+          statusHistory.take(statusHistory.length - 1).map(
+                (e) => Map<String, dynamic>.from(e as Map),
+              ),
+        );
+
+        final previousStatus = previousEntry['status'] as String;
+
+        // Update with previous status
+        tx.update(docRef, {
+          'status': previousStatus,
+          'statusHistory': newHistory,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+
+      // Fetch updated invoice after transaction
+      return await getInvoice(invoiceId);
+    } catch (e) {
+      if (e.toString().contains('Undo window expired')) {
+        return Result.failure('Cannot undo: more than 15 seconds have passed');
+      }
+      if (e.toString().contains('No previous status')) {
+        return Result.failure('Cannot undo: no previous status available');
+      }
       return Result.failure(_mapError(e));
     }
   }

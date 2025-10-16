@@ -365,7 +365,7 @@ export const dailyCleanup = onSchedule(
     timeZone: 'UTC',
     region: 'us-east4',
   },
-  async (event) => {
+  async (_event) => {
     logger.info('Starting daily TTL cleanup...');
 
     const results: DeletionResult[] = [];

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.13] - 2025-10-15
+
+### Added
+- **Invoice Undo Feature (CHK-01)**: 15-second undo window for invoice status changes
+  - `revertStatus()` method with transactional status history tracking
+  - SnackBar with "Undo" action for markAsSent() and markAsPaidCash()
+  - Audit trail maintained in statusHistory array
+  - Unit tests for status reversion and round-trip totals integrity
+- **Manual Onboarding Documentation (CHK-04)**: Comprehensive employee onboarding guide
+  - Created `docs/onboarding_manual.md` with step-by-step instructions
+  - Added help button in Employees screen linking to manual onboarding docs
+  - Renamed "Add Employee" to "Add Employee (manual)" to clarify process
+  - In-app dialog explaining manual onboarding workflow
+
+### Changed
+- Version bumped from 0.0.12+12 to 0.0.13+13
+- Invoice repository now uses transactions for status changes to maintain history
+- Employees list screen clarifies that phone-based invites are not yet implemented
+
+### Fixed
+- Invoice status changes now properly maintain audit history for undo functionality
+- Eliminated confusion around non-existent SMS invite feature
+
 ## [0.0.12] - 2024-10-04
 
 ### Added

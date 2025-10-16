@@ -230,7 +230,7 @@ describe('Invoiced Entries Immutability Tests', () => {
     });
 
     // Verify audit record exists
-    const adminContext = testEnv.authenticatedContext(ADMIN_UID, {
+    const _adminContext = testEnv.authenticatedContext(ADMIN_UID, {
       company_id: COMPANY_A,
       role: 'admin',
     });
@@ -339,7 +339,7 @@ describe('Input Validation Tests', () => {
 describe('Staging Acceptance Gates', () => {
   test('GATE: Single active shift per user (transactional guard)', async () => {
     // Create first active entry
-    let entry1Id: string;
+    let _entry1Id: string;
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const ref = await context.firestore().collection('timeEntries').add({
         companyId: COMPANY_A,
@@ -348,7 +348,7 @@ describe('Staging Acceptance Gates', () => {
         clockInAt: new Date(),
         clockOutAt: null, // Active
       });
-      entry1Id = ref.id;
+      _entry1Id = ref.id;
     });
 
     // Verify query for active shift returns one entry

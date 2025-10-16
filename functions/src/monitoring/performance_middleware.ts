@@ -26,8 +26,6 @@
 import * as functions from 'firebase-functions';
 import { CallableRequest } from 'firebase-functions/v2/https';
 import { trace } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 /**
  * Performance monitoring options
