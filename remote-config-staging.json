@@ -1,0 +1,86 @@
+{
+  "parameters": {
+    "global_panic": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Emergency kill switch - disables ALL new features when true"
+    },
+    "panic_disable_new_ui": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "description": "Disable new UI when panic flag is active"
+    },
+    "ux_animations_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable UX animations and transitions"
+    },
+    "ux_reduce_motion_default": {
+      "defaultValue": {
+        "value": "true"
+      },
+      "description": "Default to reduced motion for accessibility"
+    },
+    "shimmer_loaders_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable shimmer skeleton loaders"
+    },
+    "lottie_animations_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable Lottie animations"
+    },
+    "telemetry_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable UX telemetry tracking (requires user consent)"
+    },
+    "offline_queue_v2_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable offline queue V2 with enhanced sync"
+    },
+    "audit_trail_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable audit trail logging"
+    },
+    "smart_forms_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable smart forms with autosave"
+    },
+    "kpi_drill_down_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable KPI drill-down navigation"
+    },
+    "conflict_detection_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable conflict detection for time entries"
+    },
+    "haptic_feedback_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable haptic feedback on mobile"
+    }
+  },
+  "version": {
+    "versionNumber": "1",
+    "description": "v0.0.15 staging deployment - all features OFF for safe rollout"
+  }
+}
