@@ -1,4 +1,4 @@
-/// PHASE 1: PSEUDOCODE - UX Telemetry & Performance Monitoring
+/// PHASE 2: SKELETON CODE - UX Telemetry & Performance Monitoring
 ///
 /// PURPOSE:
 /// - Track user behavior funnels (conversion rates)
@@ -15,6 +15,12 @@
 ///   -> Local buffer (offline queue)
 
 library ux_telemetry;
+
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 
 // ============================================================================
 // DATA STRUCTURES
