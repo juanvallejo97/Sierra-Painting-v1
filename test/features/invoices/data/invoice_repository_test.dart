@@ -53,7 +53,7 @@ void main() {
         expect(invoice!.id, isNotNull);
         expect(invoice.companyId, 'company-1');
         expect(invoice.customerId, 'customer-1');
-        expect(invoice.status, InvoiceStatus.pending);
+        expect(invoice.status, InvoiceStatus.draft); // New invoices start as draft
         expect(invoice.amount, 1000.0); // 10*50 + 5*100
         expect(invoice.items.length, 2);
       });

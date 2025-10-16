@@ -9,6 +9,8 @@
     "serve:staging": "cp .env.staging .env && flutter build web --release && npm run serve",
     "serve:auto": "pwsh ./scripts/serve_web.ps1",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+    "test:security": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
+    "test:perf": "firebase emulators:exec --only firestore \"vitest run tests/perf\"",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "smoke": "node scripts/smoke.mjs",
     "smoke:local": "node scripts/smoke.mjs http://127.0.0.1:8080",
@@ -33,7 +35,10 @@
     "smoke:android": "pwsh ./scripts/dev.ps1 smoke",
     "seed": "dart run tools/seed_fixtures.dart",
     "seed:staging": "ts-node tools/seed/apply_seed.ts",
-    "seed:staging:check": "ts-node tools/seed/apply_seed.ts --check"
+    "seed:staging:check": "ts-node tools/seed/apply_seed.ts --check",
+    "verify:companyId": "ts-node scripts/backfill/verify-companyId.ts",
+    "backfill:companyId": "ts-node scripts/backfill/backfill-companyId.ts",
+    "rollback:migration": "ts-node scripts/backfill/rollback-migration.ts"
   },
   "bin": {
     "spa-server": "scripts/spa_server.mjs"
