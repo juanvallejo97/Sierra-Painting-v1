@@ -18,6 +18,7 @@ export { setUserRole } from './auth/setUserRole';
 export { clockIn, clockOut } from './timeclock';
 export { autoClockOut, adminAutoClockOutOnce } from './auto-clockout';
 export { editTimeEntry } from './edit-time-entry';
+export { onTimeEntryCreate } from './timeclock/onTimeEntryCreate';
 
 // Admin functions
 export { bulkApproveTimeEntries } from './admin/bulk_approve';
@@ -29,6 +30,8 @@ export { onInvoiceCreated, getInvoicePDFUrl, regenerateInvoicePDF } from './bill
 
 // Monitoring functions
 export { latencyProbe, getProbeMetrics } from './monitoring/latency_probe';
+export { queryMonitorScheduled, queryMonitorManual } from './monitoring/query-monitor';
+export { auditUserRoleChanges, auditTimeEntryChanges, auditInvoiceChanges } from './monitoring/security-audit';
 
 // Scheduled cleanup functions
 export { dailyCleanup, manualCleanup } from './scheduled/ttl_cleanup';
@@ -60,7 +63,7 @@ export const taskWorker = onRequest(
 );
 
 // Warmup job: ping `api` every 5 minutes to keep JIT warm during traffic dips
-const API_URL = defineString("WARM_URL");
+const API_URL = defineString("WARM_URL", { default: "" });
 export const warm = onSchedule(
   {
     schedule: "every 5 minutes",

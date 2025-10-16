@@ -159,7 +159,7 @@ void main() {
       expect(invoice.amount, 1000.0);
       expect(invoice.items, items);
       expect(invoice.dueDate, dueDate);
-      expect(invoice.status, InvoiceStatus.pending); // default
+      expect(invoice.status, InvoiceStatus.draft); // default for new invoices
       expect(invoice.currency, 'USD'); // default
       expect(invoice.id, isNull);
       expect(invoice.estimateId, isNull);
