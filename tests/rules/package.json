@@ -1,0 +1,29 @@
+{
+  "name": "firestore-rules-tests",
+  "version": "1.0.0",
+  "description": "Firestore Security Rules Test Suite",
+  "main": "firestore-security.test.js",
+  "scripts": {
+    "test": "jest --testEnvironment=node --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "firestore",
+    "security",
+    "rules",
+    "testing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testTimeout": 30000,
+    "testMatch": [
+      "**/*.test.js"
+    ]
+  }
+}

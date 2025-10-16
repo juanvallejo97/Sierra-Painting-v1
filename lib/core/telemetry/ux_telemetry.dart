@@ -13,7 +13,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_performance/firebase_performance.dart';
+import 'package:sierra_painting/core/privacy/consent_manager.dart';
+import 'package:sierra_painting/core/privacy/pii_sanitizer.dart';
 
 // ============================================================================
 // DATA STRUCTURES
@@ -86,21 +87,28 @@ class UXTelemetry {
       return;
     }
 
-    // TODO(Phase 3): Check network connectivity
+    // Check consent before tracking
+    if (!ConsentManager.instance.hasConsent(ConsentType.analytics)) {
+      debugPrint('UXTelemetry: Analytics consent not granted');
+      return;
+    }
+
+    // Sanitize PII from params
+    final sanitizedParams = PIISanitizer.sanitizeParams(params);
+
     final event = {
       'name': 'funnel_${step.name}',
       'timestamp': DateTime.now().toIso8601String(),
-      ...params,
+      ...sanitizedParams,
     };
 
     try {
-      // TODO(Phase 3): Send to Firebase Analytics
       FirebaseAnalytics.instance.logEvent(
         name: event['name'] as String,
-        parameters: event,
+        parameters: event.cast<String, Object>(),
       );
     } catch (e) {
-      // TODO(Phase 3): Add to offline buffer if network error
+      // Add to offline buffer if network error
       debugPrint('Failed to track funnel: $e');
       _offlineBuffer.add(event);
     }
@@ -164,24 +172,33 @@ class UXTelemetry {
   ) {
     if (!_initialized) return;
 
-    // TODO(Phase 3): Track user interactions
+    // Check consent before tracking
+    if (!ConsentManager.instance.hasConsent(ConsentType.analytics)) {
+      return;
+    }
+
+    // Sanitize context
+    final sanitizedContext = PIISanitizer.sanitizeParams(context);
+
     try {
       FirebaseAnalytics.instance.logEvent(
         name: 'user_interaction_${event.name}',
         parameters: {
           'event': event.name,
-          ...context,
-        },
+          ...sanitizedContext,
+        }.cast<String, Object>(),
       );
 
-      // TODO(Phase 3): Log frustration events as non-fatal errors
+      // Log frustration events as non-fatal errors (with crashlytics consent)
       if (event == InteractionEvent.rageTap ||
           event == InteractionEvent.rageScroll) {
-        FirebaseCrashlytics.instance.recordError(
-          Exception('User frustration detected: ${event.name}'),
-          null,
-          fatal: false,
-        );
+        if (ConsentManager.instance.hasConsent(ConsentType.crashlytics)) {
+          FirebaseCrashlytics.instance.recordError(
+            Exception('User frustration detected: ${event.name}'),
+            null,
+            fatal: false,
+          );
+        }
       }
     } catch (e) {
       debugPrint('Failed to track interaction: $e');
@@ -250,7 +267,7 @@ class UXTelemetry {
       try {
         await FirebaseAnalytics.instance.logEvent(
           name: event['name'] as String,
-          parameters: event,
+          parameters: event.cast<String, Object>(),
         );
         _offlineBuffer.remove(event);
       } catch (e) {
@@ -322,7 +339,8 @@ class UXTelemetry {
 
   static Future<void> _flushOfflineBuffer() async {
     // TODO(Phase 3): Send all buffered events on startup if online
-    await flush();
+    // ignore: unawaited_futures
+    flush();
   }
 }
 

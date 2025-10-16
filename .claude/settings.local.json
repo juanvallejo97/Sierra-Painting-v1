@@ -7,7 +7,8 @@
       "Bash(awk:*)",
       "Bash(flutter clean:*)",
       "Bash(gc -m \"$(cat <<''EOF''\nfix(cache): force cache invalidation with version bump to v0.0.14\n\nCritical fix for Windows aggressive caching preventing new deployments from loading.\n\nCHANGES:\n- Bumped version: 0.0.13 → 0.0.14\n- Updated app_version.dart and pubspec.yaml\n- Performed full Flutter clean to clear incremental build cache\n- Added service worker version meta tag\n- Added cache-busting query parameters to script loads\n\nCACHE-BUSTING MEASURES:\n- Service worker version: v0.0.14\n- Script query params: ?v=1760622708 (timestamp)\n- New build hash in main.dart.js\n\nDEPLOYMENT:\n- Clean rebuild completed in 15.9s\n- Deployed to staging: sierra-painting-staging.web.app\n- Version indicator widget now shows: v0.0.14\n\nROOT CAUSE:\nPrevious build at 09:40 used incremental cache from 09:39 that didn''t include\nVersionIndicator amber styling changes. This clean build ensures all changes\nare included.\n\nFILES MODIFIED:\n- lib/core/app_version.dart (version constants)\n- pubspec.yaml (version field)\n- build/web/index.html (cache-busting parameters)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(gc -m:*)"
+      "Bash(gc -m:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

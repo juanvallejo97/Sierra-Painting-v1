@@ -24,6 +24,9 @@ import 'package:sierra_painting/features/jobs/domain/job_context.dart';
 import 'package:sierra_painting/firebase_options.dart';
 import 'package:sierra_painting/infra/perf/performance_monitor.dart';
 import 'package:sierra_painting/router.dart';
+import 'package:sierra_painting/core/privacy/consent_manager.dart';
+import 'package:sierra_painting/core/feature_flags/feature_flags.dart';
+import 'package:sierra_painting/core/env/app_flavor.dart';
 
 /// Test-mode flag (set by tests via --dart-define=FLUTTER_TEST=true)
 const bool kFlutterTestMode = bool.fromEnvironment(
@@ -99,6 +102,11 @@ Future<void> main() async {
 
 Future<void> _initializeApp() async {
   debugPrint('Initializing app...'); // Debug print
+
+  // Initialize app flavor FIRST (determines environment)
+  AppFlavor.initialize();
+  debugPrint('App Flavor: ${AppFlavor.displayName} (${AppFlavor.firebaseProjectId})');
+
   // Load env only when not running tests; ignore missing file quietly.
   if (!isUnderTest) {
     final envFile = kIsWeb ? 'assets/config/public.env' : '.env';
@@ -134,6 +142,24 @@ Future<void> _initializeApp() async {
     await _activateAppCheck();
     if (!kIsWeb && kReleaseMode) {
       await FirebasePerformance.instance.setPerformanceCollectionEnabled(true);
+    }
+
+    // Phase 3A: Initialize Consent Manager (GDPR/CCPA compliance)
+    debugPrint('Initializing ConsentManager...');
+    try {
+      await ConsentManager.instance.initialize();
+      debugPrint('ConsentManager initialized successfully.');
+    } catch (e) {
+      debugPrint('ConsentManager initialization failed: $e');
+    }
+
+    // Phase 3B: Initialize Feature Flags (Remote Config + System Preferences)
+    debugPrint('Initializing FeatureFlags...');
+    try {
+      await FeatureFlags.initialize();
+      debugPrint('FeatureFlags initialized successfully.');
+    } catch (e) {
+      debugPrint('FeatureFlags initialization failed: $e');
     }
   } else {
     debugPrint('Skipping Firebase initialization in test mode.');

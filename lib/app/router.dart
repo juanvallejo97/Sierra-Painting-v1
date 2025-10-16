@@ -11,6 +11,7 @@ import 'package:sierra_painting/features/estimates/presentation/estimates_screen
 import 'package:sierra_painting/features/invoices/presentation/invoices_screen.dart';
 import 'package:sierra_painting/features/jobs/presentation/jobs_screen.dart';
 import 'package:sierra_painting/features/timeclock/presentation/timeclock_screen.dart';
+import 'package:sierra_painting/core/feature_flags/feature_flags_debug_screen.dart';
 
 // Initialize PerformanceMonitor instance
 final PerformanceMonitor monitor = PerformanceMonitor();
@@ -65,6 +66,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin',
         builder: (context, state) => const AdminScreen(),
+        redirect: (context, state) {
+          final user = ref.read(authStateProvider).value;
+          final isAdmin = user?.email?.contains('admin') ?? false;
+          return isAdmin ? null : '/timeclock';
+        },
+      ),
+      GoRoute(
+        path: '/admin/feature-flags',
+        builder: (context, state) => const FeatureFlagsDebugScreen(),
         redirect: (context, state) {
           final user = ref.read(authStateProvider).value;
           final isAdmin = user?.email?.contains('admin') ?? false;
